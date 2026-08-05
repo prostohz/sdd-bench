@@ -9,15 +9,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Методология и классы задач описаны в [`METHODOLOGY.md`](./METHODOLOGY.md).
 
-## Участники бенчмарка
-
-| Участник | Описание |
-| --- | --- |
-| Neutral SDD | Нейтральный процесс spec → plan → code, без конкретного фреймворка |
-| OpenSpec | Канонический workflow OpenSpec |
-| Spec Kit | Канонический workflow Spec Kit |
-| Canon | Полуформальный язык требований (`~/workspace/canon`) |
-
 ## Состояние
 
 Репозиторий пока пуст — код, структура и команды сборки/тестов не заведены.
