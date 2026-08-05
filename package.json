@@ -1,0 +1,23 @@
+{
+  "name": "sdd-bench",
+  "version": "0.1.0",
+  "description": "A benchmark for spec-driven development tools: tasks, runs and the metrics they are compared by",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "sdd-bench": "dist/src/cli.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && node --test dist/test/*.test.js",
+    "validate": "tsc && node dist/src/cli.js validate"
+  }
+}

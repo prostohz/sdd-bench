@@ -1,0 +1,11 @@
+{
+  "id": "ledger-cli",
+  "class": "greenfield",
+  "intent": "intent.md",
+  "hiddenTests": {
+    "dir": "tests",
+    "command": "bash sdd-bench-check.sh",
+    "countsPattern": "passed (\\d+) of (\\d+)"
+  },
+  "allowHosts": ["registry.npmjs.org", "*.npmjs.org", "pypi.org", "files.pythonhosted.org"]
+}

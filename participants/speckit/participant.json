@@ -1,0 +1,17 @@
+{
+  "id": "speckit",
+  "name": "Spec Kit",
+  "setup": "setup.sh",
+  "prompt": "prompt.md",
+  "specPaths": ["specs"],
+  "allowHosts": [
+    "astral.sh",
+    "*.astral.sh",
+    "pypi.org",
+    "files.pythonhosted.org",
+    "github.com",
+    "*.githubusercontent.com"
+  ],
+  "mounts": {},
+  "versionProbe": "specify version"
+}

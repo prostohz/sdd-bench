@@ -1,0 +1,271 @@
+#!/usr/bin/env node
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+import { findParticipant, findTask, loadCatalog } from './catalog.js'
+import { loadConfig, type BenchConfig } from './config.js'
+import { judgeRun } from './judge/judge.js'
+import type { RunRecord } from './model/run.js'
+import { agentHint, checkAgent } from './run/doctor.js'
+import { runParticipant } from './run/participantRun.js'
+import { renderReport } from './report/report.js'
+import {
+  createResult,
+  newResultId,
+  readManifest,
+  readRuns,
+  resolveResult,
+  resultsRoot,
+} from './results.js'
+import { DryRunDriver } from './sandbox/dryRun.js'
+import { SbxDriver } from './sandbox/sbx.js'
+import type { SandboxDriver } from './sandbox/driver.js'
+import { scoreParticipants, scoreRun } from './score/score.js'
+
+const USAGE = `sdd-bench — бенчмарк инструментов spec-driven development
+
+  sdd-bench validate                    проверить каталог задач и участников
+  sdd-bench doctor                      проверить, что агент в sandbox отвечает
+  sdd-bench run [опции]                 прогнать участников и сохранить артефакты
+  sdd-bench judge [опции]               оценить сохранённые запуски
+  sdd-bench score [опции]               посчитать скоры
+  sdd-bench report [опции]              собрать отчёт
+  sdd-bench all [опции]                 run + judge + report
+
+Опции:
+  --task <id,...>         задачи (по умолчанию все)
+  --participant <id,...>  участники (по умолчанию все)
+  -n, --repeats <N>       число повторов
+  --result <id|path>      каталог результата (по умолчанию последний)
+  --config <path>         файл настроек (по умолчанию bench.json)
+  --out <path>            куда записать отчёт
+  --dry-run               холостой прогон без sandbox и обращений к API
+  --skip-doctor           не проверять агента перед прогоном
+`
+
+interface Options {
+  command: string
+  tasks: string[] | undefined
+  participants: string[] | undefined
+  repeats: number | undefined
+  result: string | undefined
+  config: string | undefined
+  out: string | undefined
+  dryRun: boolean
+  skipDoctor: boolean
+}
+
+async function main(argv: string[]): Promise<number> {
+  const options = parseArgs(argv)
+  if (options.command === 'help') {
+    process.stdout.write(USAGE)
+    return 0
+  }
+
+  const root = process.cwd()
+  const config = withOverrides(loadConfig(root, options.config), options)
+
+  switch (options.command) {
+    case 'validate':
+      return validate(root)
+    case 'doctor':
+      return doctor(config, options)
+    case 'run':
+      await runCommand(root, config, options)
+      return 0
+    case 'judge':
+      await judgeCommand(root, config, options, resolveResult(root, config, options.result))
+      return 0
+    case 'score':
+      scoreCommand(root, config, options)
+      return 0
+    case 'report':
+      reportCommand(root, config, options, resolveResult(root, config, options.result))
+      return 0
+    case 'all': {
+      const resultDir = await runCommand(root, config, options)
+      await judgeCommand(root, config, options, resultDir)
+      reportCommand(root, config, options, resultDir)
+      return 0
+    }
+    default:
+      process.stderr.write(`неизвестная команда "${options.command}"\n\n${USAGE}`)
+      return 2
+  }
+}
+
+function validate(root: string): number {
+  const catalog = loadCatalog(root)
+  process.stdout.write(
+    `задач: ${catalog.tasks.length} (${catalog.tasks.map((t) => t.id).join(', ') || '—'})\n` +
+      `участников: ${catalog.participants.length} (${catalog.participants.map((p) => p.id).join(', ') || '—'})\n`,
+  )
+  return catalog.tasks.length > 0 && catalog.participants.length > 0 ? 0 : 1
+}
+
+async function doctor(config: BenchConfig, options: Options): Promise<number> {
+  const driver = makeDriver(options)
+  for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
+
+  const failure = await checkAgent(driver, config)
+  if (failure === undefined) {
+    process.stdout.write('агент отвечает\n')
+    return 0
+  }
+  process.stderr.write(`${failure}\n\n${agentHint(failure)}\n`)
+  return 1
+}
+
+async function runCommand(root: string, config: BenchConfig, options: Options): Promise<string> {
+  const catalog = loadCatalog(root)
+  const tasks = options.tasks?.map((id) => findTask(catalog, id)) ?? catalog.tasks
+  const participants = options.participants?.map((id) => findParticipant(catalog, id)) ?? catalog.participants
+  const driver = makeDriver(options)
+
+  for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
+
+  if (!options.skipDoctor) {
+    log('проверка агента…')
+    const failure = await checkAgent(driver, config)
+    if (failure) throw new Error(`${failure}\n\n${agentHint(failure)}\n\nПропустить проверку: --skip-doctor`)
+  }
+
+  const resultId = newResultId()
+  const resultDir = options.result
+    ? resolveResult(root, config, options.result)
+    : join(resultsRoot(root, config), resultId)
+  createResult(resultDir, resultDir.split('/').at(-1) ?? resultId, config, {
+    sandbox: await driver.version(),
+  })
+  log(`результат: ${resultDir}`)
+
+  for (const task of tasks) {
+    for (const participant of participants) {
+      for (let repeat = 1; repeat <= config.repeats; repeat += 1) {
+        const record = await runParticipant({ config, driver, resultDir, log }, task, participant, repeat)
+        log(`  ${record.status}${record.statusDetail ? `: ${record.statusDetail}` : ''}`)
+      }
+    }
+  }
+
+  return resultDir
+}
+
+async function judgeCommand(
+  root: string,
+  config: BenchConfig,
+  options: Options,
+  resultDir: string,
+): Promise<void> {
+  const catalog = loadCatalog(root)
+  const driver = makeDriver(options)
+  log(`оценка: ${resultDir}`)
+
+  for (const record of readRuns(resultDir)) {
+    if (record.status !== 'ok') {
+      log(`  · ${record.runId} пропущен (${record.status})`)
+      continue
+    }
+    const runDir = join(resultDir, 'runs', dirOf(record))
+    await judgeRun({ config, driver, root, log }, findTask(catalog, record.taskId), record, runDir)
+  }
+}
+
+function scoreCommand(root: string, config: BenchConfig, options: Options): void {
+  const manifest = readManifest(resolveResult(root, config, options.result))
+  process.stdout.write(
+    `${JSON.stringify(
+      { runs: manifest.runs.map(scoreRun), participants: scoreParticipants(manifest.runs) },
+      null,
+      2,
+    )}\n`,
+  )
+}
+
+function reportCommand(root: string, config: BenchConfig, options: Options, resultDir: string): void {
+  const report = renderReport(readManifest(resultDir))
+  const out = options.out ?? join(resultDir, 'report.md')
+  writeFileSync(out, report)
+  process.stdout.write(`${report}\n`)
+  log(`отчёт: ${out}`)
+}
+
+function makeDriver(options: Options): SandboxDriver {
+  return options.dryRun ? new DryRunDriver() : new SbxDriver()
+}
+
+function dirOf(record: RunRecord): string {
+  return `${record.taskId}--${record.participantId}--${record.repeat}`
+}
+
+function withOverrides(config: BenchConfig, options: Options): BenchConfig {
+  return options.repeats === undefined ? config : { ...config, repeats: options.repeats }
+}
+
+function parseArgs(argv: string[]): Options {
+  const options: Options = {
+    command: argv[0] ?? 'help',
+    tasks: undefined,
+    participants: undefined,
+    repeats: undefined,
+    result: undefined,
+    config: undefined,
+    out: undefined,
+    dryRun: false,
+    skipDoctor: false,
+  }
+  if (argv[0] === undefined || ['-h', '--help', 'help'].includes(argv[0])) options.command = 'help'
+
+  for (let i = 1; i < argv.length; i += 1) {
+    const arg = argv[i]
+    const next = (): string => {
+      const value = argv[i + 1]
+      if (value === undefined) throw new Error(`${arg}: ожидается значение`)
+      i += 1
+      return value
+    }
+    switch (arg) {
+      case '--task':
+        options.tasks = next().split(',')
+        break
+      case '--participant':
+        options.participants = next().split(',')
+        break
+      case '-n':
+      case '--repeats':
+        options.repeats = Number(next())
+        break
+      case '--result':
+        options.result = next()
+        break
+      case '--config':
+        options.config = next()
+        break
+      case '--out':
+        options.out = next()
+        break
+      case '--dry-run':
+        options.dryRun = true
+        break
+      case '--skip-doctor':
+        options.skipDoctor = true
+        break
+      default:
+        throw new Error(`неизвестная опция "${arg}"`)
+    }
+  }
+  return options
+}
+
+function log(message: string): void {
+  process.stderr.write(`${message}\n`)
+}
+
+main(process.argv.slice(2))
+  .then((code) => {
+    process.exitCode = code
+  })
+  .catch((error: unknown) => {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+    process.exitCode = 1
+  })

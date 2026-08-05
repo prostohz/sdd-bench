@@ -1,0 +1,10 @@
+{
+  "id": "openspec",
+  "name": "OpenSpec",
+  "setup": "setup.sh",
+  "prompt": "prompt.md",
+  "specPaths": ["openspec"],
+  "allowHosts": ["registry.npmjs.org", "*.npmjs.org"],
+  "mounts": {},
+  "versionProbe": "openspec --version"
+}
