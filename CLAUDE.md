@@ -7,6 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `sdd-bench` — реализация бенчмарка для инструментов SDD (Spec-Driven Development):
 набор задач, прогон инструментов на них и сравнение результатов по метрикам качества.
 
+Методология и классы задач описаны в [`METHODOLOGY.md`](./METHODOLOGY.md).
+
 ## Участники бенчмарка
 
 | Участник | Описание |
