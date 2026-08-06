@@ -66,7 +66,7 @@ function efficiencyTable(participants: ParticipantScore[]): string[] {
 }
 
 function runTable(runs: RunRecord[]): string[] {
-  const header = ['Запуск', 'Статус', ...METRICS, 'Скор', 'Примечание']
+  const header = ['Запуск', 'Статус', ...METRICS, 'Score', 'Примечание']
   const rows = runs.map((run) => {
     const score = scoreRun(run)
     return [
