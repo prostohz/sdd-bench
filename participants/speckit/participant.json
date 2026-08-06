@@ -10,8 +10,10 @@
     "pypi.org",
     "files.pythonhosted.org",
     "github.com",
+    "api.github.com",
+    "codeload.github.com",
     "*.githubusercontent.com"
   ],
   "mounts": {},
-  "versionProbe": "specify version"
+  "versionProbe": "specify version 2>&1 | grep -Eo '[0-9]+[.][0-9]+[.][0-9]+' | head -1"
 }

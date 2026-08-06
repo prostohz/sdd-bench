@@ -9,6 +9,7 @@ import { resultText, writeCapturedJson } from '../src/artifacts.js'
 import { parseVerdict } from '../src/judge/judge.js'
 import { parseClaudeResult } from '../src/run/claude.js'
 import { passRatio } from '../src/run/projectTests.js'
+import { uniqueHosts } from '../src/sandbox/sbx.js'
 
 const ENVELOPE = JSON.stringify({
   type: 'result',
@@ -99,4 +100,11 @@ test('текст ответа достаётся без экранировани
   assert.equal(resultText(JSON.stringify({ result: 'первая\nвторая' })), 'первая\nвторая\n')
   assert.equal(resultText(JSON.stringify({ result: '  ' })), undefined)
   assert.equal(resultText('не json'), undefined)
+})
+
+test('повторные хосты сводятся в одно правило, порядок сохраняется', () => {
+  assert.deepEqual(
+    uniqueHosts(['api.anthropic.com', 'registry.npmjs.org', ' ', 'registry.npmjs.org', '*.npmjs.org']),
+    ['api.anthropic.com', 'registry.npmjs.org', '*.npmjs.org'],
+  )
 })

@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync } from 'node:fs'
 import { basename, dirname } from 'node:path'
 
-import { run, runOrThrow, type ProcResult } from '../proc.js'
+import { ProcError, run, runOrThrow, type ProcResult } from '../proc.js'
 import { shellQuote } from '../shell.js'
 import type { CreateOptions, ExecOptions, Sandbox, SandboxDriver } from './driver.js'
 
@@ -96,9 +96,24 @@ class SbxSandbox implements Sandbox {
     return run(CLI, args, options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs })
   }
 
+  /**
+   * A task and a participant may both need the same host, and `sbx` rejects
+   * the whole batch over one repeated rule. Repetition is not a conflict, so
+   * an already-covered host is not an error here either.
+   */
   async allowHosts(hosts: string[]): Promise<void> {
-    if (hosts.length === 0) return
-    await runOrThrow(CLI, ['policy', 'allow', 'network', '--sandbox', this.name, hosts.join(',')])
+    const wanted = uniqueHosts(hosts)
+    if (wanted.length === 0) return
+
+    const batch = await run(CLI, ['policy', 'allow', 'network', '--sandbox', this.name, wanted.join(',')])
+    if (batch.code === 0) return
+
+    for (const host of wanted) {
+      const single = await run(CLI, ['policy', 'allow', 'network', '--sandbox', this.name, host])
+      if (single.code !== 0 && !isAlreadyAllowed(single)) {
+        throw new ProcError(`sbx policy allow network ${host}`, single)
+      }
+    }
   }
 
   async copyIn(hostPath: string, sandboxPath: string): Promise<void> {
@@ -126,6 +141,15 @@ class SbxSandbox implements Sandbox {
   async remove(): Promise<void> {
     await run(CLI, ['rm', '--force', this.name])
   }
+}
+
+/** Same host asked for twice is one rule, in the order first asked. */
+export function uniqueHosts(hosts: string[]): string[] {
+  return [...new Set(hosts.map((host) => host.trim()).filter((host) => host !== ''))]
+}
+
+function isAlreadyAllowed(result: ProcResult): boolean {
+  return /duplicate rule|already covered/i.test(`${result.stdout}\n${result.stderr}`)
 }
 
 function sameName(hostPath: string, sandboxPath: string): void {
