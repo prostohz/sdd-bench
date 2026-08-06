@@ -16,6 +16,9 @@ import { runTests } from './projectTests.js'
 
 const SETUP_PATH = '/tmp/sdd-bench/setup.sh'
 
+/** Where the participant's own work begins. */
+export const BASELINE_TAG = 'sdd-bench-baseline'
+
 export interface RunContext {
   config: BenchConfig
   driver: SandboxDriver
@@ -142,7 +145,26 @@ async function setUp(
   const cli = await sandbox.exec('claude --version', { timeoutMs: 2 * 60 * 1000 })
   if (cli.code === 0) record.versions['claude'] = cli.stdout.trim()
 
+  await markBaseline(sandbox, repo)
   return undefined
+}
+
+/**
+ * Everything the participant's tooling installed is committed and tagged
+ * before the agent starts. What the participant itself produced is then the
+ * difference from that tag — no list of directories to keep in step with, and
+ * nothing lost, because the tag travels in the bundle.
+ */
+async function markBaseline(sandbox: Sandbox, repo: string): Promise<void> {
+  await sandbox.exec(
+    [
+      `cd ${shellQuote(repo)}`,
+      'git add --all',
+      'git -c user.name=sdd-bench -c user.email=bench@localhost commit --quiet ' +
+        '--allow-empty --message "sdd-bench: tooling installed"',
+      `git tag --force ${BASELINE_TAG}`,
+    ].join(' && '),
+  )
 }
 
 /** Regressions, then the hidden tests, both outside the participant's sandbox. */

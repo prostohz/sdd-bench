@@ -46,15 +46,32 @@ export function readManifest(dir: string): ResultManifest {
   return { ...manifest, runs: readRuns(dir) }
 }
 
-export function readRuns(dir: string): RunRecord[] {
+export interface RunEntry {
+  record: RunRecord
+  /** The directory the record was read from, whatever it happens to be named. */
+  dir: string
+}
+
+/**
+ * Records are found by reading the directories, not by rebuilding their names:
+ * a result written before the naming changed still has to be readable.
+ */
+export function readRunEntries(dir: string): RunEntry[] {
   const runsDir = join(dir, 'runs')
   if (!existsSync(runsDir)) return []
   return readdirSync(runsDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
-    .map((entry) => join(runsDir, entry.name, 'run.json'))
-    .filter((path) => existsSync(path))
-    .map((path) => JSON.parse(readFileSync(path, 'utf8')) as RunRecord)
-    .sort((a, b) => a.runId.localeCompare(b.runId))
+    .map((entry) => join(runsDir, entry.name))
+    .filter((path) => existsSync(join(path, 'run.json')))
+    .map((path) => ({
+      record: JSON.parse(readFileSync(join(path, 'run.json'), 'utf8')) as RunRecord,
+      dir: path,
+    }))
+    .sort((a, b) => a.record.runId.localeCompare(b.record.runId))
+}
+
+export function readRuns(dir: string): RunRecord[] {
+  return readRunEntries(dir).map((entry) => entry.record)
 }
 
 export function latestResult(root: string, config: BenchConfig): string {

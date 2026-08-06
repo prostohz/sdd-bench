@@ -53,7 +53,14 @@ node dist/src/cli.js all --task ledger-cli --stage spec  # без реализа
 node dist/src/cli.js judge --result <id>         # перезапускаемо отдельно
 node dist/src/cli.js score --result <id>
 node dist/src/cli.js report --result <id>
+node dist/src/cli.js show --participant bmad   # развернуть репозиторий запуска
 ```
+
+`show` разворачивает результат запуска в каталог рядом с бандлом и печатает,
+что написал участник — историю отделяет тег `sdd-bench-baseline`, поставленный
+после установки инструментария. Запуск выбирается опциями `--task`,
+`--participant`, `--stage`, `--repeat`; если под них подходит несколько, команда
+их перечислит.
 
 `--dry-run` подменяет слой sandbox заглушкой: конвейер, скоринг и отчёт
 отлаживаются без обращений к API. Настройки — `bench.json` в корне

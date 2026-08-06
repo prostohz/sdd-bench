@@ -8,6 +8,8 @@ import { loadCatalog } from '../src/catalog.js'
 import { parseParticipant } from '../src/model/participant.js'
 import { parseTask } from '../src/model/task.js'
 import { ValidationError } from '../src/model/validate.js'
+import type { RunRecord } from '../src/model/run.js'
+import { selectRuns } from '../src/run/showRun.js'
 
 test('каталог репозитория проходит проверку', () => {
   const catalog = loadCatalog(process.cwd())
@@ -94,4 +96,25 @@ test('участник обязан объявить промт полного �
     (error: unknown) =>
       error instanceof ValidationError && error.problems.some((p) => p.startsWith('prompts.full:')),
   )
+})
+
+test('выбор запуска сужается по задаче, участнику, этапу и повтору', () => {
+  const record = (over: Record<string, unknown>): RunRecord =>
+    ({ taskId: 't', participantId: 'p', stage: 'full', repeat: 1, ...over }) as unknown as RunRecord
+
+  const records = [
+    record({}),
+    record({ repeat: 2 }),
+    record({ participantId: 'q' }),
+    record({ stage: 'spec' }),
+    // Записи, сделанные до появления этапов, считаются полным циклом.
+    record({ stage: undefined, repeat: 3 }),
+  ]
+
+  assert.equal(selectRuns(records, {}).length, 5)
+  assert.equal(selectRuns(records, { participants: ['q'] }).length, 1)
+  assert.equal(selectRuns(records, { stage: 'spec' }).length, 1)
+  assert.equal(selectRuns(records, { stage: 'full' }).length, 4)
+  assert.equal(selectRuns(records, { participants: ['p'], stage: 'full', repeat: 1 }).length, 1)
+  assert.equal(selectRuns(records, { tasks: ['другая'] }).length, 0)
 })

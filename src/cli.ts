@@ -6,16 +6,16 @@ import { findParticipant, findTask, loadCatalog } from './catalog.js'
 import { loadConfig, type BenchConfig } from './config.js'
 import { isStage, STAGES, type Stage } from './model/stage.js'
 import { judgeRun } from './judge/judge.js'
-import { runDirName } from './model/run.js'
-import type { RunRecord } from './model/run.js'
+
 import { agentHint, checkAgent } from './run/doctor.js'
 import { runParticipant } from './run/participantRun.js'
+import { describeRun, renderVerdicts, restoreRun, selectRuns } from './run/showRun.js'
 import { renderReport } from './report/report.js'
 import {
   createResult,
   newResultId,
   readManifest,
-  readRuns,
+  readRunEntries,
   resolveResult,
   resultsRoot,
 } from './results.js'
@@ -32,6 +32,8 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   sdd-bench judge [опции]               оценить сохранённые запуски
   sdd-bench score [опции]               посчитать скоры
   sdd-bench report [опции]              собрать отчёт
+  sdd-bench show [опции]                развернуть репозиторий запуска для просмотра
+  sdd-bench verdicts [опции]            прочитать обоснования судей
   sdd-bench all [опции]                 run + judge + report
 
 Опции:
@@ -40,7 +42,8 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   -n, --repeats <N>       число повторов
   --result <id|path>      каталог результата (по умолчанию последний)
   --config <path>         файл настроек (по умолчанию bench.json)
-  --out <path>            куда записать отчёт
+  --out <path>            куда записать отчёт или развернуть репозиторий
+  --repeat <N>            номер повтора (для show)
   --stage <full|spec>     этап цикла: полностью или только спецификация
   --dry-run               холостой прогон без sandbox и обращений к API
   --skip-doctor           не проверять агента перед прогоном
@@ -55,6 +58,7 @@ interface Options {
   config: string | undefined
   out: string | undefined
   stage: Stage | undefined
+  repeat: number | undefined
   dryRun: boolean
   skipDoctor: boolean
 }
@@ -86,6 +90,10 @@ async function main(argv: string[]): Promise<number> {
     case 'report':
       reportCommand(root, config, options, resolveResult(root, config, options.result))
       return 0
+    case 'show':
+      return showCommand(root, config, options)
+    case 'verdicts':
+      return verdictsCommand(root, config, options)
     case 'all': {
       const resultDir = await runCommand(root, config, options)
       await judgeCommand(root, config, options, resultDir)
@@ -165,13 +173,12 @@ async function judgeCommand(
   const driver = makeDriver(options)
   log(`оценка: ${resultDir}`)
 
-  for (const record of readRuns(resultDir)) {
+  for (const { record, dir } of readRunEntries(resultDir)) {
     if (record.status !== 'ok') {
       log(`  · ${record.runId} пропущен (${record.status})`)
       continue
     }
-    const runDir = join(resultDir, 'runs', dirOf(record))
-    await judgeRun({ config, driver, root, log }, findTask(catalog, record.taskId), record, runDir)
+    await judgeRun({ config, driver, root, log }, findTask(catalog, record.taskId), record, dir)
   }
 }
 
@@ -194,12 +201,70 @@ function reportCommand(root: string, config: BenchConfig, options: Options, resu
   log(`отчёт: ${out}`)
 }
 
-function makeDriver(options: Options): SandboxDriver {
-  return options.dryRun ? new DryRunDriver() : new SbxDriver()
+/** Prints what the judges wrote, for as many runs as the options select. */
+function verdictsCommand(root: string, config: BenchConfig, options: Options): number {
+  const resultDir = resolveResult(root, config, options.result)
+  const entries = readRunEntries(resultDir)
+  const chosen = selectRuns(entries.map((e) => e.record), {
+    tasks: options.tasks,
+    participants: options.participants,
+    stage: options.stage,
+    repeat: options.repeat,
+  })
+
+  if (chosen.length === 0) {
+    process.stderr.write(
+      `подходящих запусков нет.\nрезультат ${resultDir} содержит:\n` +
+        `${entries.map((e) => `  ${describeRun(e.record)}`).join('\n') || '  —'}\n`,
+    )
+    return 1
+  }
+
+  process.stdout.write(`${chosen.map(renderVerdicts).join('\n\n')}\n`)
+  return 0
 }
 
-function dirOf(record: RunRecord): string {
-  return runDirName(record)
+/** Unpacks a finished run so its repository can simply be opened. */
+async function showCommand(root: string, config: BenchConfig, options: Options): Promise<number> {
+  const resultDir = resolveResult(root, config, options.result)
+  const entries = readRunEntries(resultDir)
+  const chosen = selectRuns(entries.map((e) => e.record), {
+    tasks: options.tasks,
+    participants: options.participants,
+    stage: options.stage,
+    repeat: options.repeat,
+  })
+
+  // Without --result this is the newest result, not a search across all of
+  // them, so naming it is what explains an empty match.
+  const where = `результат ${resultDir}`
+  if (chosen.length === 0) {
+    process.stderr.write(
+      `подходящих запусков нет.\n${where} содержит:\n` +
+        `${entries.map((e) => `  ${describeRun(e.record)}`).join('\n') || '  —'}\n`,
+    )
+    return 1
+  }
+  if (chosen.length > 1) {
+    process.stderr.write(
+      `подходит несколько запусков — уточните --task, --participant, --stage или --repeat.\n${where}:\n` +
+        `${chosen.map((r) => `  ${describeRun(r)}`).join('\n')}\n`,
+    )
+    return 1
+  }
+
+  const record = chosen[0]
+  const entry = entries.find((e) => e.record.runId === record?.runId)
+  if (record === undefined || entry === undefined) return 1
+
+  const restored = await restoreRun(entry.dir, record, options.out)
+  process.stdout.write(`${restored.dir}\n`)
+  if (restored.summary) process.stdout.write(`\n${restored.summary}\n`)
+  return 0
+}
+
+function makeDriver(options: Options): SandboxDriver {
+  return options.dryRun ? new DryRunDriver() : new SbxDriver()
 }
 
 function withOverrides(config: BenchConfig, options: Options): BenchConfig {
@@ -220,6 +285,7 @@ function parseArgs(argv: string[]): Options {
     config: undefined,
     out: undefined,
     stage: undefined,
+    repeat: undefined,
     dryRun: false,
     skipDoctor: false,
   }
@@ -252,6 +318,9 @@ function parseArgs(argv: string[]): Options {
         break
       case '--out':
         options.out = next()
+        break
+      case '--repeat':
+        options.repeat = Number(next())
         break
       case '--stage': {
         const value = next()
