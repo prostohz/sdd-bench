@@ -1,3 +1,4 @@
+import type { Stage } from './stage.js'
 import type { TaskClass } from './task.js'
 
 /** The three judged metrics that make up the score of a run. */
@@ -14,6 +15,13 @@ export const RUN_STATUSES = ['ok', 'error', 'timeout'] as const
 export type RunStatus = (typeof RUN_STATUSES)[number]
 
 export interface Telemetry {
+  /**
+   * Measured by the harness around the agent invocation. A participant that
+   * delegates to subagents under-reports its own `durationMs`, so the number
+   * the participant states is not the number it is compared on.
+   */
+  wallMs: number
+  /** As the CLI reported it. */
   durationMs: number
   apiDurationMs: number | undefined
   inputTokens: number
@@ -46,6 +54,8 @@ export interface RunRecord {
   runId: string
   taskId: string
   taskClass: TaskClass
+  /** How much of the process this run exercised. */
+  stage: Stage
   participantId: string
   repeat: number
   status: RunStatus
@@ -70,6 +80,7 @@ export interface ResultManifest {
     effort: string
     judgeModel: string
     judgeEffort: string
+    stage: Stage
     timeoutMs: number
     maxBudgetUsd: number | undefined
     repeats: number
@@ -78,10 +89,13 @@ export interface ResultManifest {
   runs: RunRecord[]
 }
 
+/** The stage is part of the name so two stages never share a directory. */
 export function runDirName(record: {
   taskId: string
+  stage: Stage | undefined
   participantId: string
   repeat: number
 }): string {
-  return `${record.taskId}--${record.participantId}--${record.repeat}`
+  const stage = record.stage ?? 'full'
+  return `${record.taskId}--${record.participantId}--${stage}--${record.repeat}`
 }

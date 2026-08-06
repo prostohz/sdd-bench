@@ -1,24 +1,22 @@
 {
-  "id": "speckit",
-  "name": "Spec Kit",
+  "id": "bmad",
+  "name": "BMad Method",
   "setup": "setup.sh",
   "prompts": {
     "full": "prompt.md",
     "spec": "prompt-spec.md"
   },
   "specPaths": [
-    "specs"
+    "docs"
   ],
   "allowHosts": [
-    "astral.sh",
-    "*.astral.sh",
-    "pypi.org",
-    "files.pythonhosted.org",
+    "registry.npmjs.org",
+    "*.npmjs.org",
     "github.com",
     "api.github.com",
     "codeload.github.com",
     "*.githubusercontent.com"
   ],
   "mounts": {},
-  "versionProbe": "specify version 2>&1 | grep -Eo '[0-9]+[.][0-9]+[.][0-9]+' | head -1"
+  "versionProbe": "grep -m1 'version:' \"$(git rev-parse --show-toplevel)/_bmad/_config/manifest.yaml\""
 }

@@ -4,7 +4,9 @@ import { join } from 'node:path'
 
 import { findParticipant, findTask, loadCatalog } from './catalog.js'
 import { loadConfig, type BenchConfig } from './config.js'
+import { isStage, STAGES, type Stage } from './model/stage.js'
 import { judgeRun } from './judge/judge.js'
+import { runDirName } from './model/run.js'
 import type { RunRecord } from './model/run.js'
 import { agentHint, checkAgent } from './run/doctor.js'
 import { runParticipant } from './run/participantRun.js'
@@ -39,6 +41,7 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   --result <id|path>      каталог результата (по умолчанию последний)
   --config <path>         файл настроек (по умолчанию bench.json)
   --out <path>            куда записать отчёт
+  --stage <full|spec>     этап цикла: полностью или только спецификация
   --dry-run               холостой прогон без sandbox и обращений к API
   --skip-doctor           не проверять агента перед прогоном
 `
@@ -51,6 +54,7 @@ interface Options {
   result: string | undefined
   config: string | undefined
   out: string | undefined
+  stage: Stage | undefined
   dryRun: boolean
   skipDoctor: boolean
 }
@@ -137,7 +141,7 @@ async function runCommand(root: string, config: BenchConfig, options: Options): 
   createResult(resultDir, resultDir.split('/').at(-1) ?? resultId, config, {
     sandbox: await driver.version(),
   })
-  log(`результат: ${resultDir}`)
+  log(`результат: ${resultDir} (этап ${config.stage})`)
 
   for (const task of tasks) {
     for (const participant of participants) {
@@ -195,11 +199,15 @@ function makeDriver(options: Options): SandboxDriver {
 }
 
 function dirOf(record: RunRecord): string {
-  return `${record.taskId}--${record.participantId}--${record.repeat}`
+  return runDirName(record)
 }
 
 function withOverrides(config: BenchConfig, options: Options): BenchConfig {
-  return options.repeats === undefined ? config : { ...config, repeats: options.repeats }
+  return {
+    ...config,
+    ...(options.repeats === undefined ? {} : { repeats: options.repeats }),
+    ...(options.stage === undefined ? {} : { stage: options.stage }),
+  }
 }
 
 function parseArgs(argv: string[]): Options {
@@ -211,6 +219,7 @@ function parseArgs(argv: string[]): Options {
     result: undefined,
     config: undefined,
     out: undefined,
+    stage: undefined,
     dryRun: false,
     skipDoctor: false,
   }
@@ -244,6 +253,12 @@ function parseArgs(argv: string[]): Options {
       case '--out':
         options.out = next()
         break
+      case '--stage': {
+        const value = next()
+        if (!isStage(value)) throw new Error(`--stage: ожидается ${STAGES.join(' или ')}`)
+        options.stage = value
+        break
+      }
       case '--dry-run':
         options.dryRun = true
         break

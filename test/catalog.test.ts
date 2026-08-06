@@ -54,7 +54,7 @@ test('специфкация участника не может уходить �
       parseParticipant('participant.json', '/tmp', {
         id: 'x',
         name: 'X',
-        prompt: 'p.md',
+        prompts: { full: 'p.md' },
         specPaths: ['../secrets', 'spec/*'],
       }),
     (error: unknown) => error instanceof ValidationError && error.problems.length === 2,
@@ -80,4 +80,18 @@ test('каталог сообщает обо всех проблемах раз�
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
+})
+
+test('участник обязан объявить промт полного цикла', () => {
+  assert.throws(
+    () =>
+      parseParticipant('participant.json', '/tmp', {
+        id: 'x',
+        name: 'X',
+        specPaths: ['spec'],
+        prompts: { spec: 'p-spec.md' },
+      }),
+    (error: unknown) =>
+      error instanceof ValidationError && error.problems.some((p) => p.startsWith('prompts.full:')),
+  )
 })

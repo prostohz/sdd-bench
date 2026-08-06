@@ -6,6 +6,7 @@ import type { BenchConfig } from '../config.js'
 import type { Participant } from '../model/participant.js'
 import type { Task } from '../model/task.js'
 import { runDirName, type RunRecord, type RunStatus } from '../model/run.js'
+import { producesCode } from '../model/stage.js'
 import type { Sandbox, SandboxDriver } from '../sandbox/driver.js'
 import { extractResult } from '../sandbox/extract.js'
 import { materializeWorkspace } from '../sandbox/workspace.js'
@@ -29,8 +30,18 @@ export async function runParticipant(
   participant: Participant,
   repeat: number,
 ): Promise<RunRecord> {
-  const runId = `${task.id}-${participant.id}-${repeat}`
-  const runDir = join(ctx.resultDir, 'runs', runDirName({ taskId: task.id, participantId: participant.id, repeat }))
+  const stage = ctx.config.stage
+  const promptFile = participant.promptFiles[stage]
+  if (promptFile === undefined) {
+    throw new Error(`участник "${participant.id}" не объявил промт для этапа "${stage}"`)
+  }
+
+  const runId = `${task.id}-${participant.id}-${stage}-${repeat}`
+  const runDir = join(
+    ctx.resultDir,
+    'runs',
+    runDirName({ taskId: task.id, stage, participantId: participant.id, repeat }),
+  )
   const workspace = join(runDir, 'workspace')
   mkdirSync(runDir, { recursive: true })
 
@@ -38,6 +49,7 @@ export async function runParticipant(
     runId,
     taskId: task.id,
     taskClass: task.taskClass,
+    stage,
     participantId: participant.id,
     repeat,
     status: 'ok',
@@ -70,9 +82,9 @@ export async function runParticipant(
     const setupFailure = await setUp(sandbox, participant, repo, runDir, record)
     if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace)
 
-    const promptFile = join(runDir, 'prompt.md')
-    writeFileSync(promptFile, buildPrompt(task, participant))
-    await sandbox.copyIn(promptFile, PROMPT_PATH)
+    const promptOnHost = join(runDir, 'prompt.md')
+    writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile)))
+    await sandbox.copyIn(promptOnHost, PROMPT_PATH)
 
     const run = await runClaude(sandbox, {
       model: ctx.config.model,
@@ -101,7 +113,8 @@ export async function runParticipant(
     await sandbox.remove()
   }
 
-  if (bundlePath) await check(ctx, task, record, bundlePath, runDir)
+  // Nothing was implemented, so there is nothing to run tests against.
+  if (bundlePath && producesCode(stage)) await check(ctx, task, record, bundlePath, runDir)
   return finish(record, record.status, record.statusDetail, runDir, workspace)
 }
 
@@ -185,10 +198,9 @@ function setupEnv(participant: Participant, repo: string): string {
   return vars.join(' ')
 }
 
-function buildPrompt(task: Task, participant: Participant): string {
+function buildPrompt(task: Task, promptPath: string): string {
   const intent = readFileSync(join(task.dir, task.intentFile), 'utf8').trim()
-  const template = readFileSync(join(participant.dir, participant.promptFile), 'utf8')
-  return template.replaceAll('{{intent}}', intent)
+  return readFileSync(promptPath, 'utf8').replaceAll('{{intent}}', intent)
 }
 
 function finish(

@@ -1,4 +1,5 @@
-import { METRICS, type Metric, type RunRecord } from '../model/run.js'
+import { type Metric, type RunRecord } from '../model/run.js'
+import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import type { TaskClass } from '../model/task.js'
 
 /** The rubric every judge answers on. */
@@ -57,15 +58,18 @@ export function scoreRun(record: RunRecord): RunScore {
     return { ...base, value: 0, normalized: {}, zeroReason }
   }
 
+  // A stage that writes no code produces no IS, and its score is the
+  // geometric mean of what it does produce — not a zero for what it cannot.
+  const metrics = STAGE_METRICS[record.stage ?? DEFAULT_STAGE]
   const normalized: Partial<Record<Metric, number>> = {}
-  for (const metric of METRICS) {
+  for (const metric of metrics) {
     const verdict = record.verdicts[metric]
     if (verdict === undefined) return { ...base, value: null, normalized, zeroReason: undefined }
     normalized[metric] = normalize(verdict.score)
   }
 
-  const product = METRICS.reduce((acc, metric) => acc * (normalized[metric] ?? 0), 1)
-  return { ...base, value: 100 * Math.cbrt(product), normalized, zeroReason: undefined }
+  const product = metrics.reduce((acc, metric) => acc * (normalized[metric] ?? 0), 1)
+  return { ...base, value: 100 * product ** (1 / metrics.length), normalized, zeroReason: undefined }
 }
 
 /**
@@ -113,7 +117,9 @@ function efficiencyOf(records: RunRecord[]): Efficiency {
   const telemetry = records.map((r) => r.telemetry).filter((t) => t !== undefined)
   return {
     runs: records.length,
-    meanDurationMs: mean(telemetry.map((t) => t.durationMs)),
+    // Records written before the harness measured time fall back to the
+    // participant's own figure, which is all they carry.
+    meanDurationMs: mean(telemetry.map((t) => t.wallMs ?? t.durationMs)),
     meanTotalTokens: mean(telemetry.map((t) => t.totalTokens)),
     meanCostUsd: mean(telemetry.map((t) => t.costUsd ?? null)),
   }

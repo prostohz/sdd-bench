@@ -128,7 +128,14 @@ class DrySandbox implements Sandbox {
         cache_read_input_tokens: 100_000 + (seed % 50_000),
       },
     }
-    return { code: 0, stdout: JSON.stringify(envelope), stderr: '', timedOut: false, durationMs: 1 }
+    // The harness measures wall time itself, so the stub has to spend it too.
+    return {
+      code: 0,
+      stdout: JSON.stringify(envelope),
+      stderr: '',
+      timedOut: false,
+      durationMs: envelope.duration_ms,
+    }
   }
 }
 

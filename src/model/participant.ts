@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
+import { STAGES, type Stage } from './stage.js'
 import { Reader } from './validate.js'
 
 /** Task and participant identifiers end up in a sandbox name. */
@@ -14,8 +15,8 @@ export interface Participant {
   dir: string
   /** Script installing the participant's tooling in the sandbox, relative to `dir`. */
   setupFile: string | undefined
-  /** Prompt template with `{{intent}}`, relative to `dir`. */
-  promptFile: string
+  /** Prompt template with `{{intent}}` per stage, relative to `dir`. */
+  promptFiles: Partial<Record<Stage, string>>
   /**
    * Directories or files where this participant keeps its specification,
    * relative to the repository root. Their contents are lifted into a neutral
@@ -40,7 +41,7 @@ export function parseParticipant(source: string, dir: string, value: unknown): P
   const id = reader.string('id')
   const name = reader.string('name')
   const setupFile = reader.optionalString('setup')
-  const promptFile = reader.string('prompt')
+  const promptFiles = readPrompts(reader)
   const specPaths = reader.stringArray('specPaths')
   const allowHosts = reader.stringArray('allowHosts')
   const versionProbe = reader.optionalString('versionProbe')
@@ -66,7 +67,24 @@ export function parseParticipant(source: string, dir: string, value: unknown): P
 
   reader.done()
 
-  return { id, name, dir, setupFile, promptFile, specPaths, allowHosts, mounts, versionProbe }
+  return { id, name, dir, setupFile, promptFiles, specPaths, allowHosts, mounts, versionProbe }
+}
+
+/** Every participant runs the full cycle; other stages are optional. */
+function readPrompts(reader: Reader): Partial<Record<Stage, string>> {
+  const prompts: Partial<Record<Stage, string>> = {}
+  const declared = reader.object('prompts')
+  if (declared === undefined) {
+    reader.problem('prompts: expected a prompt file per stage, at least for "full"')
+    return prompts
+  }
+
+  for (const stage of STAGES) {
+    const file = declared.optionalString(stage)
+    if (file !== undefined) prompts[stage] = file
+  }
+  if (prompts.full === undefined) reader.problem('prompts.full: every participant must run the full cycle')
+  return prompts
 }
 
 function expandHome(path: string): string {

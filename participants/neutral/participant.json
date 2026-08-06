@@ -1,8 +1,13 @@
 {
   "id": "neutral",
   "name": "Neutral SDD",
-  "prompt": "prompt.md",
-  "specPaths": ["spec"],
+  "prompts": {
+    "full": "prompt.md",
+    "spec": "prompt-spec.md"
+  },
+  "specPaths": [
+    "spec"
+  ],
   "allowHosts": [],
   "mounts": {}
 }

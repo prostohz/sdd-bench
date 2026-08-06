@@ -82,12 +82,14 @@ function loadParticipants(participantsRoot: string, problems: string[]): Partici
     if (basename(dir) !== participant.id) {
       problems.push(`${source}: id "${participant.id}" does not match its directory "${basename(dir)}"`)
     }
-    requireFile(dir, participant.promptFile, source, 'prompt', problems)
     if (participant.setupFile) requireFile(dir, participant.setupFile, source, 'setup', problems)
 
-    const prompt = readFileSync(join(dir, participant.promptFile), 'utf8')
-    if (!prompt.includes('{{intent}}')) {
-      problems.push(`${source}: prompt must carry the intent through {{intent}}`)
+    for (const [stage, file] of Object.entries(participant.promptFiles)) {
+      requireFile(dir, file, source, `prompts.${stage}`, problems)
+      if (!existsSync(join(dir, file))) continue
+      if (!readFileSync(join(dir, file), 'utf8').includes('{{intent}}')) {
+        problems.push(`${source}: prompts.${stage} must carry the intent through {{intent}}`)
+      }
     }
 
     participants.push(participant)

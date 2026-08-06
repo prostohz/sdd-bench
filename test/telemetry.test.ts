@@ -52,6 +52,13 @@ test('длительность берётся по стене, когда её �
   assert.equal(parsed.telemetry.costUsd, undefined)
 })
 
+test('время по стене меряет харнесс, а не участник', () => {
+  // Делегирующий подагентам участник занижает собственный duration_ms.
+  const parsed = parseClaudeResult(ENVELOPE, 1_200_000)
+  assert.equal(parsed.telemetry.durationMs, 754_000, 'сказанное участником сохраняется')
+  assert.equal(parsed.telemetry.wallMs, 1_200_000, 'сравнивают по измеренному')
+})
+
 test('доля прошедших тестов — из счётчиков, иначе по коду возврата', () => {
   const pattern = 'passed (\\d+) of (\\d+)'
   assert.equal(passRatio(1, 'passed 9 of 12', pattern), 0.75)

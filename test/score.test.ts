@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import type { Metric, RunRecord, Verdict } from '../src/model/run.js'
+import type { Stage } from '../src/model/stage.js'
 import type { TaskClass } from '../src/model/task.js'
 import { normalize, scoreParticipants, scoreRun } from '../src/score/score.js'
 
@@ -14,6 +15,7 @@ function record(over: Partial<RunRecord> = {}): RunRecord {
     runId: 'task-participant-1',
     taskId: 'task',
     taskClass: 'greenfield' as TaskClass,
+    stage: 'full' as Stage,
     participantId: 'participant',
     repeat: 1,
     status: 'ok',
@@ -116,6 +118,7 @@ test('повторы одной задачи усредняются', () => {
 
 test('эффективность считается по телеметрии и в скор не входит', () => {
   const telemetry = {
+    wallMs: 900_000,
     durationMs: 60_000,
     apiDurationMs: 50_000,
     inputTokens: 1000,
@@ -129,10 +132,34 @@ test('эффективность считается по телеметрии и
 
   const [participant] = scoreParticipants([record({ telemetry })])
   assert.equal(participant?.score, 100)
+  // The participant said a minute; the harness saw fifteen.
   assert.deepEqual(participant?.efficiency, {
     runs: 1,
-    meanDurationMs: 60_000,
+    meanDurationMs: 900_000,
     meanTotalTokens: 1500,
     meanCostUsd: 2,
   })
+})
+
+test('этап spec оценивается по двум метрикам, без IS', () => {
+  const specRun = record({
+    stage: 'spec',
+    verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 5) },
+  })
+
+  // Среднее геометрическое двух, а не ноль за неприменимую IS.
+  assert.equal(scoreRun(specRun).value?.toFixed(2), (100 * Math.sqrt(0.8 * 0.5)).toFixed(2))
+})
+
+test('на этапе spec вердикт IS ничего не меняет', () => {
+  const withoutIS = scoreRun(record({ stage: 'spec', verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 8) } }))
+  const withIS = scoreRun(
+    record({ stage: 'spec', verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 8), IS: verdict('IS', 0) } }),
+  )
+  assert.equal(withoutIS.value, withIS.value)
+})
+
+test('незавершённое судейство этапа spec не считается нулём', () => {
+  const partial = scoreRun(record({ stage: 'spec', verdicts: { Q: verdict('Q', 8) } }))
+  assert.equal(partial.value, null)
 })

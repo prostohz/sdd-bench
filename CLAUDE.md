@@ -17,9 +17,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | OpenSpec | Канонический workflow OpenSpec |
 | Spec Kit | Канонический workflow Spec Kit |
 | Canon | Полуформальный язык требований (`~/workspace/canon`) |
+| BMad Method | Канонический процесс BMad: `bmad-spec` → `bmad-quick-dev` |
 
 Определения участников — в `participants/<id>/`: `participant.json` (где лежит
-спецификация, что ставить, какие хосты нужны), `setup.sh` и `prompt.md`.
+спецификация, что ставить, какие хосты нужны), `setup.sh` и промт на каждый
+этап (`prompt.md` для полного цикла, `prompt-spec.md` — только спецификация).
 
 ## Предусловия
 
@@ -47,6 +49,7 @@ npm run validate               # проверить каталог задач и
 ```sh
 node dist/src/cli.js all --dry-run               # весь конвейер на заглушках
 node dist/src/cli.js run --task ledger-cli --participant neutral -n 1
+node dist/src/cli.js all --task ledger-cli --stage spec  # без реализации
 node dist/src/cli.js judge --result <id>         # перезапускаемо отдельно
 node dist/src/cli.js score --result <id>
 node dist/src/cli.js report --result <id>

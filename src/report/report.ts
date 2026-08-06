@@ -1,4 +1,5 @@
 import { METRICS, type ResultManifest, type RunRecord } from '../model/run.js'
+import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import { TASK_CLASSES, type TaskClass } from '../model/task.js'
 import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
 
@@ -16,7 +17,8 @@ export function renderReport(manifest: ResultManifest): string {
   lines.push(
     `Модель участников: \`${manifest.config.model}\` (effort \`${manifest.config.effort}\`). ` +
       `Судья: \`${manifest.config.judgeModel}\` (effort \`${manifest.config.judgeEffort}\`). ` +
-      `Повторов: ${manifest.config.repeats}.`,
+      `Повторов: ${manifest.config.repeats}. ` +
+      `Этап: ${STAGE_TITLES[manifest.config.stage ?? DEFAULT_STAGE]}.`,
     '',
   )
 

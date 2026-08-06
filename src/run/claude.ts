@@ -84,6 +84,7 @@ export function parseClaudeResult(stdout: string, wallMs: number): ClaudeResult 
     subtype: typeof envelope['subtype'] === 'string' ? envelope['subtype'] : 'unknown',
     text: typeof envelope['result'] === 'string' ? envelope['result'] : '',
     telemetry: {
+      wallMs,
       durationMs: numberOr(envelope['duration_ms'], wallMs),
       apiDurationMs: optionalNumber(envelope['duration_api_ms']),
       inputTokens,

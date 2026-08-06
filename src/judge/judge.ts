@@ -5,7 +5,8 @@ import { join } from 'node:path'
 
 import { writeCapturedJson } from '../artifacts.js'
 import type { BenchConfig } from '../config.js'
-import { METRICS, type Metric, type RunRecord, type Verdict } from '../model/run.js'
+import { type Metric, type RunRecord, type Verdict } from '../model/run.js'
+import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import type { Task } from '../model/task.js'
 import { isRecord } from '../model/validate.js'
 import { runClaude } from '../run/claude.js'
@@ -42,7 +43,7 @@ export async function judgeRun(
   record: RunRecord,
   runDir: string,
 ): Promise<RunRecord> {
-  for (const metric of METRICS) {
+  for (const metric of STAGE_METRICS[record.stage ?? DEFAULT_STAGE]) {
     if (record.verdicts[metric]) continue
     ctx.log(`  · ${record.runId} ${metric}`)
     record.verdicts[metric] = await judgeMetric(ctx, task, record, runDir, metric)

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { DEFAULT_STAGE, isStage, type Stage } from './model/stage.js'
 import { Reader } from './model/validate.js'
 
 export const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
@@ -16,6 +17,8 @@ export interface BenchConfig {
   effort: Effort
   judgeModel: string
   judgeEffort: Effort
+  /** How much of the process a run exercises. */
+  stage: Stage
   /** Wall-clock limit for one participant run. */
   timeoutMs: number
   /** Wall-clock limit for one judgement. */
@@ -32,6 +35,7 @@ export const DEFAULT_CONFIG: BenchConfig = {
   effort: 'high',
   judgeModel: 'claude-opus-5',
   judgeEffort: 'high',
+  stage: DEFAULT_STAGE,
   timeoutMs: 45 * 60 * 1000,
   judgeTimeoutMs: 20 * 60 * 1000,
   maxBudgetUsd: undefined,
@@ -50,6 +54,7 @@ export function loadConfig(root: string, path?: string): BenchConfig {
     effort: optionalEffort(reader, 'effort') ?? DEFAULT_CONFIG.effort,
     judgeModel: reader.optionalString('judgeModel') ?? DEFAULT_CONFIG.judgeModel,
     judgeEffort: optionalEffort(reader, 'judgeEffort') ?? DEFAULT_CONFIG.judgeEffort,
+    stage: readStage(reader) ?? DEFAULT_CONFIG.stage,
     timeoutMs: reader.number('timeoutMs', DEFAULT_CONFIG.timeoutMs),
     judgeTimeoutMs: reader.number('judgeTimeoutMs', DEFAULT_CONFIG.judgeTimeoutMs),
     maxBudgetUsd: optionalNumber(reader, 'maxBudgetUsd'),
@@ -60,6 +65,14 @@ export function loadConfig(root: string, path?: string): BenchConfig {
   if (config.repeats < 1) reader.problem('repeats: expected at least one run')
   reader.done()
   return config
+}
+
+function readStage(reader: Reader): Stage | undefined {
+  const raw = reader.optionalString('stage')
+  if (raw === undefined) return undefined
+  if (isStage(raw)) return raw
+  reader.problem('stage: expected "full" or "spec"')
+  return undefined
 }
 
 function optionalEffort(reader: Reader, key: string): Effort | undefined {
