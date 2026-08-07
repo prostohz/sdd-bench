@@ -51,6 +51,8 @@ node dist/src/cli.js all --dry-run               # весь конвейер н�
 node dist/src/cli.js run --task ledger-cli --participant neutral -n 1
 node dist/src/cli.js all --task ledger-cli --stage spec  # без реализации
 node dist/src/cli.js judge --result <id>         # перезапускаемо отдельно
+node dist/src/cli.js judge-probe --metric SR -n 3 \
+  --material spec=<путь> --material intent.md=<путь>   # отладка судейства
 node dist/src/cli.js score --result <id>
 node dist/src/cli.js report --result <id>
 node dist/src/cli.js show --participant bmad   # развернуть репозиторий запуска
@@ -70,6 +72,16 @@ node dist/src/cli.js serve                     # просмотр в брауз�
 после установки инструментария. Запуск выбирается опциями `--task`,
 `--participant`, `--stage`, `--repeat`; если под них подходит несколько, команда
 их перечислит.
+
+`judge-probe` вызывает судью в отдельном sandbox на материалах, названных в
+командной строке, и ни на чём другом: `--material <имя>=<путь>` кладёт файл или
+каталог в рабочий каталог судьи под этим именем, `--metric` выбирает рубрику,
+`--rubric <path>` подменяет её своей, `-n` спрашивает одно и то же несколько раз
+и печатает разброс оценок. Всё, что судья видел, и всё, что он ответил, ложится
+в `judge-probes/<время>--<метрика>/` (`materials/`, `rubric.md`,
+`attempt-N.json`, `probe.json`); каталог меняется через `--out`.
+`--keep-sandbox` оставляет sandbox судьи живым, чтобы зайти в него руками.
+Путь до судьи тот же, что в настоящем прогоне (`askJudge` в `src/judge/`).
 
 `--dry-run` подменяет слой sandbox заглушкой: конвейер, скоринг и отчёт
 отлаживаются без обращений к API. Настройки — `bench.json` в корне

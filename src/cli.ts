@@ -6,6 +6,8 @@ import { findParticipant, findTask, loadCatalog } from './catalog.js'
 import { loadConfig, type BenchConfig } from './config.js'
 import { isStage, STAGES, type Stage } from './model/stage.js'
 import { judgeRun } from './judge/judge.js'
+import { parseMaterial, probeJudge, renderProbe } from './judge/probe.js'
+import { METRICS, type Metric } from './model/run.js'
 
 import { agentHint, checkAgent } from './run/doctor.js'
 import { runParticipant } from './run/participantRun.js'
@@ -31,6 +33,7 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   sdd-bench doctor                      проверить, что агент в sandbox отвечает
   sdd-bench run [опции]                 прогнать участников и сохранить артефакты
   sdd-bench judge [опции]               оценить сохранённые запуски
+  sdd-bench judge-probe [опции]         прогнать судью на указанных материалах
   sdd-bench score [опции]               посчитать скоры
   sdd-bench report [опции]              собрать отчёт
   sdd-bench show [опции]                развернуть репозиторий запуска для просмотра
@@ -50,6 +53,14 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   --stage <full|spec>     этап цикла: полностью или только спецификация
   --dry-run               холостой прогон без sandbox и обращений к API
   --skip-doctor           не проверять агента перед прогоном
+
+Опции judge-probe:
+  --metric <Q|SR|IS>      что оценивать (по умолчанию Q)
+  --rubric <path>         своя рубрика вместо judges/<metric>.md
+  --material <имя=путь>   что видит судья; можно повторять
+  -n, --repeats <N>       сколько раз спросить одно и то же (разброс оценок)
+  --keep-sandbox          не удалять sandbox судьи после ответа
+  --out <path>            куда сложить материалы и ответы
 `
 
 interface Options {
@@ -63,6 +74,10 @@ interface Options {
   stage: Stage | undefined
   repeat: number | undefined
   port: number | undefined
+  metric: Metric | undefined
+  rubric: string | undefined
+  materials: string[]
+  keepSandbox: boolean
   dryRun: boolean
   skipDoctor: boolean
 }
@@ -87,6 +102,9 @@ async function main(argv: string[]): Promise<number> {
       return 0
     case 'judge':
       await judgeCommand(root, config, options, resolveResult(root, config, options.result))
+      return 0
+    case 'judge-probe':
+      await judgeProbeCommand(root, config, options)
       return 0
     case 'score':
       scoreCommand(root, config, options)
@@ -190,6 +208,35 @@ async function judgeCommand(
       continue
     }
     await judgeRun({ config, driver, root, log }, findTask(catalog, record.taskId), record, dir)
+  }
+}
+
+/**
+ * Judging, taken apart: one metric, the materials named on the command line and
+ * nothing else, repeated as many times as asked. Nothing here reads a result —
+ * a rubric can be tried before there is anything to judge.
+ */
+async function judgeProbeCommand(root: string, config: BenchConfig, options: Options): Promise<void> {
+  const metric = options.metric ?? 'Q'
+  const driver = makeDriver(options)
+  for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
+
+  const outDir = options.out ?? join(root, 'judge-probes', `${newResultId()}--${metric}`)
+  const report = await probeJudge(
+    { config, driver, root, log },
+    {
+      metric,
+      rubricPath: options.rubric,
+      materials: options.materials.map(parseMaterial),
+      repeats: options.repeats ?? 1,
+      outDir,
+      keepSandbox: options.keepSandbox,
+    },
+  )
+
+  process.stdout.write(`${renderProbe(report)}\n`)
+  if (options.keepSandbox) {
+    log(`sandbox не удалён: ${report.attempts.map((a) => a.sandboxName).join(', ')}`)
   }
 }
 
@@ -298,6 +345,10 @@ function parseArgs(argv: string[]): Options {
     stage: undefined,
     repeat: undefined,
     port: undefined,
+    metric: undefined,
+    rubric: undefined,
+    materials: [],
+    keepSandbox: false,
     dryRun: false,
     skipDoctor: false,
   }
@@ -343,6 +394,23 @@ function parseArgs(argv: string[]): Options {
         options.stage = value
         break
       }
+      case '--metric': {
+        const value = next()
+        if (!(METRICS as readonly string[]).includes(value)) {
+          throw new Error(`--metric: ожидается ${METRICS.join(', ')}`)
+        }
+        options.metric = value as Metric
+        break
+      }
+      case '--rubric':
+        options.rubric = next()
+        break
+      case '--material':
+        options.materials.push(next())
+        break
+      case '--keep-sandbox':
+        options.keepSandbox = true
+        break
       case '--dry-run':
         options.dryRun = true
         break

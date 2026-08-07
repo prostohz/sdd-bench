@@ -9,7 +9,7 @@ import { type Metric, type RunRecord, type Verdict } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import type { Task } from '../model/task.js'
 import { isRecord } from '../model/validate.js'
-import { runClaude } from '../run/claude.js'
+import { runClaude, type ClaudeRun } from '../run/claude.js'
 import type { SandboxDriver } from '../sandbox/driver.js'
 import { restoreRepo } from '../sandbox/extract.js'
 
@@ -30,6 +30,84 @@ export interface JudgeContext {
   /** Where `judges/<metric>.md` lives. */
   root: string
   log: (message: string) => void
+}
+
+export interface JudgeRequest {
+  metric: Metric
+  /** The rubric's text: the judge's instructions, not one of its materials. */
+  rubric: string
+  /** Host directory that becomes the judge's whole world. */
+  materials: string
+  allowHosts: string[]
+  sandboxName: string
+  /** Leave the sandbox behind so it can be opened by hand. */
+  keepSandbox?: boolean
+}
+
+export interface JudgeAnswer {
+  sandboxName: string
+  run: ClaudeRun
+  verdict: Verdict | undefined
+  /** Why the answer is not a verdict, when it is not one. */
+  parseError: string | undefined
+}
+
+export function readRubric(root: string, metric: Metric): string {
+  return readFileSync(join(root, 'judges', `${metric}.md`), 'utf8')
+}
+
+/**
+ * One judgement, from materials to verdict. Everything a judge sees is here:
+ * the workspace it is given, the rubric it is handed and the hosts it may
+ * reach — so a debugging call and a real one take the same path.
+ */
+export async function askJudge(ctx: JudgeContext, request: JudgeRequest): Promise<JudgeAnswer> {
+  const staging = mkdtempSync(join(tmpdir(), 'sdd-bench-rubric-'))
+  try {
+    const promptPath = `/tmp/sdd-bench/rubric-${request.metric}.md`
+    const promptFile = join(staging, `rubric-${request.metric}.md`)
+    writeFileSync(promptFile, request.rubric)
+
+    const sandbox = await ctx.driver.create({
+      name: request.sandboxName,
+      workspace: request.materials,
+      agent: 'claude',
+      clone: false,
+    })
+    try {
+      await sandbox.allowHosts(request.allowHosts)
+      await sandbox.copyIn(promptFile, promptPath)
+
+      const run = await runClaude(sandbox, {
+        model: ctx.config.judgeModel,
+        effort: ctx.config.judgeEffort,
+        promptPath,
+        jsonSchema: VERDICT_SCHEMA,
+        timeoutMs: ctx.config.judgeTimeoutMs,
+      })
+
+      try {
+        const parsed = parseVerdict(run.result?.text ?? '', request.metric)
+        return {
+          sandboxName: sandbox.name,
+          run,
+          verdict: { ...parsed, metric: request.metric, judgeModel: ctx.config.judgeModel },
+          parseError: undefined,
+        }
+      } catch (error) {
+        return {
+          sandboxName: sandbox.name,
+          run,
+          verdict: undefined,
+          parseError: error instanceof Error ? error.message : String(error),
+        }
+      }
+    } finally {
+      if (request.keepSandbox !== true) await sandbox.remove()
+    }
+  } finally {
+    rmSync(staging, { recursive: true, force: true })
+  }
 }
 
 /**
@@ -61,40 +139,25 @@ async function judgeMetric(
   metric: Metric,
 ): Promise<Verdict> {
   const materials = mkdtempSync(join(tmpdir(), 'sdd-bench-judge-'))
-  // The rubric is the judge's instructions, not one of its materials.
-  const staging = mkdtempSync(join(tmpdir(), 'sdd-bench-rubric-'))
   // Nothing in the sandbox name may hint at who produced the result.
   const name = `judge-${createHash('sha256').update(`${record.runId}:${metric}`).digest('hex').slice(0, 12)}`
 
   try {
     await layOutMaterials(metric, task, runDir, materials)
 
-    const promptPath = `/tmp/sdd-bench/rubric-${metric}.md`
-    const promptFile = join(staging, `rubric-${metric}.md`)
-    writeFileSync(promptFile, readFileSync(join(ctx.root, 'judges', `${metric}.md`), 'utf8'))
+    const answer = await askJudge(ctx, {
+      metric,
+      rubric: readRubric(ctx.root, metric),
+      materials,
+      allowHosts: [...ctx.config.allowHosts, ...task.allowHosts],
+      sandboxName: name,
+    })
 
-    const sandbox = await ctx.driver.create({ name, workspace: materials, agent: 'claude', clone: false })
-    try {
-      await sandbox.allowHosts([...ctx.config.allowHosts, ...task.allowHosts])
-      await sandbox.copyIn(promptFile, promptPath)
-
-      const run = await runClaude(sandbox, {
-        model: ctx.config.judgeModel,
-        effort: ctx.config.judgeEffort,
-        promptPath,
-        jsonSchema: VERDICT_SCHEMA,
-        timeoutMs: ctx.config.judgeTimeoutMs,
-      })
-
-      const text = run.result?.text ?? ''
-      writeCapturedJson(join(runDir, `judge-${metric}.json`), run.proc.stdout)
-      return { ...parseVerdict(text, metric), metric, judgeModel: ctx.config.judgeModel }
-    } finally {
-      await sandbox.remove()
-    }
+    writeCapturedJson(join(runDir, `judge-${metric}.json`), answer.run.proc.stdout)
+    if (answer.verdict === undefined) throw new Error(answer.parseError ?? `судья ${metric} не ответил`)
+    return answer.verdict
   } finally {
     rmSync(materials, { recursive: true, force: true })
-    rmSync(staging, { recursive: true, force: true })
   }
 }
 
