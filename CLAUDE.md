@@ -42,6 +42,7 @@ sbx policy init deny-all      # в headless-окружении, до перво�
 npm run build                  # tsc
 npm test                       # tsc + node --test dist/test/*.test.js
 npm run validate               # проверить каталог задач и участников
+npm run serve                  # просмотр с пересборкой на лету (--port)
 ```
 
 Бенчмарк (`dist/src/cli.js`, он же `sdd-bench`):

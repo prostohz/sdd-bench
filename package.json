@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "serve": "trap 'kill 0' EXIT INT TERM; tsc --watch --preserveWatchOutput & node --watch dist/src/cli.js serve",
     "test": "tsc && node --test dist/test/*.test.js",
     "validate": "tsc && node dist/src/cli.js validate"
   }

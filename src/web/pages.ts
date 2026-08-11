@@ -306,7 +306,7 @@ export function verdictsSection(record: RunRecord): string {
   const blocks = verdicts
     .map(
       (verdict) => `<div class="verdict">
-<p class="head"><span class="metric">${verdict.metric} ${verdict.score}</span>
+<p class="head"><span class="metric">${esc(METRIC_LABELS[verdict.metric])} ${verdict.score}</span>
 <span class="of">${esc(METRIC_TITLES[verdict.metric])}</span></p>
 <p>${esc(verdict.rationale)}</p>
 ${
