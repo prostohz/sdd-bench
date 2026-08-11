@@ -14,11 +14,14 @@ import { readInside } from '../src/web/data.js'
 
 test('каталог репозитория проходит проверку', () => {
   const catalog = loadCatalog(process.cwd())
+
   assert.ok(catalog.tasks.length > 0, 'ожидается хотя бы одна задача')
-  assert.deepEqual(
-    catalog.participants.map((p) => p.id).sort(),
-    ['canon', 'neutral', 'openspec', 'speckit'],
-  )
+  assert.ok(catalog.participants.length > 0, 'ожидается хотя бы один участник')
+  // Список участников не перечисляется: он меняется, а требование к нему — нет.
+  for (const participant of catalog.participants) {
+    assert.ok(participant.promptFiles.full, `${participant.id}: нет промта полного цикла`)
+    assert.ok(participant.specPaths.length > 0, `${participant.id}: не сказано, где спецификация`)
+  }
 })
 
 test('greenfield-задача не может нести seed или базовые тесты', () => {

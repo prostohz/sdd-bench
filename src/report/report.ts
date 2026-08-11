@@ -1,4 +1,4 @@
-import { METRICS, type ResultManifest, type RunRecord } from '../model/run.js'
+import { METRICS, METRIC_LABELS, type ResultManifest, type RunRecord } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import { TASK_CLASSES, type TaskClass } from '../model/task.js'
 import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
@@ -66,7 +66,7 @@ function efficiencyTable(participants: ParticipantScore[]): string[] {
 }
 
 function runTable(runs: RunRecord[]): string[] {
-  const header = ['Запуск', 'Статус', ...METRICS, 'Score', 'Примечание']
+  const header = ['Запуск', 'Статус', ...METRICS.map((m) => METRIC_LABELS[m]), 'Score', 'Примечание']
   const rows = runs.map((run) => {
     const score = scoreRun(run)
     return [

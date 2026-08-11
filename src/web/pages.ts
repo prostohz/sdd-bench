@@ -1,4 +1,4 @@
-import { METRICS, METRIC_TITLES, type RunRecord } from '../model/run.js'
+import { METRICS, METRIC_LABELS, METRIC_TITLES, type RunRecord } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import type { RunEntry } from '../results.js'
 import { scoreRun } from '../score/score.js'
@@ -196,7 +196,7 @@ export function resultPage(result: ResultView): string {
 <tr class="groups"><th colspan="2"></th><th colspan="3" class="grp num">Оценки судей</th>
 <th></th><th></th><th colspan="2" class="grp num">Эффективность</th></tr>
 <tr class="head"><th>Запуск</th><th>Статус</th>
-${METRICS.map((m) => `<th class="num">${m}</th>`).join('')}
+${METRICS.map((m) => `<th class="num" title="${esc(METRIC_TITLES[m])}">${esc(METRIC_LABELS[m])}</th>`).join('')}
 <th class="num">Score</th><th class="num">Скрытые тесты</th>
 <th class="num">Время</th><th class="num">$</th></tr>
 </thead><tbody>${rows}</tbody></table></div>
@@ -214,7 +214,7 @@ function runRow(result: ResultView, entry: RunEntry, firstOfGroup: boolean): str
   const score = scoreRun(record)
   const href = `/r/${esc(result.id)}/${esc(runDirName(entry))}`
 
-  // Q, SR и IS остаются чернилами: они лежат в узкой полосе, и оттенок
+  // Оценки судей остаются чернилами: они лежат в узкой полосе, и оттенок
   // показывал бы разброс, которого нет.
   const metrics = METRICS.map((metric) => {
     const verdict = record.verdicts[metric]
@@ -229,7 +229,7 @@ function runRow(result: ResultView, entry: RunEntry, firstOfGroup: boolean): str
 ${metrics}
 <td class="score">${gauge(score.value)}</td>
 <td class="num">${hiddenCell(record)}</td>
-<td class="num dim">${telemetry ? minutes(telemetry.wallMs ?? telemetry.durationMs) : '—'}</td>
+<td class="num dim">${telemetry ? minutes(telemetry.activeMs ?? telemetry.durationMs) : '—'}</td>
 <td class="num dim">${telemetry?.costUsd === undefined ? '—' : telemetry.costUsd.toFixed(2)}</td>
 </tr>`
 }
@@ -289,7 +289,7 @@ function statusLine(record: RunRecord): string {
   ]
   if (record.hidden) parts.push(`скрытые тесты ${hiddenCell(record)}`)
   if (telemetry) {
-    parts.push(`${minutes(telemetry.wallMs ?? telemetry.durationMs)}`)
+    parts.push(`${minutes(telemetry.activeMs ?? telemetry.durationMs)}`)
     parts.push(`${telemetry.totalTokens.toLocaleString('ru-RU')} токенов`)
     if (telemetry.costUsd !== undefined) parts.push(`$${telemetry.costUsd.toFixed(2)}`)
   }

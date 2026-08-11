@@ -19,12 +19,12 @@ export const STAGE_TITLES: Record<Stage, string> = {
 /** A metric a stage cannot produce is not scored, not judged, and not zero. */
 export const STAGE_METRICS: Record<Stage, readonly Metric[]> = {
   full: METRICS,
-  spec: ['Q', 'SR'],
+  spec: ['spec-quality', 'spec-fit'],
 }
 
 /** Without an implementation there is nothing to run tests against. */
 export function producesCode(stage: Stage): boolean {
-  return STAGE_METRICS[stage].includes('IS')
+  return STAGE_METRICS[stage].includes('impl-fit')
 }
 
 export function isStage(value: string): value is Stage {

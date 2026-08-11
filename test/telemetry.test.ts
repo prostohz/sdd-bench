@@ -9,6 +9,7 @@ import { resultText, writeCapturedJson } from '../src/artifacts.js'
 import { parseVerdict } from '../src/judge/judge.js'
 import { parseClaudeResult } from '../src/run/claude.js'
 import { passRatio } from '../src/run/projectTests.js'
+import { run } from '../src/proc.js'
 import { uniqueHosts } from '../src/sandbox/sbx.js'
 
 const ENVELOPE = JSON.stringify({
@@ -52,11 +53,11 @@ test('длительность берётся по стене, когда её �
   assert.equal(parsed.telemetry.costUsd, undefined)
 })
 
-test('время по стене меряет харнесс, а не участник', () => {
+test('время меряет харнесс, а не участник', () => {
   // Делегирующий подагентам участник занижает собственный duration_ms.
   const parsed = parseClaudeResult(ENVELOPE, 1_200_000)
   assert.equal(parsed.telemetry.durationMs, 754_000, 'сказанное участником сохраняется')
-  assert.equal(parsed.telemetry.wallMs, 1_200_000, 'сравнивают по измеренному')
+  assert.equal(parsed.telemetry.activeMs, 1_200_000, 'сравнивают по измеренному')
 })
 
 test('доля прошедших тестов — из счётчиков, иначе по коду возврата', () => {
@@ -68,14 +69,14 @@ test('доля прошедших тестов — из счётчиков, ин
 })
 
 test('вердикт судьи читается и обрезается по шкале', () => {
-  const verdict = parseVerdict('{"score": 12, "rationale": "потому что", "evidence": ["a.ts:1"]}', 'Q')
+  const verdict = parseVerdict('{"score": 12, "rationale": "потому что", "evidence": ["a.ts:1"]}', 'spec-quality')
   assert.equal(verdict.score, 10)
   assert.equal(verdict.rationale, 'потому что')
   assert.deepEqual(verdict.evidence, ['a.ts:1'])
 })
 
 test('ответ судьи не в виде оценки — ошибка', () => {
-  assert.throws(() => parseVerdict('не могу оценить', 'IS'), /судья IS/)
+  assert.throws(() => parseVerdict('не могу оценить', 'impl-fit'), /судья impl-fit/)
 })
 
 test('сохранённый вывод форматируется и разворачивает вложенный JSON', () => {
@@ -114,4 +115,23 @@ test('повторные хосты сводятся в одно правило,
     uniqueHosts(['api.anthropic.com', 'registry.npmjs.org', ' ', 'registry.npmjs.org', '*.npmjs.org']),
     ['api.anthropic.com', 'registry.npmjs.org', '*.npmjs.org'],
   )
+})
+
+test('сон хоста не расходует лимит и не попадает в замер', async () => {
+  // Команда спит дольше тика: сам прогон короткий, но между тиками пройдёт
+  // время. Активное время не должно превысить календарное.
+  const result = await run('bash', ['-c', 'sleep 0.2'], { timeoutMs: 60_000 })
+
+  assert.equal(result.code, 0)
+  assert.equal(result.timedOut, false)
+  assert.ok(result.activeMs <= result.durationMs, 'активное время не больше календарного')
+  assert.ok(result.durationMs >= 200, 'календарное время измерено')
+})
+
+test('лимит расходуется и обрывает команду', async () => {
+  const result = await run('bash', ['-c', 'sleep 30'], { timeoutMs: 2500 })
+
+  assert.equal(result.timedOut, true)
+  assert.ok(result.activeMs >= 2000, `ожидается расход лимита, получено ${result.activeMs}`)
+  assert.ok(result.durationMs < 20_000, 'команда оборвана, а не досижена до конца')
 })

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { isAbsolute, join } from 'node:path'
 
 import type { BenchConfig } from './config.js'
-import type { ResultManifest, RunRecord } from './model/run.js'
+import type { Metric, ResultManifest, RunRecord, Verdict } from './model/run.js'
 
 export function resultsRoot(root: string, config: BenchConfig): string {
   return isAbsolute(config.resultsDir) ? config.resultsDir : join(root, config.resultsDir)
@@ -64,10 +64,31 @@ export function readRunEntries(dir: string): RunEntry[] {
     .map((entry) => join(runsDir, entry.name))
     .filter((path) => existsSync(join(path, 'run.json')))
     .map((path) => ({
-      record: JSON.parse(readFileSync(join(path, 'run.json'), 'utf8')) as RunRecord,
+      record: renameMetrics(JSON.parse(readFileSync(join(path, 'run.json'), 'utf8')) as RunRecord),
       dir: path,
     }))
     .sort((a, b) => a.record.runId.localeCompare(b.record.runId))
+}
+
+/**
+ * The metrics were once called `Q`, `SR` and `IS`. Results taken under those
+ * names are read under the current ones, so a rename does not empty a table
+ * that was correct when it was written.
+ */
+const FORMER_METRICS: Record<string, Metric> = {
+  Q: 'spec-quality',
+  SR: 'spec-fit',
+  IS: 'impl-fit',
+}
+
+function renameMetrics(record: RunRecord): RunRecord {
+  const verdicts: Partial<Record<Metric, Verdict>> = {}
+  for (const [key, verdict] of Object.entries(record.verdicts)) {
+    if (verdict === undefined) continue
+    const metric = FORMER_METRICS[key] ?? (key as Metric)
+    verdicts[metric] = { ...verdict, metric }
+  }
+  return { ...record, verdicts }
 }
 
 export function readRuns(dir: string): RunRecord[] {

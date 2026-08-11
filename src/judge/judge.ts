@@ -172,10 +172,10 @@ async function layOutMaterials(
   mkdirSync(join(materials, 'spec'), { recursive: true })
   if (existsSync(spec)) cpSync(spec, join(materials, 'spec'), { recursive: true })
 
-  if (metric === 'SR') {
+  if (metric === 'spec-fit') {
     cpSync(join(task.dir, task.intentFile), join(materials, 'intent.md'))
   }
-  if (metric === 'IS') {
+  if (metric === 'impl-fit') {
     await restoreRepo(join(runDir, 'repo.bundle'), join(materials, 'repo'))
   }
 }

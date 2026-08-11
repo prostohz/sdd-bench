@@ -1,20 +1,33 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { resultText, writeCapturedJson } from '../artifacts.js'
 import type { BenchConfig } from '../config.js'
 import type { Participant } from '../model/participant.js'
 import type { Task } from '../model/task.js'
-import { runDirName, type RunRecord, type RunStatus } from '../model/run.js'
+import { runDirName, type RunRecord, type RunStatus, type TestOutcome } from '../model/run.js'
 import { producesCode } from '../model/stage.js'
 import type { Sandbox, SandboxDriver } from '../sandbox/driver.js'
 import { extractResult } from '../sandbox/extract.js'
 import { materializeWorkspace } from '../sandbox/workspace.js'
 import { shellQuote } from '../shell.js'
+import { agentStream } from './agentLog.js'
 import { PROMPT_PATH, runClaude, type ClaudeRun } from './claude.js'
 import { runTests } from './projectTests.js'
 
 const SETUP_PATH = '/tmp/sdd-bench/setup.sh'
+
+/**
+ * A run takes tens of minutes inside a sandbox that is then deleted, and its
+ * artefacts only say how it ended. This says how it went: every step, stamped
+ * with the time it happened, beside the artefacts it produced.
+ */
+export type Note = (message: string) => void
+
+function runLog(runDir: string): Note {
+  const path = join(runDir, 'run.log')
+  return (message) => appendFileSync(path, `${new Date().toISOString()} ${message}\n`)
+}
 
 /** Where the participant's own work begins. */
 export const BASELINE_TAG = 'sdd-bench-baseline'
@@ -66,9 +79,12 @@ export async function runParticipant(
     versions: { model: ctx.config.model, effort: ctx.config.effort, driver: ctx.driver.kind },
   }
 
+  const note = runLog(runDir)
   ctx.log(`▶ ${runId}`)
+  note(`запуск ${runId}: ${ctx.config.model}, effort ${ctx.config.effort}, драйвер ${ctx.driver.kind}`)
   await materializeWorkspace(task, workspace)
 
+  note('sandbox: создание')
   const sandbox = await ctx.driver.create({
     name: runId,
     workspace,
@@ -81,14 +97,16 @@ export async function runParticipant(
   try {
     await sandbox.allowHosts([...ctx.config.allowHosts, ...task.allowHosts, ...participant.allowHosts])
     const repo = await sandbox.repoPath()
+    note(`sandbox: готов, репозиторий ${repo}`)
 
-    const setupFailure = await setUp(sandbox, participant, repo, runDir, record)
-    if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace)
+    const setupFailure = await setUp(sandbox, participant, repo, runDir, record, note)
+    if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace, note)
 
     const promptOnHost = join(runDir, 'prompt.md')
     writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile)))
     await sandbox.copyIn(promptOnHost, PROMPT_PATH)
 
+    note(`агент: старт, лимит ${Math.round(ctx.config.timeoutMs / 60000)} мин (диалог в agent.log)`)
     const run = await runClaude(sandbox, {
       model: ctx.config.model,
       effort: ctx.config.effort,
@@ -96,7 +114,9 @@ export async function runParticipant(
       maxBudgetUsd: ctx.config.maxBudgetUsd,
       cwd: repo,
       timeoutMs: ctx.config.timeoutMs,
+      onStdout: agentStream(runDir),
     })
+    note(`агент: код ${run.proc.code}${describeAgent(run)}`)
 
     writeCapturedJson(join(runDir, 'agent.json'), run.proc.stdout)
     const said = resultText(run.proc.stdout)
@@ -106,19 +126,21 @@ export async function runParticipant(
 
     const extraction = await extractResult(sandbox, participant, runDir)
     bundlePath = extraction.bundlePath
+    note(`извлечение: файлов спецификации ${extraction.specFiles}`)
     if (extraction.specFiles === 0) ctx.log(`  спецификация не найдена в ${participant.specPaths.join(', ')}`)
 
-    if (run.proc.timedOut) return finish(record, 'timeout', 'лимит времени исчерпан', runDir, workspace)
+    if (run.proc.timedOut) return finish(record, 'timeout', 'лимит времени исчерпан', runDir, workspace, note)
     if (run.proc.code !== 0 || run.result?.isError) {
-      return finish(record, 'error', agentFailure(run), runDir, workspace)
+      return finish(record, 'error', agentFailure(run), runDir, workspace, note)
     }
   } finally {
     await sandbox.remove()
+    note('sandbox: удалён')
   }
 
   // Nothing was implemented, so there is nothing to run tests against.
-  if (bundlePath && producesCode(stage)) await check(ctx, task, record, bundlePath, runDir)
-  return finish(record, record.status, record.statusDetail, runDir, workspace)
+  if (bundlePath && producesCode(stage)) await check(ctx, task, record, bundlePath, runDir, note)
+  return finish(record, record.status, record.statusDetail, runDir, workspace, note)
 }
 
 async function setUp(
@@ -127,13 +149,16 @@ async function setUp(
   repo: string,
   runDir: string,
   record: RunRecord,
+  note: Note,
 ): Promise<string | undefined> {
   if (participant.setupFile) {
+    note(`установка: ${participant.setupFile}`)
     await sandbox.copyIn(join(participant.dir, participant.setupFile), SETUP_PATH)
     const setup = await sandbox.exec(`${setupEnv(participant, repo)} bash ${SETUP_PATH}`, {
       timeoutMs: 20 * 60 * 1000,
     })
     writeFileSync(join(runDir, 'setup.log'), `${setup.stdout}\n${setup.stderr}`)
+    note(`установка: код ${setup.code} (вывод в setup.log)`)
     if (setup.code !== 0) return `установка инструментария участника завершилась с кодом ${setup.code}`
   }
 
@@ -145,6 +170,8 @@ async function setUp(
   const cli = await sandbox.exec('claude --version', { timeoutMs: 2 * 60 * 1000 })
   if (cli.code === 0) record.versions['claude'] = cli.stdout.trim()
 
+  const versions = Object.entries(record.versions).map(([k, v]) => `${k}=${v.slice(0, 60)}`)
+  note(`версии: ${versions.join(', ')}`)
   await markBaseline(sandbox, repo)
   return undefined
 }
@@ -174,6 +201,7 @@ async function check(
   record: RunRecord,
   bundlePath: string,
   runDir: string,
+  note: Note,
 ): Promise<void> {
   const common = {
     driver: ctx.driver,
@@ -184,15 +212,18 @@ async function check(
   }
 
   if (task.baselineTests) {
+    note('тесты: базовые')
     record.baseline = await runTests({
       ...common,
       sandboxName: `${record.runId}-baseline`,
       suite: task.baselineTests,
     })
     writeFileSync(join(runDir, 'baseline.log'), record.baseline.output)
+    note(`тесты: базовые — ${describeTests(record.baseline)}`)
   }
 
   if (task.hiddenTests) {
+    note('тесты: скрытые')
     record.hidden = await runTests({
       ...common,
       sandboxName: `${record.runId}-hidden`,
@@ -200,7 +231,22 @@ async function check(
       overlayDir: join(task.dir, task.hiddenTests.dir),
     })
     writeFileSync(join(runDir, 'hidden.log'), record.hidden.output)
+    note(`тесты: скрытые — ${describeTests(record.hidden)}`)
   }
+}
+
+/** What the agent's own numbers say about the invocation that just ended. */
+function describeAgent(run: ClaudeRun): string {
+  const t = run.result?.telemetry
+  if (!t) return run.proc.timedOut ? ', лимит времени исчерпан' : ''
+  const parts = [`${Math.round(t.activeMs / 1000)} с`, `${t.numTurns ?? '—'} ходов`, `${t.totalTokens} токенов`]
+  if (t.costUsd !== undefined) parts.push(`$${t.costUsd.toFixed(2)}`)
+  if (run.proc.timedOut) parts.push('лимит времени исчерпан')
+  return `, ${parts.join(', ')}`
+}
+
+function describeTests(outcome: TestOutcome): string {
+  return `код ${outcome.exitCode}, прошло ${Math.round(outcome.passRatio * 100)}%`
 }
 
 /** What actually went wrong, not the envelope's `subtype`, which says `success`. */
@@ -231,10 +277,12 @@ function finish(
   detail: string | undefined,
   runDir: string,
   workspace: string,
+  note: Note,
 ): RunRecord {
   record.status = status
   record.statusDetail = detail
   record.finishedAt = new Date().toISOString()
+  note(`итог: ${status}${detail ? `: ${detail}` : ''}`)
   rmSync(workspace, { recursive: true, force: true })
   writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`)
   return record

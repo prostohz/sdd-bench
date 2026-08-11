@@ -93,7 +93,10 @@ class SbxSandbox implements Sandbox {
     const args = ['exec']
     if (options.cwd) args.push('--workdir', options.cwd)
     args.push(this.name, 'bash', '-lc', script)
-    return run(CLI, args, options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs })
+    return run(CLI, args, {
+      ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
+      ...(options.onStdout === undefined ? {} : { onStdout: options.onStdout }),
+    })
   }
 
   /**

@@ -51,7 +51,7 @@ node dist/src/cli.js all --dry-run               # весь конвейер н�
 node dist/src/cli.js run --task ledger-cli --participant neutral -n 1
 node dist/src/cli.js all --task ledger-cli --stage spec  # без реализации
 node dist/src/cli.js judge --result <id>         # перезапускаемо отдельно
-node dist/src/cli.js judge-probe --metric SR -n 3 \
+node dist/src/cli.js judge-probe --metric spec-fit -n 3 \
   --material spec=<путь> --material intent.md=<путь>   # отладка судейства
 node dist/src/cli.js score --result <id>
 node dist/src/cli.js report --result <id>
@@ -96,10 +96,12 @@ src/catalog.ts   загрузка tasks/ и participants/, все проблем
 src/sandbox/     драйвер sbx, холостой драйвер, материализация seed, извлечение
 src/run/         запуск участника, вызов claude, телеметрия, тесты проекта
 src/judge/       судья по метрике в отдельном sandbox, рубрики в judges/
-src/score/       Q,SR,IS → Score_run, агрегация запуск→задача→класс→итог
+src/score/       spec-quality,spec-fit,impl-fit → Score_run, агрегация запуск→задача→класс→итог
 src/report/      markdown-отчёт
 tasks/<class>/<id>/   task.json, intent.md, seed/, tests/
-results/<id>/    manifest.json, runs/<задача>--<участник>--<повтор>/
+results/<id>/    manifest.json, bench.log, runs/<задача>--<участник>--<повтор>/
+                 в запуске: run.log — ход запуска, agent.log — диалог агента,
+                 agent.jsonl — его события как есть
 ```
 
 Один прогон: seed → git-репозиторий с фиксированным коммитом → sandbox

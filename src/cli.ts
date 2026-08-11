@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { writeFileSync } from 'node:fs'
+import { appendFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { findParticipant, findTask, loadCatalog } from './catalog.js'
@@ -55,7 +55,8 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   --skip-doctor           не проверять агента перед прогоном
 
 Опции judge-probe:
-  --metric <Q|SR|IS>      что оценивать (по умолчанию Q)
+  --metric <spec-quality|spec-fit|impl-fit>
+                          что оценивать (по умолчанию spec-quality)
   --rubric <path>         своя рубрика вместо judges/<metric>.md
   --material <имя=путь>   что видит судья; можно повторять
   -n, --repeats <N>       сколько раз спросить одно и то же (разброс оценок)
@@ -178,6 +179,7 @@ async function runCommand(root: string, config: BenchConfig, options: Options): 
   createResult(resultDir, resultDir.split('/').at(-1) ?? resultId, config, {
     sandbox: await driver.version(),
   })
+  logTo(resultDir)
   log(`результат: ${resultDir} (этап ${config.stage})`)
 
   for (const task of tasks) {
@@ -200,6 +202,7 @@ async function judgeCommand(
 ): Promise<void> {
   const catalog = loadCatalog(root)
   const driver = makeDriver(options)
+  logTo(resultDir)
   log(`оценка: ${resultDir}`)
 
   for (const { record, dir } of readRunEntries(resultDir)) {
@@ -217,7 +220,7 @@ async function judgeCommand(
  * a rubric can be tried before there is anything to judge.
  */
 async function judgeProbeCommand(root: string, config: BenchConfig, options: Options): Promise<void> {
-  const metric = options.metric ?? 'Q'
+  const metric = options.metric ?? 'spec-quality'
   const driver = makeDriver(options)
   for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
 
@@ -252,6 +255,7 @@ function scoreCommand(root: string, config: BenchConfig, options: Options): void
 }
 
 function reportCommand(root: string, config: BenchConfig, options: Options, resultDir: string): void {
+  logTo(resultDir)
   const report = renderReport(readManifest(resultDir))
   const out = options.out ?? join(resultDir, 'report.md')
   writeFileSync(out, report)
@@ -424,8 +428,21 @@ function parseArgs(argv: string[]): Options {
   return options
 }
 
+/**
+ * A run outlives the terminal it was started from: hours pass, the output
+ * scrolls away or was never watched. Once a result directory exists, every
+ * line of progress is kept beside it, stamped with the time it was written —
+ * which is also the only record of how long each part took.
+ */
+let logFile: string | undefined
+
+function logTo(resultDir: string): void {
+  logFile = join(resultDir, 'bench.log')
+}
+
 function log(message: string): void {
   process.stderr.write(`${message}\n`)
+  if (logFile) appendFileSync(logFile, `${new Date().toISOString()} ${message}\n`)
 }
 
 main(process.argv.slice(2))

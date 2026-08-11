@@ -1,14 +1,25 @@
 import type { Stage } from './stage.js'
 import type { TaskClass } from './task.js'
 
-/** The three judged metrics that make up the score of a run. */
-export const METRICS = ['Q', 'SR', 'IS'] as const
+/**
+ * The three judged metrics that make up the score of a run, each named after
+ * what it holds against what: the specification on its own, the specification
+ * against the requirements, the implementation against the specification.
+ */
+export const METRICS = ['spec-quality', 'spec-fit', 'impl-fit'] as const
 export type Metric = (typeof METRICS)[number]
 
+/** For a column heading, where the full title would not fit. */
+export const METRIC_LABELS: Record<Metric, string> = {
+  'spec-quality': 'Spec quality',
+  'spec-fit': 'Spec fit',
+  'impl-fit': 'Impl fit',
+}
+
 export const METRIC_TITLES: Record<Metric, string> = {
-  Q: 'Качество спецификации',
-  SR: 'Соответствие спецификации требованиям',
-  IS: 'Соответствие реализации спецификации',
+  'spec-quality': 'Качество спецификации',
+  'spec-fit': 'Соответствие спецификации требованиям',
+  'impl-fit': 'Соответствие реализации спецификации',
 }
 
 export const RUN_STATUSES = ['ok', 'error', 'timeout'] as const
@@ -16,11 +27,12 @@ export type RunStatus = (typeof RUN_STATUSES)[number]
 
 export interface Telemetry {
   /**
-   * Measured by the harness around the agent invocation. A participant that
-   * delegates to subagents under-reports its own `durationMs`, so the number
-   * the participant states is not the number it is compared on.
+   * Measured by the harness around the agent invocation, with host sleep
+   * excluded. A participant that delegates to subagents under-reports its own
+   * `durationMs`, so the number it states is not the one it is compared on;
+   * and a laptop that sleeps mid-run must not be charged to it either.
    */
-  wallMs: number
+  activeMs: number
   /** As the CLI reported it. */
   durationMs: number
   apiDurationMs: number | undefined

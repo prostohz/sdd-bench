@@ -40,11 +40,17 @@ class DrySandbox implements Sandbox {
     cpSync(workspace, this.root, { recursive: true })
   }
 
-  async exec(script: string, _options: ExecOptions = {}): Promise<ProcResult> {
+  async exec(script: string, options: ExecOptions = {}): Promise<ProcResult> {
     if (script.includes('--json-schema')) return this.result(JSON.stringify(this.verdict(script)))
     if (script.includes('claude -p')) {
       this.writeArtifacts()
-      return this.result('Спецификация и реализация готовы.')
+      const done = this.result('Спецификация и реализация готовы.')
+      // A stream was asked for, so the stub speaks in one too, envelope last.
+      if (options.onStdout) {
+        for (const event of this.session()) options.onStdout(`${JSON.stringify(event)}\n`)
+        options.onStdout(`${done.stdout}\n`)
+      }
+      return done
     }
     // The extraction step reads real files back, so they have to be there.
     if (script.includes('git bundle create')) this.bundle()
@@ -101,13 +107,25 @@ class DrySandbox implements Sandbox {
   }
 
   private verdict(script: string): { score: number; rationale: string; evidence: string[] } {
-    const metric = /Q|SR|IS/.exec(script.split('rubric-')[1] ?? '')?.[0] ?? 'Q'
+    const metric = /spec-quality|spec-fit|impl-fit/.exec(script.split('rubric-')[1] ?? '')?.[0] ?? 'spec-quality'
     const score = 5 + (hash(`${this.name}:${metric}`) % 41) / 10
     return {
       score: Number(score.toFixed(1)),
       rationale: 'Холостой прогон: оценка выдумана и ничего не значит.',
       evidence: [],
     }
+  }
+
+  private session(): unknown[] {
+    return [
+      { type: 'system', subtype: 'init', session_id: this.name },
+      { type: 'assistant', message: { content: [{ type: 'text', text: 'Читаю задание.' }] } },
+      {
+        type: 'assistant',
+        message: { content: [{ type: 'tool_use', name: 'Write', input: { file_path: 'spec/spec.md' } }] },
+      },
+      { type: 'user', message: { content: [{ type: 'tool_result', content: 'File created' }] } },
+    ]
   }
 
   private result(text: string): ProcResult {
@@ -135,6 +153,7 @@ class DrySandbox implements Sandbox {
       stderr: '',
       timedOut: false,
       durationMs: envelope.duration_ms,
+      activeMs: envelope.duration_ms,
     }
   }
 }

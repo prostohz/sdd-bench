@@ -25,7 +25,7 @@ function record(over: Partial<RunRecord> = {}): RunRecord {
     telemetry: undefined,
     baseline: undefined,
     hidden: undefined,
-    verdicts: { Q: verdict('Q', 10), SR: verdict('SR', 10), IS: verdict('IS', 10) },
+    verdicts: { 'spec-quality': verdict('spec-quality', 10), 'spec-fit': verdict('spec-fit', 10), 'impl-fit': verdict('impl-fit', 10) },
     versions: {},
     ...over,
   }
@@ -42,14 +42,14 @@ test('скор запуска — геометрическое среднее т
   assert.equal(scoreRun(record()).value, 100)
 
   const mixed = scoreRun(
-    record({ verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 5), IS: verdict('IS', 2) } }),
+    record({ verdicts: { 'spec-quality': verdict('spec-quality', 8), 'spec-fit': verdict('spec-fit', 5), 'impl-fit': verdict('impl-fit', 2) } }),
   )
   assert.equal(mixed.value?.toFixed(2), (100 * Math.cbrt(0.8 * 0.5 * 0.2)).toFixed(2))
 })
 
 test('нулевая метрика обнуляет весь запуск', () => {
   const zero = scoreRun(
-    record({ verdicts: { Q: verdict('Q', 10), SR: verdict('SR', 10), IS: verdict('IS', 0) } }),
+    record({ verdicts: { 'spec-quality': verdict('spec-quality', 10), 'spec-fit': verdict('spec-fit', 10), 'impl-fit': verdict('impl-fit', 0) } }),
   )
   assert.equal(zero.value, 0)
 })
@@ -72,7 +72,7 @@ test('регрессия обнуляет brownfield-запуск и не тро
 })
 
 test('неоценённый запуск не считается нулём', () => {
-  const partial = scoreRun(record({ verdicts: { Q: verdict('Q', 10) } }))
+  const partial = scoreRun(record({ verdicts: { 'spec-quality': verdict('spec-quality', 10) } }))
   assert.equal(partial.value, null)
   assert.equal(partial.zeroReason, undefined)
 })
@@ -108,7 +108,7 @@ test('повторы одной задачи усредняются', () => {
     record({
       runId: 'a-p-2',
       repeat: 2,
-      verdicts: { Q: verdict('Q', 0), SR: verdict('SR', 0), IS: verdict('IS', 0) },
+      verdicts: { 'spec-quality': verdict('spec-quality', 0), 'spec-fit': verdict('spec-fit', 0), 'impl-fit': verdict('impl-fit', 0) },
     }),
   ]
 
@@ -118,7 +118,7 @@ test('повторы одной задачи усредняются', () => {
 
 test('эффективность считается по телеметрии и в скор не входит', () => {
   const telemetry = {
-    wallMs: 900_000,
+    activeMs: 900_000,
     durationMs: 60_000,
     apiDurationMs: 50_000,
     inputTokens: 1000,
@@ -132,7 +132,7 @@ test('эффективность считается по телеметрии и
 
   const [participant] = scoreParticipants([record({ telemetry })])
   assert.equal(participant?.score, 100)
-  // The participant said a minute; the harness saw fifteen.
+  // Участник сказал минуту; харнесс намерил пятнадцать.
   assert.deepEqual(participant?.efficiency, {
     runs: 1,
     meanDurationMs: 900_000,
@@ -144,7 +144,7 @@ test('эффективность считается по телеметрии и
 test('этап spec оценивается по двум метрикам, без IS', () => {
   const specRun = record({
     stage: 'spec',
-    verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 5) },
+    verdicts: { 'spec-quality': verdict('spec-quality', 8), 'spec-fit': verdict('spec-fit', 5) },
   })
 
   // Среднее геометрическое двух, а не ноль за неприменимую IS.
@@ -152,14 +152,14 @@ test('этап spec оценивается по двум метрикам, бе�
 })
 
 test('на этапе spec вердикт IS ничего не меняет', () => {
-  const withoutIS = scoreRun(record({ stage: 'spec', verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 8) } }))
+  const withoutIS = scoreRun(record({ stage: 'spec', verdicts: { 'spec-quality': verdict('spec-quality', 8), 'spec-fit': verdict('spec-fit', 8) } }))
   const withIS = scoreRun(
-    record({ stage: 'spec', verdicts: { Q: verdict('Q', 8), SR: verdict('SR', 8), IS: verdict('IS', 0) } }),
+    record({ stage: 'spec', verdicts: { 'spec-quality': verdict('spec-quality', 8), 'spec-fit': verdict('spec-fit', 8), 'impl-fit': verdict('impl-fit', 0) } }),
   )
   assert.equal(withoutIS.value, withIS.value)
 })
 
 test('незавершённое судейство этапа spec не считается нулём', () => {
-  const partial = scoreRun(record({ stage: 'spec', verdicts: { Q: verdict('Q', 8) } }))
+  const partial = scoreRun(record({ stage: 'spec', verdicts: { 'spec-quality': verdict('spec-quality', 8) } }))
   assert.equal(partial.value, null)
 })

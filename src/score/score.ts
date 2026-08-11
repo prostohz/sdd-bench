@@ -119,7 +119,7 @@ function efficiencyOf(records: RunRecord[]): Efficiency {
     runs: records.length,
     // Records written before the harness measured time fall back to the
     // participant's own figure, which is all they carry.
-    meanDurationMs: mean(telemetry.map((t) => t.wallMs ?? t.durationMs)),
+    meanDurationMs: mean(telemetry.map((t) => t.activeMs ?? t.durationMs)),
     meanTotalTokens: mean(telemetry.map((t) => t.totalTokens)),
     meanCostUsd: mean(telemetry.map((t) => t.costUsd ?? null)),
   }

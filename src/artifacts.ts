@@ -9,7 +9,7 @@ import { isRecord } from './model/validate.js'
  * that is not JSON at all is saved untouched, because then it is a diagnostic.
  */
 export function writeCapturedJson(path: string, stdout: string): void {
-  const envelope = parseJson(stdout)
+  const envelope = resultEnvelope(stdout)
   if (envelope === undefined) {
     writeFileSync(path, stdout)
     return
@@ -19,7 +19,7 @@ export function writeCapturedJson(path: string, stdout: string): void {
 
 /** The agent's own words, without JSON escaping in the way. */
 export function resultText(stdout: string): string | undefined {
-  const envelope = parseJson(stdout)
+  const envelope = resultEnvelope(stdout)
   if (!isRecord(envelope) || typeof envelope['result'] !== 'string') return undefined
   const text = envelope['result'].trim()
   return text === '' ? undefined : `${text}\n`
@@ -29,6 +29,22 @@ function expandResult(envelope: unknown): unknown {
   if (!isRecord(envelope) || typeof envelope['result'] !== 'string') return envelope
   const inner = parseJson(envelope['result'])
   return inner === undefined ? envelope : { ...envelope, result: inner }
+}
+
+/**
+ * The envelope that closes a session, wherever it ended up. A streamed session
+ * prints one event per line and the envelope is the last of them; a plain one
+ * prints it alone. Either way the CLI may print notices of its own around it,
+ * so a line that does not parse is passed over rather than believed.
+ */
+export function resultEnvelope(stdout: string): unknown {
+  const lines = stdout.trim().split('\n')
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const candidate = parseJson(lines[i] ?? '')
+    if (isRecord(candidate) && 'result' in candidate) return candidate
+  }
+  // Not one object per line: an envelope printed across several of them.
+  return parseJson(stdout)
 }
 
 /** The CLI may print notices before the JSON, so the first object also counts. */

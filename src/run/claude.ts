@@ -1,3 +1,4 @@
+import { resultEnvelope } from '../artifacts.js'
 import type { Effort } from '../config.js'
 import type { Telemetry } from '../model/run.js'
 import type { ProcResult } from '../proc.js'
@@ -17,6 +18,12 @@ export interface ClaudeInvocation {
   addDirs?: string[]
   cwd?: string
   timeoutMs: number
+  /**
+   * Given a reader, the session is asked for as a stream: every turn arrives
+   * as it happens instead of all at once at the end. A judge has nothing to
+   * watch, so it asks for the plain envelope.
+   */
+  onStdout?: (chunk: string) => void
 }
 
 export interface ClaudeResult {
@@ -40,7 +47,9 @@ export async function runClaude(sandbox: Sandbox, invocation: ClaudeInvocation):
   const args = [
     'claude',
     '-p',
-    '--output-format json',
+    // A stream is one event per line, the envelope last; `--verbose` is what
+    // makes the CLI emit the turns themselves rather than only the envelope.
+    ...(invocation.onStdout ? ['--output-format stream-json', '--verbose'] : ['--output-format json']),
     `--model ${shellQuote(invocation.model)}`,
     `--effort ${shellQuote(invocation.effort)}`,
     '--permission-mode bypassPermissions',
@@ -55,22 +64,21 @@ export async function runClaude(sandbox: Sandbox, invocation: ClaudeInvocation):
   for (const dir of invocation.addDirs ?? []) args.push(`--add-dir ${shellQuote(dir)}`)
   args.push(`"$(cat ${shellQuote(invocation.promptPath)})"`)
 
-  const proc = await sandbox.exec(
-    args.join(' '),
-    invocation.cwd === undefined
-      ? { timeoutMs: invocation.timeoutMs }
-      : { timeoutMs: invocation.timeoutMs, cwd: invocation.cwd },
-  )
+  const proc = await sandbox.exec(args.join(' '), {
+    timeoutMs: invocation.timeoutMs,
+    ...(invocation.cwd === undefined ? {} : { cwd: invocation.cwd }),
+    ...(invocation.onStdout === undefined ? {} : { onStdout: invocation.onStdout }),
+  })
 
   try {
-    return { proc, result: parseClaudeResult(proc.stdout, proc.durationMs), parseError: undefined }
+    return { proc, result: parseClaudeResult(proc.stdout, proc.activeMs), parseError: undefined }
   } catch (error) {
     return { proc, result: undefined, parseError: (error as Error).message }
   }
 }
 
-export function parseClaudeResult(stdout: string, wallMs: number): ClaudeResult {
-  const envelope = lastJsonObject(stdout)
+export function parseClaudeResult(stdout: string, activeMs: number): ClaudeResult {
+  const envelope = resultEnvelope(stdout)
   if (!isRecord(envelope)) throw new Error('вывод claude не содержит JSON-результата')
 
   const usage = isRecord(envelope['usage']) ? envelope['usage'] : {}
@@ -84,8 +92,8 @@ export function parseClaudeResult(stdout: string, wallMs: number): ClaudeResult 
     subtype: typeof envelope['subtype'] === 'string' ? envelope['subtype'] : 'unknown',
     text: typeof envelope['result'] === 'string' ? envelope['result'] : '',
     telemetry: {
-      wallMs,
-      durationMs: numberOr(envelope['duration_ms'], wallMs),
+      activeMs,
+      durationMs: numberOr(envelope['duration_ms'], activeMs),
       apiDurationMs: optionalNumber(envelope['duration_api_ms']),
       inputTokens,
       outputTokens,
@@ -96,22 +104,6 @@ export function parseClaudeResult(stdout: string, wallMs: number): ClaudeResult 
       numTurns: optionalNumber(envelope['num_turns']),
     },
   }
-}
-
-/** The CLI may print notices before the result; the result is the last object. */
-function lastJsonObject(stdout: string): unknown {
-  const trimmed = stdout.trim()
-  if (trimmed === '') return undefined
-
-  for (let start = trimmed.indexOf('{'); start !== -1; start = trimmed.indexOf('{', start + 1)) {
-    try {
-      const candidate: unknown = JSON.parse(trimmed.slice(start))
-      if (isRecord(candidate) && 'result' in candidate) return candidate
-    } catch {
-      // Not a complete object at this offset; try the next one.
-    }
-  }
-  return undefined
 }
 
 function numberOr(value: unknown, fallback: number): number {

@@ -3,6 +3,8 @@ import type { ProcResult } from '../proc.js'
 export interface ExecOptions {
   timeoutMs?: number
   cwd?: string
+  /** Called with output as it arrives, for a command worth watching live. */
+  onStdout?: (chunk: string) => void
 }
 
 export interface Sandbox {
