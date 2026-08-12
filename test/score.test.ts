@@ -7,7 +7,7 @@ import type { TaskClass } from '../src/model/task.js'
 import { normalize, scoreParticipants, scoreRun } from '../src/score/score.js'
 
 function verdict(metric: Metric, score: number): Verdict {
-  return { metric, score, rationale: '', evidence: [], judgeModel: 'judge' }
+  return { metric, score, rationale: '', findings: [], evidence: [], judgeModel: 'judge' }
 }
 
 function record(over: Partial<RunRecord> = {}): RunRecord {

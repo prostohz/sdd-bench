@@ -86,7 +86,8 @@ function renameMetrics(record: RunRecord): RunRecord {
   for (const [key, verdict] of Object.entries(record.verdicts)) {
     if (verdict === undefined) continue
     const metric = FORMER_METRICS[key] ?? (key as Metric)
-    verdicts[metric] = { ...verdict, metric }
+    // Verdicts written before judges ruled item by item carry no findings.
+    verdicts[metric] = { ...verdict, metric, findings: verdict.findings ?? [], evidence: verdict.evidence ?? [] }
   }
   return { ...record, verdicts }
 }

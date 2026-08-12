@@ -2,13 +2,15 @@
 import { appendFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { findParticipant, findTask, loadCatalog } from './catalog.js'
+import { findParticipant, findTask, loadCatalog, type Catalog } from './catalog.js'
 import { loadConfig, type BenchConfig } from './config.js'
-import { isStage, STAGES, type Stage } from './model/stage.js'
-import { judgeRun } from './judge/judge.js'
+import { DEFAULT_STAGE, isStage, STAGES, type Stage } from './model/stage.js'
+import { judgeRun, rescoreRun } from './judge/judge.js'
 import { parseMaterial, probeJudge, renderProbe } from './judge/probe.js'
 import { METRICS, type Metric } from './model/run.js'
 
+import type { Participant } from './model/participant.js'
+import type { Task } from './model/task.js'
 import { agentHint, checkAgent } from './run/doctor.js'
 import { runParticipant } from './run/participantRun.js'
 import { describeRun, renderVerdicts, restoreRun, selectRuns } from './run/showRun.js'
@@ -51,6 +53,9 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   --repeat <N>            номер повтора (для show и verdicts)
   --port <N>              порт для serve (по умолчанию 7777)
   --stage <full|spec>     этап цикла: полностью или только спецификация
+  --rejudge               спросить судей заново там, где вердикт уже есть
+  --rescore               пересчитать баллы по сохранённым ответам судей
+  --retry-failed          переснять запуски результата, не дошедшие до конца
   --dry-run               холостой прогон без sandbox и обращений к API
   --skip-doctor           не проверять агента перед прогоном
 
@@ -79,6 +84,9 @@ interface Options {
   rubric: string | undefined
   materials: string[]
   keepSandbox: boolean
+  rejudge: boolean
+  rescore: boolean
+  retryFailed: boolean
   dryRun: boolean
   skipDoctor: boolean
 }
@@ -158,11 +166,45 @@ async function doctor(config: BenchConfig, options: Options): Promise<number> {
   return 1
 }
 
+/** One participant on one task, once. */
+interface Job {
+  task: Task
+  participant: Participant
+  repeat: number
+  stage: Stage
+}
+
+/**
+ * The runs of a result that never finished. A sandbox that lost its connection
+ * or an agent that failed to authenticate says nothing about the process being
+ * measured, and re-taking those runs is not the same as re-taking the result:
+ * everything that did finish is left exactly as it was.
+ */
+function failedJobs(catalog: Catalog, resultDir: string, options: Options): Job[] {
+  const records = selectRuns(
+    readRunEntries(resultDir).map((e) => e.record),
+    { tasks: options.tasks, participants: options.participants, repeat: options.repeat },
+  )
+
+  return records
+    .filter((record) => record.status !== 'ok')
+    .map((record) => ({
+      task: findTask(catalog, record.taskId),
+      participant: findParticipant(catalog, record.participantId),
+      repeat: record.repeat,
+      stage: record.stage ?? DEFAULT_STAGE,
+    }))
+}
+
 async function runCommand(root: string, config: BenchConfig, options: Options): Promise<string> {
   const catalog = loadCatalog(root)
   const tasks = options.tasks?.map((id) => findTask(catalog, id)) ?? catalog.tasks
   const participants = options.participants?.map((id) => findParticipant(catalog, id)) ?? catalog.participants
   const driver = makeDriver(options)
+
+  if (options.retryFailed && options.result === undefined) {
+    throw new Error('--retry-failed: укажите --result — переснимать нечего, пока нет результата')
+  }
 
   for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
 
@@ -176,19 +218,44 @@ async function runCommand(root: string, config: BenchConfig, options: Options): 
   const resultDir = options.result
     ? resolveResult(root, config, options.result)
     : join(resultsRoot(root, config), resultId)
-  createResult(resultDir, resultDir.split('/').at(-1) ?? resultId, config, {
-    sandbox: await driver.version(),
-  })
-  logTo(resultDir)
-  log(`результат: ${resultDir} (этап ${config.stage})`)
 
-  for (const task of tasks) {
-    for (const participant of participants) {
-      for (let repeat = 1; repeat <= config.repeats; repeat += 1) {
-        const record = await runParticipant({ config, driver, resultDir, log }, task, participant, repeat)
-        log(`  ${record.status}${record.statusDetail ? `: ${record.statusDetail}` : ''}`)
-      }
-    }
+  // Re-taking failed runs joins a result that already exists; its manifest
+  // records the settings the finished runs were taken under and stays put.
+  if (!options.retryFailed) {
+    createResult(resultDir, resultDir.split('/').at(-1) ?? resultId, config, {
+      sandbox: await driver.version(),
+    })
+  }
+  logTo(resultDir)
+
+  const jobs: Job[] = options.retryFailed
+    ? failedJobs(catalog, resultDir, options)
+    : tasks.flatMap((task) =>
+        participants.flatMap((participant) =>
+          Array.from({ length: config.repeats }, (_, i) => ({
+            task,
+            participant,
+            repeat: i + 1,
+            stage: config.stage,
+          })),
+        ),
+      )
+
+  if (options.retryFailed) {
+    log(`пересъёмка: ${resultDir} — запусков ${jobs.length}`)
+    if (jobs.length === 0) log('  все запуски дошли до конца, переснимать нечего')
+  } else {
+    log(`результат: ${resultDir} (этап ${config.stage})`)
+  }
+
+  for (const job of jobs) {
+    const record = await runParticipant(
+      { config: { ...config, stage: job.stage }, driver, resultDir, log },
+      job.task,
+      job.participant,
+      job.repeat,
+    )
+    log(`  ${record.status}${record.statusDetail ? `: ${record.statusDetail}` : ''}`)
   }
 
   return resultDir
@@ -201,7 +268,26 @@ async function judgeCommand(
   resultDir: string,
 ): Promise<void> {
   const catalog = loadCatalog(root)
+
+  if (options.rescore) {
+    logTo(resultDir)
+    log(`пересчёт: ${resultDir}`)
+    for (const { record, dir } of readRunEntries(resultDir)) {
+      const metrics = rescoreRun(root, findTask(catalog, record.taskId), record, dir)
+      const scores = metrics.map((m) => `${m}=${record.verdicts[m]?.score}`).join(' ')
+      log(`  · ${record.runId} ${scores || 'нечего пересчитывать'}`)
+    }
+    return
+  }
+
   const driver = makeDriver(options)
+
+  // Выдуманные оценки поверх настоящих не восстановить: холостой прогон вправе
+  // дописать недостающие вердикты, но не заменить уже вынесенные.
+  if (options.rejudge && driver.kind === 'dry-run') {
+    throw new Error('--rejudge затрёт настоящие вердикты выдуманными; уберите --dry-run или --rejudge')
+  }
+
   logTo(resultDir)
   log(`оценка: ${resultDir}`)
 
@@ -210,7 +296,13 @@ async function judgeCommand(
       log(`  · ${record.runId} пропущен (${record.status})`)
       continue
     }
-    await judgeRun({ config, driver, root, log }, findTask(catalog, record.taskId), record, dir)
+    await judgeRun(
+      { config, driver, root, log },
+      findTask(catalog, record.taskId),
+      record,
+      dir,
+      options.rejudge,
+    )
   }
 }
 
@@ -353,6 +445,9 @@ function parseArgs(argv: string[]): Options {
     rubric: undefined,
     materials: [],
     keepSandbox: false,
+    rejudge: false,
+    rescore: false,
+    retryFailed: false,
     dryRun: false,
     skipDoctor: false,
   }
@@ -414,6 +509,15 @@ function parseArgs(argv: string[]): Options {
         break
       case '--keep-sandbox':
         options.keepSandbox = true
+        break
+      case '--rejudge':
+        options.rejudge = true
+        break
+      case '--rescore':
+        options.rescore = true
+        break
+      case '--retry-failed':
+        options.retryFailed = true
         break
       case '--dry-run':
         options.dryRun = true

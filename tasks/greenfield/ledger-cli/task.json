@@ -2,6 +2,7 @@
   "id": "ledger-cli",
   "class": "greenfield",
   "intent": "intent.md",
+  "requirements": "requirements.md",
   "hiddenTests": {
     "dir": "tests",
     "command": "bash sdd-bench-check.sh",

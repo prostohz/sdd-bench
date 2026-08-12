@@ -31,6 +31,7 @@ test('greenfield-задача не может нести seed или базов�
         id: 'x',
         class: 'greenfield',
         intent: 'intent.md',
+        requirements: 'requirements.md',
         seed: 'seed',
       }),
     (error: unknown) =>
@@ -41,7 +42,13 @@ test('greenfield-задача не может нести seed или базов�
 
 test('brownfield-задача без seed отвергается', () => {
   assert.throws(
-    () => parseTask('task.json', '/tmp', { id: 'x', class: 'brownfield-spec', intent: 'intent.md' }),
+    () =>
+      parseTask('task.json', '/tmp', {
+        id: 'x',
+        class: 'brownfield-spec',
+        intent: 'intent.md',
+        requirements: 'requirements.md',
+      }),
     ValidationError,
   )
 })
@@ -73,7 +80,12 @@ test('каталог сообщает обо всех проблемах раз�
     mkdirSync(join(root, 'tasks', 'greenfield', 'wrong-place'), { recursive: true })
     writeFileSync(
       join(root, 'tasks', 'greenfield', 'wrong-place', 'task.json'),
-      JSON.stringify({ id: 'other-id', class: 'greenfield', intent: 'intent.md' }),
+      JSON.stringify({
+        id: 'other-id',
+        class: 'greenfield',
+        intent: 'intent.md',
+        requirements: 'requirements.md',
+      }),
     )
 
     assert.throws(
@@ -81,7 +93,8 @@ test('каталог сообщает обо всех проблемах раз�
       (error: unknown) =>
         error instanceof ValidationError &&
         error.problems.some((p) => p.includes('does not match its directory')) &&
-        error.problems.some((p) => p.includes('intent "intent.md" is not a file')),
+        error.problems.some((p) => p.includes('intent "intent.md" is not a file')) &&
+        error.problems.some((p) => p.includes('requirements "requirements.md" is not a file')),
     )
   } finally {
     rmSync(root, { recursive: true, force: true })

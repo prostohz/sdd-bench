@@ -1,3 +1,4 @@
+import { costly, findingLine, findingSummary } from '../judge/explain.js'
 import { METRICS, METRIC_LABELS, METRIC_TITLES, type RunRecord } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import type { RunEntry } from '../results.js'
@@ -117,6 +118,11 @@ ul.files a:hover { border-bottom-color: var(--baseline) }
                letter-spacing: .06em }
 .verdict ul { margin: .6rem 0 0; padding-left: 1.1rem; color: var(--ink-2); font-size: .89rem }
 .verdict li { margin: .2rem 0 }
+/* Из чего сложился балл — вторая строка заголовка, не абзац. */
+.verdict .tally { color: var(--ink-muted); font-size: .82rem; margin: .3rem 0 0;
+                  font-variant-numeric: tabular-nums }
+.verdict ul.checks { list-style: none; padding: 0; color: var(--ink-muted);
+                     font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace }
 
 .facts { display: flex; flex-wrap: wrap; gap: .5rem 1.4rem; margin: .9rem 0 0;
          color: var(--ink-2); font-size: .9rem }
@@ -304,17 +310,27 @@ export function verdictsSection(record: RunRecord): string {
   }
 
   const blocks = verdicts
-    .map(
-      (verdict) => `<div class="verdict">
-<p class="head"><span class="metric">${esc(METRIC_LABELS[verdict.metric])} ${verdict.score}</span>
+    .map((verdict) => {
+      const summary = findingSummary(verdict.metric, verdict.findings)
+      // Findings that cost nothing are most of the list and explain no part of
+      // the score; what is shown is what the number is made of.
+      const lost = verdict.findings.filter(costly)
+      return `<div class="verdict">
+<p class="head"><span class="metric">${esc(METRIC_LABELS[verdict.metric])} ${verdict.score.toFixed(2)}</span>
 <span class="of">${esc(METRIC_TITLES[verdict.metric])}</span></p>
+${summary ? `<p class="tally">${esc(summary)}</p>` : ''}
 <p>${esc(verdict.rationale)}</p>
+${
+  lost.length === 0
+    ? ''
+    : `<ul>${lost.map((f) => `<li><b>${esc(f.ruling)}</b> ${esc(findingLine(f).slice(f.ruling.length + 2))}</li>`).join('')}</ul>`
+}
 ${
   verdict.evidence.length === 0
     ? ''
-    : `<ul>${verdict.evidence.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
-}</div>`,
-    )
+    : `<ul class="checks">${verdict.evidence.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
+}</div>`
+    })
     .join('')
 
   return `<h2>Оценки судей</h2><div class="panel">${blocks}</div>`

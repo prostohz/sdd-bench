@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 
+import { costly, findingLine, findingSummary } from '../judge/explain.js'
 import { METRIC_TITLES, METRICS, type RunRecord } from '../model/run.js'
 import type { Stage } from '../model/stage.js'
 import { run } from '../proc.js'
@@ -76,9 +77,17 @@ export function renderVerdicts(record: RunRecord): string {
   }
 
   for (const verdict of verdicts) {
-    lines.push('', `${verdict.metric} = ${verdict.score} — ${METRIC_TITLES[verdict.metric]}`, verdict.rationale)
+    lines.push('', `${verdict.metric} = ${verdict.score} — ${METRIC_TITLES[verdict.metric]}`)
+    const summary = findingSummary(verdict.metric, verdict.findings)
+    if (summary) lines.push(summary)
+    lines.push(verdict.rationale)
+
+    // Findings that cost nothing are the bulk of the list and say nothing
+    // about the score; the whole list stays in `run.json`.
+    const lost = verdict.findings.filter(costly)
+    if (lost.length > 0) lines.push('чем набран балл:', ...lost.map((f) => `  · ${findingLine(f)}`))
     if (verdict.evidence.length > 0) {
-      lines.push('доводы:', ...verdict.evidence.map((item) => `  · ${item}`))
+      lines.push('проверки:', ...verdict.evidence.map((item) => `  · ${item}`))
     }
   }
   return lines.join('\n')

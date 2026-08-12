@@ -22,6 +22,57 @@ export const METRIC_TITLES: Record<Metric, string> = {
   'impl-fit': 'Соответствие реализации спецификации',
 }
 
+/** How a requirement of the intent survived the move into a specification. */
+export const COVERAGE_RULINGS = ['covered', 'partial', 'distorted', 'missing'] as const
+export type CoverageRuling = (typeof COVERAGE_RULINGS)[number]
+
+/** How a requirement of a specification fared in the implementation. */
+export const IMPL_RULINGS = ['verified', 'present', 'partial', 'broken', 'absent'] as const
+export type ImplRuling = (typeof IMPL_RULINGS)[number]
+
+export const SEVERITIES = ['blocker', 'major', 'minor'] as const
+export type Severity = (typeof SEVERITIES)[number]
+
+/** The five properties a specification is held to, each scored on its own. */
+export const QUALITY_AXES = [
+  'completeness',
+  'ambiguity',
+  'verifiability',
+  'structure',
+  'proportion',
+] as const
+export type QualityAxis = (typeof QUALITY_AXES)[number]
+
+export const AXIS_TITLES: Record<QualityAxis, string> = {
+  completeness: 'Полнота',
+  ambiguity: 'Однозначность',
+  verifiability: 'Проверяемость',
+  structure: 'Структура',
+  proportion: 'Соразмерность',
+}
+
+/** What a finding is about, which is also the vocabulary its ruling comes from. */
+export const FINDING_KINDS = ['requirement', 'addition', 'defect', 'contradiction'] as const
+export type FindingKind = (typeof FINDING_KINDS)[number]
+
+/**
+ * One thing a judge ruled on. A verdict is a list of these and nothing else:
+ * the judge names items and rules on them, and the score is arithmetic over
+ * the rulings — never a number the judge chose.
+ */
+export interface Finding {
+  kind: FindingKind
+  /** A requirement's identifier, or a short name for a defect or an addition. */
+  item: string
+  /** What the item says, filled in by the harness where it knows the wording. */
+  statement: string
+  /** A ruling for a requirement, a severity for everything else. */
+  ruling: string
+  /** Where it is seen: a path, `path:line`, a quotation, or a check that was run. */
+  where: string
+  note: string
+}
+
 export const RUN_STATUSES = ['ok', 'error', 'timeout'] as const
 export type RunStatus = (typeof RUN_STATUSES)[number]
 
@@ -55,9 +106,12 @@ export interface TestOutcome {
 
 export interface Verdict {
   metric: Metric
-  /** As given by the judge, on the rubric's 0..10 scale. */
+  /** Computed from the findings, on the rubric's 0..10 scale. */
   score: number
   rationale: string
+  /** Every item ruled on. Empty only in results taken before judges ruled by item. */
+  findings: Finding[]
+  /** Checks the judge ran, and quotations from judges that wrote no findings. */
   evidence: string[]
   judgeModel: string
 }

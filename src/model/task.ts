@@ -26,6 +26,12 @@ export interface Task {
   dir: string
   /** Intent handed to the participant verbatim, relative to `dir`. */
   intentFile: string
+  /**
+   * The intent's requirements, one per line, relative to `dir`. Judges of
+   * `spec-fit` rule against this list and never against a list of their own,
+   * and the participant never sees it.
+   */
+  requirementsFile: string
   /** Initial repository state, relative to `dir`. Absent for greenfield. */
   seedDir: string | undefined
   /** The project's own tests, whose continued passing is the regression check. */
@@ -42,6 +48,7 @@ export function parseTask(source: string, dir: string, value: unknown): Task {
   const id = reader.string('id')
   const taskClass = reader.enum('class', TASK_CLASSES)
   const intentFile = reader.string('intent')
+  const requirementsFile = reader.string('requirements')
   const seedDir = reader.optionalString('seed')
   const allowHosts = reader.stringArray('allowHosts')
 
@@ -72,5 +79,5 @@ export function parseTask(source: string, dir: string, value: unknown): Task {
 
   reader.done()
 
-  return { id, taskClass, dir, intentFile, seedDir, baselineTests, hiddenTests, allowHosts }
+  return { id, taskClass, dir, intentFile, requirementsFile, seedDir, baselineTests, hiddenTests, allowHosts }
 }

@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
 import { join, relative, basename, dirname } from 'node:path'
 
+import { parseRequirements, requirementProblems } from './model/requirements.js'
 import { parseTask, type Task } from './model/task.js'
 import { parseParticipant, type Participant } from './model/participant.js'
 import { ValidationError } from './model/validate.js'
@@ -56,6 +57,8 @@ function loadTasks(tasksRoot: string, problems: string[]): Task[] {
       problems.push(`${source}: class "${task.taskClass}" does not match its directory "${basename(dirname(dir))}"`)
     }
     requireFile(dir, task.intentFile, source, 'intent', problems)
+    requireFile(dir, task.requirementsFile, source, 'requirements', problems)
+    requireRequirements(dir, task.requirementsFile, source, problems)
     if (task.seedDir) requireDir(dir, task.seedDir, source, 'seed', problems)
     if (task.hiddenTests) requireDir(dir, task.hiddenTests.dir, source, 'hiddenTests.dir', problems)
 
@@ -126,6 +129,15 @@ function requireFile(dir: string, relPath: string, source: string, key: string, 
   const path = join(dir, relPath)
   if (!existsSync(path) || !statSync(path).isFile()) {
     problems.push(`${source}: ${key} "${relPath}" is not a file`)
+  }
+}
+
+/** A checklist that does not parse is found here, not in the middle of a run. */
+function requireRequirements(dir: string, relPath: string, source: string, problems: string[]): void {
+  const path = join(dir, relPath)
+  if (!existsSync(path) || !statSync(path).isFile()) return
+  for (const problem of requirementProblems(parseRequirements(readFileSync(path, 'utf8')))) {
+    problems.push(`${source}: requirements "${relPath}": ${problem}`)
   }
 }
 

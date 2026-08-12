@@ -1,8 +1,10 @@
 import { execFileSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, normalize } from 'node:path'
 
+import { parseRequirements } from '../model/requirements.js'
+import { COVERAGE_RULINGS, IMPL_RULINGS, QUALITY_AXES, SEVERITIES } from '../model/run.js'
 import type { ProcResult } from '../proc.js'
 import type { CreateOptions, ExecOptions, Sandbox, SandboxDriver } from './driver.js'
 
@@ -106,13 +108,51 @@ class DrySandbox implements Sandbox {
     writeFileSync(join(this.root, 'IMPLEMENTED.md'), 'Холостой прогон: реализации нет.\n')
   }
 
-  private verdict(script: string): { score: number; rationale: string; evidence: string[] } {
+  /** Rulings, not a score — the stub answers in the shape a judge answers in. */
+  private verdict(script: string): Record<string, unknown> {
     const metric = /spec-quality|spec-fit|impl-fit/.exec(script.split('rubric-')[1] ?? '')?.[0] ?? 'spec-quality'
-    const score = 5 + (hash(`${this.name}:${metric}`) % 41) / 10
+    const rationale = 'Холостой прогон: решения выдуманы и ничего не значат.'
+    const pick = <T>(values: readonly T[], seed: string): T =>
+      values[hash(`${this.name}:${seed}`) % values.length] as T
+
+    if (metric === 'spec-quality') {
+      return {
+        defects: QUALITY_AXES.filter((axis) => hash(`${this.name}:${axis}`) % 3 === 0).map((axis) => ({
+          axis,
+          what: 'выдуманный дефект',
+          severity: pick(SEVERITIES, axis),
+          where: 'spec/spec.md:1',
+          note: '',
+        })),
+        rationale,
+      }
+    }
+
+    if (metric === 'spec-fit') {
+      const checklist = join(this.root, 'requirements.md')
+      const requirements = existsSync(checklist) ? parseRequirements(readFileSync(checklist, 'utf8')) : []
+      return {
+        requirements: requirements.map((requirement) => ({
+          id: requirement.id,
+          ruling: pick(COVERAGE_RULINGS, requirement.id),
+          where: 'spec/spec.md:1',
+          note: '',
+        })),
+        additions: [],
+        rationale,
+      }
+    }
+
     return {
-      score: Number(score.toFixed(1)),
-      rationale: 'Холостой прогон: оценка выдумана и ничего не значит.',
-      evidence: [],
+      requirements: Array.from({ length: 8 }, (_, index) => ({
+        statement: `выдуманное требование ${index + 1}`,
+        ruling: pick(IMPL_RULINGS, `impl-${index}`),
+        where: 'repo/ledger:1',
+        note: '',
+      })),
+      contradictions: [],
+      checks: ['./ledger balance'],
+      rationale,
     }
   }
 

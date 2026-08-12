@@ -68,14 +68,7 @@ test('доля прошедших тестов — из счётчиков, ин
   assert.equal(passRatio(0, '', undefined), 1)
 })
 
-test('вердикт судьи читается и обрезается по шкале', () => {
-  const verdict = parseVerdict('{"score": 12, "rationale": "потому что", "evidence": ["a.ts:1"]}', 'spec-quality')
-  assert.equal(verdict.score, 10)
-  assert.equal(verdict.rationale, 'потому что')
-  assert.deepEqual(verdict.evidence, ['a.ts:1'])
-})
-
-test('ответ судьи не в виде оценки — ошибка', () => {
+test('ответ судьи не в виде вердикта — ошибка', () => {
   assert.throws(() => parseVerdict('не могу оценить', 'impl-fit'), /судья impl-fit/)
 })
 

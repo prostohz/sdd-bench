@@ -14,8 +14,10 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, normalize } from 'node:path'
 
 import { writeCapturedJson } from '../artifacts.js'
-import { METRIC_TITLES, type Metric, type Telemetry } from '../model/run.js'
-import { askJudge, readRubric, type JudgeContext } from './judge.js'
+import { parseRequirements } from '../model/requirements.js'
+import { METRIC_TITLES, type Finding, type Metric, type Telemetry } from '../model/run.js'
+import { costly, findingLine, findingSummary } from './explain.js'
+import { askJudge, readRubric, REQUIREMENTS_FILE, type JudgeContext } from './judge.js'
 
 /** One thing the judge is allowed to see, and the name it sees it under. */
 export interface Material {
@@ -40,6 +42,7 @@ export interface ProbeAttempt {
   sandboxName: string
   score: number | undefined
   rationale: string
+  findings: Finding[]
   evidence: string[]
   /** What went wrong instead of a verdict. */
   error: string | undefined
@@ -79,6 +82,11 @@ export async function probeJudge(ctx: JudgeContext, options: ProbeOptions): Prom
   try {
     for (const material of options.materials) placeMaterial(material, workspace)
 
+    // A checklist handed in as a material binds the probe's judge exactly as
+    // it binds a real one, so the two are asked the same question.
+    const checklist = join(workspace, REQUIREMENTS_FILE)
+    const requirements = existsSync(checklist) ? parseRequirements(readFileSync(checklist, 'utf8')) : []
+
     // The probe directory is the record of the experiment: what the judge saw
     // is kept beside what it answered, or the answer cannot be read later.
     mkdirSync(options.outDir, { recursive: true })
@@ -94,6 +102,7 @@ export async function probeJudge(ctx: JudgeContext, options: ProbeOptions): Prom
         materials: workspace,
         allowHosts: ctx.config.allowHosts,
         sandboxName: sandboxName(options, attempt),
+        requirements,
         keepSandbox: options.keepSandbox,
       })
 
@@ -103,6 +112,7 @@ export async function probeJudge(ctx: JudgeContext, options: ProbeOptions): Prom
         sandboxName: answer.sandboxName,
         score: answer.verdict?.score,
         rationale: answer.verdict?.rationale ?? '',
+        findings: answer.verdict?.findings ?? [],
         evidence: answer.verdict?.evidence ?? [],
         error: answer.parseError ?? answer.run.parseError,
         telemetry: answer.run.result?.telemetry,
@@ -181,8 +191,13 @@ export function renderProbe(report: ProbeReport): string {
 
   for (const attempt of report.attempts) {
     lines.push('', `попытка ${attempt.attempt}: ${attempt.score ?? '—'}${attempt.error ? ` (${attempt.error})` : ''}`)
+    const summary = findingSummary(report.metric, attempt.findings)
+    if (summary) lines.push(summary)
     if (attempt.rationale) lines.push(attempt.rationale)
-    if (attempt.evidence.length > 0) lines.push('доводы:', ...attempt.evidence.map((item) => `  · ${item}`))
+
+    const lost = attempt.findings.filter(costly)
+    if (lost.length > 0) lines.push('чем набран балл:', ...lost.map((f) => `  · ${findingLine(f)}`))
+    if (attempt.evidence.length > 0) lines.push('проверки:', ...attempt.evidence.map((item) => `  · ${item}`))
   }
 
   if (report.spread) {

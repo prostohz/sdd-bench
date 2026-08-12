@@ -82,7 +82,9 @@ node dist/src/cli.js serve                     # просмотр в брауз�
 в `judge-probes/<время>--<метрика>/` (`materials/`, `rubric.md`,
 `attempt-N.json`, `probe.json`); каталог меняется через `--out`.
 `--keep-sandbox` оставляет sandbox судьи живым, чтобы зайти в него руками.
-Путь до судьи тот же, что в настоящем прогоне (`askJudge` в `src/judge/`).
+Путь до судьи тот же, что в настоящем прогоне (`askJudge` в `src/judge/`):
+материал с именем `requirements.md` связывает судью пробы тем же чек-листом,
+что и настоящего.
 
 `--dry-run` подменяет слой sandbox заглушкой: конвейер, скоринг и отчёт
 отлаживаются без обращений к API. Настройки — `bench.json` в корне
@@ -97,9 +99,10 @@ src/catalog.ts   загрузка tasks/ и participants/, все проблем
 src/sandbox/     драйвер sbx, холостой драйвер, материализация seed, извлечение
 src/run/         запуск участника, вызов claude, телеметрия, тесты проекта
 src/judge/       судья по метрике в отдельном sandbox, рубрики в judges/
+                 судья решает по пунктам, балл считает tally.ts
 src/score/       spec-quality,spec-fit,impl-fit → Score_run, агрегация запуск→задача→класс→итог
 src/report/      markdown-отчёт
-tasks/<class>/<id>/   task.json, intent.md, seed/, tests/
+tasks/<class>/<id>/   task.json, intent.md, requirements.md, seed/, tests/
 results/<id>/    manifest.json, bench.log, runs/<задача>--<участник>--<повтор>/
                  в запуске: run.log — ход запуска, agent.log — диалог агента,
                  agent.jsonl — его события как есть
