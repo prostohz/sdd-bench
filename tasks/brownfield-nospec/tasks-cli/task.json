@@ -1,0 +1,16 @@
+{
+  "id": "tasks-cli",
+  "class": "brownfield-nospec",
+  "intent": "intent.md",
+  "requirements": "requirements.md",
+  "seed": "seed",
+  "baselineTests": {
+    "command": "python3 -m unittest discover -q -s tests -t ."
+  },
+  "hiddenTests": {
+    "dir": "tests",
+    "command": "bash sdd-bench-check.sh",
+    "countsPattern": "passed (\\d+) of (\\d+)"
+  },
+  "allowHosts": ["registry.npmjs.org", "*.npmjs.org", "pypi.org", "files.pythonhosted.org"]
+}
