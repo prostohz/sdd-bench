@@ -589,7 +589,7 @@ tbody tr:hover {
   }
 }
 @media (max-width: 430px) {
-  .topbar nav a:nth-child(1) {
+  .brand > span:last-child {
     display: none;
   }
   .hero h1 {

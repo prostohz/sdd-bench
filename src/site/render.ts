@@ -36,9 +36,9 @@ function bar(value: number | null, className = ''): string {
 function sectionHead(title: string, note?: string): string {
   return `<div class="section-head"><h2>${title}</h2>${note ? `<p>${note}</p>` : ''}</div>`
 }
-export function siteHeader(hasResults: boolean, current: 'home' | 'methodology' = 'home'): string {
+export function siteHeader(current: 'home' | 'methodology' = 'home'): string {
   const home = current === 'home'
-  return `<header class="topbar"><a class="brand" href="./index.html" aria-label="SDD Bench home"><span class="brand-mark">S<span>/</span>D</span><span>SDD BENCH</span></a><nav aria-label="Sections"><a href="${home ? '#results' : './index.html#results'}">Results</a>${hasResults ? `<a href="${home ? '#tasks' : './index.html#tasks'}">Tasks</a>` : ''}<a href="${home ? './methodology.html' : '#top'}"${home ? '' : ' aria-current="page"'}>Methodology</a></nav></header>`
+  return `<header class="topbar"><a class="brand" href="./index.html" aria-label="SDD Bench home"><span class="brand-mark">S<span>/</span>D</span><span>SDD BENCH</span></a><nav aria-label="Sections"><a href="./index.html"${home ? ' aria-current="page"' : ''}>Bench</a><a href="./methodology.html"${home ? '' : ' aria-current="page"'}>Methodology</a></nav></header>`
 }
 function empty(): string {
   return `<main id="top"><section class="hero empty-hero"><div class="hero-layout"><div><h1>From intent<br>to working<br><em>code.</em></h1><p class="hero-intro">Comparing specification-driven workflows by specification quality, implementation fidelity, and effort.</p><a class="hero-link" href="./methodology.html">How the benchmark works <span aria-hidden="true">↗</span></a></div><div class="hero-art" aria-hidden="true"><div class="art-caption">BENCHMARK PIPELINE <span>01 / 03</span></div><div class="art-step"><span>01</span><strong>Intent</strong><i></i></div><div class="art-step"><span>02</span><strong>Specification</strong><i></i></div><div class="art-step"><span>03</span><strong>Implementation</strong><i></i></div><div class="art-bottom">INTENT <span>→</span> SPEC <span>→</span> CODE</div></div></div></section><section id="results" class="content empty-state">${sectionHead('Results', 'No public runs yet.')}<div class="empty-panel"><div class="empty-icon">∅</div><div><h3>The first result is in progress</h3><p>Once a run is complete and reviewed, participant scores and task comparisons will appear here.</p></div><span class="empty-label">AWAITING DATA</span></div></section>${method()}</main>`
@@ -121,5 +121,5 @@ export function renderSite(manifest: ResultManifest | undefined, version: string
     manifest && manifest.runs.length > 0
       ? `Results ${manifest.resultId} — SDD Bench`
       : 'SDD Bench — Results'
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench: results of a specification-driven development benchmark."><meta name="theme-color" content="#f7f6f2"><title>${esc(title)}</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader(Boolean(manifest && manifest.runs.length > 0))}${body}</body></html>\n`
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench: results of a specification-driven development benchmark."><meta name="theme-color" content="#f7f6f2"><title>${esc(title)}</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader()}${body}</body></html>\n`
 }

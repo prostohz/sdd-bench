@@ -4,7 +4,7 @@ const markdown = new MarkdownIt({ html: false, linkify: false, typographer: true
 function esc(value: string): string {
   return markdown.utils.escapeHtml(value)
 }
-export function renderMethodology(source: string, hasResults = false): string {
+export function renderMethodology(source: string): string {
   const lines = source.trim().split(/\r?\n/)
   const first = lines[0] ?? ''
   const title = first.startsWith('# ') ? first.slice(2).trim() : 'Methodology'
@@ -24,5 +24,5 @@ export function renderMethodology(source: string, hasResults = false): string {
     .join('')
   const article = markdown.renderer.render(tokens, markdown.options, {})
   const body = `<main id="top" class="methodology-page"><div class="methodology-layout"><h1 class="methodology-title">${esc(title)}</h1><aside class="methodology-aside"><div class="methodology-toc"><ul>${contents}</ul><a class="toc-back" href="./index.html#results">← Back to results</a></div></aside><article class="methodology-content">${article}</article></div></main>`
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${esc(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader(hasResults, 'methodology')}${body}</body></html>\n`
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${esc(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader('methodology')}${body}</body></html>\n`
 }

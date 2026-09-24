@@ -42,7 +42,7 @@ mkdirSync(destination, { recursive: true })
 writeFileSync(join(destination, 'index.html'), renderSite(manifest, version))
 writeFileSync(
   join(destination, 'methodology.html'),
-  renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8'), Boolean(manifest)),
+  renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8')),
 )
 copyFileSync(join(root, 'src/site/site.css'), join(destination, 'site.css'))
 copyFileSync(join(root, 'src/site/favicon.svg'), join(destination, 'favicon.svg'))

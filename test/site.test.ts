@@ -78,6 +78,10 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 
 test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture(), version)
+  assert.match(
+    html,
+    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Bench<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
+  )
   assert.match(html, /Overall scores/)
   assert.match(html, /Task breakdown/)
   assert.match(html, /Run scores/)
@@ -121,6 +125,10 @@ test('the specification stage omits implementation checks', () => {
 
 test('the site shows an empty state without a result', () => {
   const html = renderSite(undefined, version)
+  assert.match(
+    html,
+    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Bench<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
+  )
   assert.match(html, /No public runs yet/)
   assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
@@ -131,6 +139,10 @@ test('the site shows an empty state without a result', () => {
 test('the methodology page renders the current Markdown with navigation', () => {
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
+  assert.match(
+    html,
+    /<nav aria-label="Sections"><a href="\.\/index\.html">Bench<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
+  )
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
   assert.doesNotMatch(html, /ON THIS PAGE|class="toc-label"|<a href="#section-1"><span>/)
