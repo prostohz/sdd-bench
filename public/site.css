@@ -96,25 +96,6 @@ main {
 .topbar nav a:hover {
   color: var(--green-2);
 }
-.topbar-badge {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  border-left: 1px solid var(--line);
-  padding-left: 31px;
-  color: var(--green);
-  font: 10px var(--mono);
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-.live-dot {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #3b9b68;
-  box-shadow: 0 0 0 4px #dcebdc;
-}
 .hero {
   padding: 67px max(5vw, calc((100vw - 1420px) / 2)) 78px;
   background:
@@ -674,9 +655,6 @@ tbody tr:hover {
 @media (max-width: 1050px) {
   .topbar {
     padding: 0 4vw;
-  }
-  .topbar-badge {
-    display: none;
   }
   .hero {
     padding-left: 4vw;

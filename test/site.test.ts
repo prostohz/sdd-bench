@@ -78,6 +78,7 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture())
   assert.match(html, /Run ranking/)
+  assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
   assert.match(html, /Repeats: 1/)
@@ -114,6 +115,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
   assert.match(html, /Task classes/)
+  assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.match(html, /Run protocol/)
   assert.match(html, /Aggregate score/)
   assert.match(html, /Interpreting results/)
