@@ -1,4 +1,4 @@
-import type { Metric, ResultManifest, RunRecord } from '../model/run.js'
+import type { Metric, ResultManifest } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import { scoreParticipants, scoreRun } from '../score/score.js'
 const METRIC_LABELS: Record<Metric, string> = {
@@ -33,11 +33,8 @@ function bar(value: number | null, className = ''): string {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
   return `<span class="bar ${className}" aria-hidden="true"><span style="width:${width}%"></span></span>`
 }
-function duration(ms: number | null): string {
-  return ms === null ? '—' : `${Math.round(ms / 60000)} min`
-}
-function sectionHead(title: string, note: string): string {
-  return `<div class="section-head"><h2>${title}</h2><p>${note}</p></div>`
+function sectionHead(title: string, note?: string): string {
+  return `<div class="section-head"><h2>${title}</h2>${note ? `<p>${note}</p>` : ''}</div>`
 }
 export function siteHeader(hasResults: boolean, current: 'home' | 'methodology' = 'home'): string {
   const home = current === 'home'
@@ -60,11 +57,10 @@ function leaderboard(manifest: ResultManifest): string {
           return `<td class="class-cell"><span>${score(value)}</span>${bar(value)}</td>`
         })
         .join('')
-      const cost = participant.efficiency.meanCostUsd
-      return `<tr><td class="rank">${String(index + 1).padStart(2, '0')}</td><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span><span class="participant-id">${esc(participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}<td class="efficiency">${duration(participant.efficiency.meanDurationMs)}</td><td class="efficiency">${cost === null ? '—' : `$${cost.toFixed(2)}`}</td></tr>`
+      return `<tr><td class="rank">${String(index + 1).padStart(2, '0')}</td><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span><span class="participant-id">${esc(participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Run ranking', 'Mean across included task classes. Time and cost are reported separately.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col">Avg. time</th><th scope="col">Avg. cost</th></tr></thead><tbody>${rows}</tbody></table></div><p class="table-footnote">Scores range from 0 to 100 · “—” means no data.</p></section>`
+  return `<section class="content" id="results">${sectionHead('Run ranking', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -84,19 +80,11 @@ function tasks(manifest: ResultManifest): string {
     .join('')
   return `<section class="content task-section" id="tasks">${sectionHead('By task', 'Each card shows a participant’s mean score across repeats for one task.')}<div class="task-grid">${cards}</div></section>`
 }
-function runStatus(run: RunRecord): string {
-  const scored = scoreRun(run)
-  if (scored.value === null) return '<span class="status pending">Awaiting judgment</span>'
-  if (scored.zeroReason) return '<span class="status failed">Zero score</span>'
-  return '<span class="status complete">Scored</span>'
-}
 function runs(manifest: ResultManifest): string {
   const stage = manifest.config.stage ?? DEFAULT_STAGE
   const metrics = STAGE_METRICS[stage]
   const showHidden = stage === 'full'
-  const note = showHidden
-    ? 'Judge scores use a 0–10 scale. Held-out tests are reported separately from the score.'
-    : 'Judge scores use a 0–10 scale.'
+  const note = showHidden ? 'Held-out tests are reported separately from the score.' : undefined
   const rows = [...manifest.runs]
     .sort(
       (a, b) =>
@@ -116,10 +104,10 @@ function runs(manifest: ResultManifest): string {
       const hiddenCell = showHidden
         ? `<td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td>`
         : ''
-      return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)} · repeat ${run.repeat}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}<td>${runStatus(run)}</td></tr>`
+      return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)} · repeat ${run.repeat}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
     })
     .join('')
-  return `<section class="content runs-section" id="runs">${sectionHead('All runs', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}<th scope="col">Status</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content runs-section" id="runs">${sectionHead('All runs', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function method(): string {
   return `<section class="method" id="method"><div class="content">${sectionHead('How to read this result', 'How scores are calculated and where comparisons apply.')}<div class="method-grid"><div class="method-item"><span>01 / SAME CONDITIONS</span><h3>One starting point</h3><p>Participants receive the same task, model, and limits. Only the SDD workflow and its tools differ.</p></div><div class="method-item"><span>02 / ITEM-LEVEL JUDGING</span><h3>Decisions before scores</h3><p>Judges assess individual requirements and defects. The harness calculates scores from those decisions.</p></div><div class="method-item"><span>03 / AGGREGATION</span><h3>Equal class weights</h3><p>A run score is the geometric mean of applicable metrics. Repeats average into tasks, tasks into classes, and classes into the final score.</p></div></div></div></section>`

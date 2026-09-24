@@ -88,11 +88,15 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
   assert.match(html, /ledger-cli/)
   assert.match(html, /80%/)
-  assert.match(html, /\$0\.12/)
+  assert.doesNotMatch(
+    html,
+    /Scores range from 0 to 100|Avg\. time|Avg\. cost|<th scope="col">Status<\/th>|Judge scores use a 0–10 scale\.|\$0\.12/,
+  )
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
   assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
   assert.match(html, /<th scope="col" class="number">Score<\/th>/)
   assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
+  assert.match(html, /Held-out tests are reported separately from the score\./)
   assert.doesNotMatch(html, /Full methodology|class="method-link"/)
   assert.doesNotMatch(
     html,
@@ -106,6 +110,7 @@ test('the specification stage omits implementation checks', () => {
   assert.match(html, /spec-quality/)
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
+  assert.match(html, /<div class="section-head"><h2>All runs<\/h2><\/div>/)
 })
 
 test('the site shows an empty state without a result', () => {
