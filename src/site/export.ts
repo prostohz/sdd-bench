@@ -27,6 +27,9 @@ for (let i = 0; i < args.length; i += 1) {
 }
 
 const root = process.cwd()
+const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
+  version: string
+}
 const manifest =
   result === undefined ? undefined : readManifest(resolveResult(root, loadConfig(root), result))
 if (manifest) {
@@ -36,7 +39,7 @@ if (manifest) {
 }
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })
-writeFileSync(join(destination, 'index.html'), renderSite(manifest))
+writeFileSync(join(destination, 'index.html'), renderSite(manifest, version))
 writeFileSync(
   join(destination, 'methodology.html'),
   renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8'), Boolean(manifest)),

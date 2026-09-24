@@ -6,6 +6,8 @@ import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderMethodology } from '../src/site/methodology.js'
 import { renderSite } from '../src/site/render.js'
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+
 function verdict(metric: Verdict['metric'], score: number): Verdict {
   return {
     metric,
@@ -76,8 +78,10 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 }
 
 test('the public site shows summaries without exposing run artifacts', () => {
-  const html = renderSite(fixture())
+  const html = renderSite(fixture(), version)
   assert.match(html, /Run ranking/)
+  assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
+  assert.doesNotMatch(html, /RUN RESULT/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
@@ -97,14 +101,14 @@ test('the public site shows summaries without exposing run artifacts', () => {
 })
 
 test('the specification stage omits implementation checks', () => {
-  const html = renderSite(fixture('spec'))
+  const html = renderSite(fixture('spec'), version)
   assert.match(html, /Specification only/)
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
 })
 
 test('the site shows an empty state without a result', () => {
-  const html = renderSite()
+  const html = renderSite(undefined, version)
   assert.match(html, /No public runs yet/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)

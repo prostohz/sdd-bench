@@ -61,12 +61,12 @@ export function siteHeader(hasResults: boolean, current: 'home' | 'methodology' 
 function empty(): string {
   return `<main id="top"><section class="hero empty-hero"><div class="hero-layout"><div><h1>From intent<br>to working<br><em>code.</em></h1><p class="hero-intro">Comparing specification-driven workflows by specification quality, implementation fidelity, and effort.</p><a class="hero-link" href="./methodology.html">How the benchmark works <span aria-hidden="true">↗</span></a></div><div class="hero-art" aria-hidden="true"><div class="art-caption">BENCHMARK PIPELINE <span>01 / 03</span></div><div class="art-step"><span>01</span><strong>Intent</strong><i></i></div><div class="art-step"><span>02</span><strong>Specification</strong><i></i></div><div class="art-step"><span>03</span><strong>Implementation</strong><i></i></div><div class="art-bottom">INTENT <span>→</span> SPEC <span>→</span> CODE</div></div></div></section><section id="results" class="content empty-state">${sectionHead('Results', 'No public runs yet.')}<div class="empty-panel"><div class="empty-icon">∅</div><div><h3>The first result is in progress</h3><p>Once a run is complete and reviewed, participant scores and task comparisons will appear here.</p></div><span class="empty-label">AWAITING DATA</span></div></section>${method()}</main>`
 }
-function summary(manifest: ResultManifest): string {
+function summary(manifest: ResultManifest, version: string): string {
   const participants = scoreParticipants(manifest.runs)
   const scored = manifest.runs.filter((run) => scoreRun(run).value !== null).length
   const taskCount = new Set(manifest.runs.map((run) => run.taskId)).size
   const stage = manifest.config.stage ?? DEFAULT_STAGE
-  return `<section class="hero results-hero"><div class="results-hero-grid"><div><div class="edition">RUN RESULT <span>${esc(manifest.resultId)}</span></div><h1>From specification<br>to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings. Scores are calculated from saved item-level judgments.</p><div class="hero-meta"><span>${date(manifest.createdAt)}</span><span>${esc(STAGE_LABELS[stage])}</span><span>${esc(manifest.config.participantModel)}</span><span>Repeats: ${manifest.config.repeats}</span></div></div><div class="hero-stat"><span class="hero-stat-label">RESULT SET / 01</span><strong>${participants.length.toString().padStart(2, '0')}</strong><span>participants</span><div class="stat-rule"></div><div class="hero-stat-secondary"><div><b>${taskCount.toString().padStart(2, '0')}</b><span>${taskCount === 1 ? "task" : "tasks"}</span></div><div><b>${scored}<small>/${manifest.runs.length}</small></b><span>runs scored</span></div></div></div></div></section>`
+  return `<section class="hero results-hero"><div class="results-hero-grid"><div><div class="edition">VERSION <span>${esc(version)}</span></div><h1>From specification<br>to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings. Scores are calculated from saved item-level judgments.</p><div class="hero-meta"><span>${date(manifest.createdAt)}</span><span>${esc(STAGE_LABELS[stage])}</span><span>${esc(manifest.config.participantModel)}</span><span>Repeats: ${manifest.config.repeats}</span></div></div><div class="hero-stat"><span class="hero-stat-label">RESULT SET / 01</span><strong>${participants.length.toString().padStart(2, '0')}</strong><span>participants</span><div class="stat-rule"></div><div class="hero-stat-secondary"><div><b>${taskCount.toString().padStart(2, '0')}</b><span>${taskCount === 1 ? "task" : "tasks"}</span></div><div><b>${scored}<small>/${manifest.runs.length}</small></b><span>runs scored</span></div></div></div></div></section>`
 }
 function leaderboard(manifest: ResultManifest): string {
   const ranked = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -146,10 +146,10 @@ function method(): string {
 export function siteFooter(manifest?: ResultManifest): string {
   return `<footer class="footer"><span class="brand-mark">S<span>/</span>D</span><div><strong>SDD BENCH</strong><span>A benchmark for specification-driven development</span></div><span class="footer-id">${manifest ? `SNAPSHOT ${esc(manifest.resultId)}` : 'NO PUBLIC RESULTS YET'}</span></footer>`
 }
-export function renderSite(manifest?: ResultManifest): string {
+export function renderSite(manifest: ResultManifest | undefined, version: string): string {
   const body =
     manifest && manifest.runs.length > 0
-      ? `<main id="top">${summary(manifest)}${leaderboard(manifest)}${tasks(manifest)}${runs(manifest)}${method()}</main>`
+      ? `<main id="top">${summary(manifest, version)}${leaderboard(manifest)}${tasks(manifest)}${runs(manifest)}${method()}</main>`
       : empty()
   const title =
     manifest && manifest.runs.length > 0
