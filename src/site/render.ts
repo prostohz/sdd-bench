@@ -1,10 +1,6 @@
 import type { Metric, ResultManifest, RunRecord } from '../model/run.js'
-import { DEFAULT_STAGE, STAGE_METRICS, type Stage } from '../model/stage.js'
+import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import { scoreParticipants, scoreRun } from '../score/score.js'
-const STAGE_LABELS: Record<Stage, string> = {
-  full: 'Full workflow',
-  spec: 'Specification only',
-}
 const METRIC_LABELS: Record<Metric, string> = {
   'spec-quality': 'Specification quality',
   'spec-fit': 'Specification fit to requirements',
@@ -37,17 +33,6 @@ function bar(value: number | null, className = ''): string {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
   return `<span class="bar ${className}" aria-hidden="true"><span style="width:${width}%"></span></span>`
 }
-function date(value: string): string {
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime())
-    ? esc(value)
-    : new Intl.DateTimeFormat('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        timeZone: 'UTC',
-      }).format(parsed)
-}
 function duration(ms: number | null): string {
   return ms === null ? '—' : `${Math.round(ms / 60000)} min`
 }
@@ -61,9 +46,8 @@ export function siteHeader(hasResults: boolean, current: 'home' | 'methodology' 
 function empty(): string {
   return `<main id="top"><section class="hero empty-hero"><div class="hero-layout"><div><h1>From intent<br>to working<br><em>code.</em></h1><p class="hero-intro">Comparing specification-driven workflows by specification quality, implementation fidelity, and effort.</p><a class="hero-link" href="./methodology.html">How the benchmark works <span aria-hidden="true">↗</span></a></div><div class="hero-art" aria-hidden="true"><div class="art-caption">BENCHMARK PIPELINE <span>01 / 03</span></div><div class="art-step"><span>01</span><strong>Intent</strong><i></i></div><div class="art-step"><span>02</span><strong>Specification</strong><i></i></div><div class="art-step"><span>03</span><strong>Implementation</strong><i></i></div><div class="art-bottom">INTENT <span>→</span> SPEC <span>→</span> CODE</div></div></div></section><section id="results" class="content empty-state">${sectionHead('Results', 'No public runs yet.')}<div class="empty-panel"><div class="empty-icon">∅</div><div><h3>The first result is in progress</h3><p>Once a run is complete and reviewed, participant scores and task comparisons will appear here.</p></div><span class="empty-label">AWAITING DATA</span></div></section>${method()}</main>`
 }
-function summary(manifest: ResultManifest, version: string): string {
-  const stage = manifest.config.stage ?? DEFAULT_STAGE
-  return `<section class="hero results-hero"><div class="results-hero-content"><div class="edition">VERSION <span>${esc(version)}</span></div><h1>From specification<br>to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings. Scores are calculated from saved item-level judgments.</p><div class="hero-meta"><span>${date(manifest.createdAt)}</span><span>${esc(STAGE_LABELS[stage])}</span><span>${esc(manifest.config.participantModel)}</span><span>Repeats: ${manifest.config.repeats}</span></div></div></section>`
+function summary(version: string): string {
+  return `<section class="hero results-hero"><div class="results-hero-content"><div class="edition">VERSION <span>${esc(version)}</span></div><h1>From specification<br>to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings. Scores are calculated from saved item-level judgments.</p></div></section>`
 }
 function leaderboard(manifest: ResultManifest): string {
   const ranked = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -143,7 +127,7 @@ function method(): string {
 export function renderSite(manifest: ResultManifest | undefined, version: string): string {
   const body =
     manifest && manifest.runs.length > 0
-      ? `<main id="top">${summary(manifest, version)}${leaderboard(manifest)}${tasks(manifest)}${runs(manifest)}${method()}</main>`
+      ? `<main id="top">${summary(version)}${leaderboard(manifest)}${tasks(manifest)}${runs(manifest)}${method()}</main>`
       : empty()
   const title =
     manifest && manifest.runs.length > 0

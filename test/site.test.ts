@@ -86,7 +86,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
-  assert.match(html, /Repeats: 1/)
+  assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
   assert.match(html, /ledger-cli/)
   assert.match(html, /80%/)
   assert.match(html, /\$0\.12/)
@@ -103,7 +103,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
 
 test('the specification stage omits implementation checks', () => {
   const html = renderSite(fixture('spec'), version)
-  assert.match(html, /Specification only/)
+  assert.doesNotMatch(html, /Specification only|class="hero-meta"/)
+  assert.match(html, /spec-quality/)
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
 })

@@ -253,20 +253,21 @@ main {
   white-space: nowrap;
 }
 .results-hero {
-  padding-bottom: 70px;
+  padding-top: 44px;
+  padding-bottom: 50px;
 }
 .results-hero-content {
   max-width: 1340px;
   margin: 0 auto;
 }
 .results-hero h1 {
-  font-size: clamp(57px, 6.1vw, 99px);
+  font-size: clamp(50px, 5vw, 76px);
 }
 .edition {
   font: 11px var(--mono);
   letter-spacing: 0.12em;
   color: var(--green);
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 .edition span {
   color: #829489;
@@ -275,19 +276,7 @@ main {
 }
 .results-hero .hero-intro {
   max-width: 680px;
-  margin-top: 26px;
-}
-.hero-meta {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 37px;
-}
-.hero-meta span {
-  border: 1px solid #cfdbce;
-  padding: 8px 11px;
-  color: #4a6452;
-  font: 11px var(--mono);
+  margin-top: 20px;
 }
 .table-shell {
   background: var(--paper);
@@ -582,6 +571,9 @@ tbody tr:hover {
   .hero {
     padding: 52px 5vw 65px;
   }
+  .results-hero {
+    padding: 36px 5vw 40px;
+  }
   .hero-layout {
     display: block;
   }
@@ -589,7 +581,7 @@ tbody tr:hover {
     font-size: clamp(49px, 12vw, 75px);
   }
   .results-hero h1 {
-    font-size: clamp(38px, 8.5vw, 58px);
+    font-size: clamp(36px, 8vw, 48px);
   }
   .hero-intro {
     font-size: 15px;
@@ -598,12 +590,6 @@ tbody tr:hover {
   .hero-art {
     margin: 54px 14px 0 0;
     min-height: 320px;
-  }
-  .hero-meta {
-    gap: 8px;
-  }
-  .hero-meta span {
-    font-size: 10px;
   }
   .content {
     padding: 60px 5vw 0;
@@ -659,7 +645,7 @@ tbody tr:hover {
     font-size: 46px;
   }
   .results-hero h1 {
-    font-size: 38px;
+    font-size: 36px;
   }
   .hero-art {
     padding: 20px 22px;
