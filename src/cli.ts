@@ -157,13 +157,19 @@ async function doctor(config: BenchConfig, options: Options): Promise<number> {
   const driver = makeDriver(options)
   for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
 
-  const failure = await checkAgent(driver, config)
-  if (failure === undefined) {
-    process.stdout.write('агент отвечает\n')
-    return 0
+  const checks = [
+    { role: 'исполнитель', config },
+    { role: 'судья', config: { ...config, participantProvider: config.judgeProvider, participantModel: config.judgeModel, participantEffort: config.judgeEffort } },
+  ]
+  for (const check of checks) {
+    const failure = await checkAgent(driver, check.config)
+    if (failure) {
+      process.stderr.write(`${check.role}: ${failure}\n\n${agentHint(failure, check.config.participantProvider)}\n`)
+      return 1
+    }
   }
-  process.stderr.write(`${failure}\n\n${agentHint(failure)}\n`)
-  return 1
+  process.stdout.write('исполнитель и судья отвечают\n')
+  return 0
 }
 
 /** One participant on one task, once. */
@@ -209,9 +215,13 @@ async function runCommand(root: string, config: BenchConfig, options: Options): 
   for (const warning of await driver.preflight()) log(`⚠ ${warning}`)
 
   if (!options.skipDoctor) {
-    log('проверка агента…')
+    log('проверка исполнителя…')
     const failure = await checkAgent(driver, config)
-    if (failure) throw new Error(`${failure}\n\n${agentHint(failure)}\n\nПропустить проверку: --skip-doctor`)
+    if (failure) throw new Error(`${failure}\n\n${agentHint(failure, config.participantProvider)}\n\nПропустить проверку: --skip-doctor`)
+    log('проверка судьи…')
+    const judgeConfig = { ...config, participantProvider: config.judgeProvider, participantModel: config.judgeModel, participantEffort: config.judgeEffort }
+    const judgeFailure = await checkAgent(driver, judgeConfig)
+    if (judgeFailure) throw new Error(`${judgeFailure}\n\n${agentHint(judgeFailure, config.judgeProvider)}\n\nПропустить проверку: --skip-doctor`)
   }
 
   const resultId = newResultId()

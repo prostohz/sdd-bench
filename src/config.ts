@@ -6,6 +6,8 @@ import { Reader } from './model/validate.js'
 
 export const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'] as const
 export type Effort = (typeof EFFORT_LEVELS)[number]
+export const PROVIDERS = ['codex', 'claude'] as const
+export type Provider = (typeof PROVIDERS)[number]
 
 /**
  * One configuration for every participant: the same model, the same reasoning
@@ -13,8 +15,10 @@ export type Effort = (typeof EFFORT_LEVELS)[number]
  * canonical process differs between participants.
  */
 export interface BenchConfig {
-  model: string
-  effort: Effort
+  participantProvider: Provider
+  participantModel: string
+  participantEffort: Effort
+  judgeProvider: Provider
   judgeModel: string
   judgeEffort: Effort
   /** How much of the process a run exercises. */
@@ -31,16 +35,18 @@ export interface BenchConfig {
 }
 
 export const DEFAULT_CONFIG: BenchConfig = {
-  model: 'claude-sonnet-5',
-  effort: 'high',
-  judgeModel: 'claude-opus-5',
+  participantProvider: 'codex',
+  participantModel: 'gpt-5.6-terra',
+  participantEffort: 'high',
+  judgeProvider: 'codex',
+  judgeModel: 'gpt-6-sol',
   judgeEffort: 'high',
   stage: DEFAULT_STAGE,
   timeoutMs: 45 * 60 * 1000,
   judgeTimeoutMs: 20 * 60 * 1000,
   maxBudgetUsd: undefined,
   repeats: 3,
-  allowHosts: ['api.anthropic.com'],
+  allowHosts: [],
   resultsDir: 'results',
 }
 
@@ -50,8 +56,10 @@ export function loadConfig(root: string, path?: string): BenchConfig {
 
   const reader = Reader.of(file, JSON.parse(readFileSync(file, 'utf8')))
   const config: BenchConfig = {
-    model: reader.optionalString('model') ?? DEFAULT_CONFIG.model,
-    effort: optionalEffort(reader, 'effort') ?? DEFAULT_CONFIG.effort,
+    participantProvider: optionalProvider(reader, 'participantProvider') ?? optionalProvider(reader, 'provider') ?? DEFAULT_CONFIG.participantProvider,
+    participantModel: reader.optionalString('participantModel') ?? reader.optionalString('model') ?? DEFAULT_CONFIG.participantModel,
+    participantEffort: optionalEffort(reader, 'participantEffort') ?? optionalEffort(reader, 'effort') ?? DEFAULT_CONFIG.participantEffort,
+    judgeProvider: optionalProvider(reader, 'judgeProvider') ?? DEFAULT_CONFIG.judgeProvider,
     judgeModel: reader.optionalString('judgeModel') ?? DEFAULT_CONFIG.judgeModel,
     judgeEffort: optionalEffort(reader, 'judgeEffort') ?? DEFAULT_CONFIG.judgeEffort,
     stage: readStage(reader) ?? DEFAULT_CONFIG.stage,
@@ -63,6 +71,9 @@ export function loadConfig(root: string, path?: string): BenchConfig {
     resultsDir: reader.optionalString('resultsDir') ?? DEFAULT_CONFIG.resultsDir,
   }
   if (config.repeats < 1) reader.problem('repeats: expected at least one run')
+  if (config.participantProvider === 'codex' && config.maxBudgetUsd !== undefined) {
+    reader.problem('maxBudgetUsd: Codex CLI не поддерживает лимит стоимости в USD')
+  }
   reader.done()
   return config
 }
@@ -80,6 +91,14 @@ function optionalEffort(reader: Reader, key: string): Effort | undefined {
   if (raw === undefined) return undefined
   if ((EFFORT_LEVELS as readonly string[]).includes(raw)) return raw as Effort
   reader.problem(`${key}: expected one of ${EFFORT_LEVELS.join(', ')}`)
+  return undefined
+}
+
+function optionalProvider(reader: Reader, key: string): Provider | undefined {
+  const raw = reader.optionalString(key)
+  if (raw === undefined) return undefined
+  if ((PROVIDERS as readonly string[]).includes(raw)) return raw as Provider
+  reader.problem(`${key}: expected one of ${PROVIDERS.join(', ')}`)
   return undefined
 }
 

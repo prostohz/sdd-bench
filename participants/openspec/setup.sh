@@ -5,4 +5,4 @@ set -euo pipefail
 npm install -g --no-audit --no-fund @fission-ai/openspec@latest
 
 cd "$SDD_REPO"
-openspec init --tools claude --force --no-animation
+openspec init --tools "$SDD_PROVIDER" --force --no-animation

@@ -15,4 +15,4 @@ cd /tmp/canon/@canon/studio && npm run install:local
 cd /tmp/canon/@canon/cli && npm run install:local && npm link
 
 cd "$SDD_REPO"
-canon-cli init --harness claude
+canon-cli init --harness "$SDD_PROVIDER"

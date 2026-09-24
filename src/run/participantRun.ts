@@ -11,8 +11,9 @@ import type { Sandbox, SandboxDriver } from '../sandbox/driver.js'
 import { extractResult } from '../sandbox/extract.js'
 import { materializeWorkspace } from '../sandbox/workspace.js'
 import { shellQuote } from '../shell.js'
+import { providerHosts, runAgent, type AgentRun } from './agent.js'
 import { agentStream } from './agentLog.js'
-import { PROMPT_PATH, runClaude, type ClaudeRun } from './claude.js'
+import { PROMPT_PATH } from './codex.js'
 import { runTests } from './projectTests.js'
 
 const SETUP_PATH = '/tmp/sdd-bench/setup.sh'
@@ -76,40 +77,40 @@ export async function runParticipant(
     baseline: undefined,
     hidden: undefined,
     verdicts: {},
-    versions: { model: ctx.config.model, effort: ctx.config.effort, driver: ctx.driver.kind },
+    versions: { provider: ctx.config.participantProvider, model: ctx.config.participantModel, effort: ctx.config.participantEffort, driver: ctx.driver.kind },
   }
 
   const note = runLog(runDir)
   ctx.log(`▶ ${runId}`)
-  note(`запуск ${runId}: ${ctx.config.model}, effort ${ctx.config.effort}, драйвер ${ctx.driver.kind}`)
+  note(`запуск ${runId}: ${ctx.config.participantModel}, effort ${ctx.config.participantEffort}, драйвер ${ctx.driver.kind}`)
   await materializeWorkspace(task, workspace)
 
   note('sandbox: создание')
   const sandbox = await ctx.driver.create({
     name: runId,
     workspace,
-    agent: 'claude',
+    agent: ctx.config.participantProvider,
     clone: true,
     readOnlyMounts: Object.values(participant.mounts),
   })
 
   let bundlePath: string | undefined
   try {
-    await sandbox.allowHosts([...ctx.config.allowHosts, ...task.allowHosts, ...participant.allowHosts])
+    await sandbox.allowHosts([...providerHosts(ctx.config.participantProvider), ...ctx.config.allowHosts, ...task.allowHosts, ...participant.allowHosts])
     const repo = await sandbox.repoPath()
     note(`sandbox: готов, репозиторий ${repo}`)
 
-    const setupFailure = await setUp(sandbox, participant, repo, runDir, record, note)
+    const setupFailure = await setUp(sandbox, participant, ctx.config.participantProvider, repo, runDir, record, note)
     if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace, note)
 
     const promptOnHost = join(runDir, 'prompt.md')
-    writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile)))
+    writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile), ctx.config.participantProvider))
     await sandbox.copyIn(promptOnHost, PROMPT_PATH)
 
     note(`агент: старт, лимит ${Math.round(ctx.config.timeoutMs / 60000)} мин (диалог в agent.log)`)
-    const run = await runClaude(sandbox, {
-      model: ctx.config.model,
-      effort: ctx.config.effort,
+    const run = await runAgent(sandbox, ctx.config.participantProvider, {
+      model: ctx.config.participantModel,
+      effort: ctx.config.participantEffort,
       promptPath: PROMPT_PATH,
       maxBudgetUsd: ctx.config.maxBudgetUsd,
       cwd: repo,
@@ -146,6 +147,7 @@ export async function runParticipant(
 async function setUp(
   sandbox: Sandbox,
   participant: Participant,
+  provider: string,
   repo: string,
   runDir: string,
   record: RunRecord,
@@ -154,7 +156,7 @@ async function setUp(
   if (participant.setupFile) {
     note(`установка: ${participant.setupFile}`)
     await sandbox.copyIn(join(participant.dir, participant.setupFile), SETUP_PATH)
-    const setup = await sandbox.exec(`${setupEnv(participant, repo)} bash ${SETUP_PATH}`, {
+    const setup = await sandbox.exec(`${setupEnv(participant, repo, provider)} bash ${SETUP_PATH}`, {
       timeoutMs: 20 * 60 * 1000,
     })
     writeFileSync(join(runDir, 'setup.log'), `${setup.stdout}\n${setup.stderr}`)
@@ -167,8 +169,8 @@ async function setUp(
     if (probe.code === 0) record.versions[participant.id] = probe.stdout.trim().split('\n')[0] ?? ''
   }
 
-  const cli = await sandbox.exec('claude --version', { timeoutMs: 2 * 60 * 1000 })
-  if (cli.code === 0) record.versions['claude'] = cli.stdout.trim()
+  const cli = await sandbox.exec(`${provider} --version`, { timeoutMs: 2 * 60 * 1000 })
+  if (cli.code === 0) record.versions[provider] = cli.stdout.trim()
 
   const versions = Object.entries(record.versions).map(([k, v]) => `${k}=${v.slice(0, 60)}`)
   note(`версии: ${versions.join(', ')}`)
@@ -236,7 +238,7 @@ async function check(
 }
 
 /** What the agent's own numbers say about the invocation that just ended. */
-function describeAgent(run: ClaudeRun): string {
+function describeAgent(run: AgentRun): string {
   const t = run.result?.telemetry
   if (!t) return run.proc.timedOut ? ', лимит времени исчерпан' : ''
   const parts = [`${Math.round(t.activeMs / 1000)} с`, `${t.numTurns ?? '—'} ходов`, `${t.totalTokens} токенов`]
@@ -250,25 +252,27 @@ function describeTests(outcome: TestOutcome): string {
 }
 
 /** What actually went wrong, not the envelope's `subtype`, which says `success`. */
-function agentFailure(run: ClaudeRun): string {
+function agentFailure(run: AgentRun): string {
   const said = run.result?.text.trim()
   if (run.parseError) return run.parseError
   if (said) return said.length > 300 ? `${said.slice(0, 300)}…` : said
-  return `claude завершился с кодом ${run.proc.code}`
+  return `агент завершился с кодом ${run.proc.code}`
 }
 
 /** The setup script learns where the repository and the mounts are. */
-function setupEnv(participant: Participant, repo: string): string {
-  const vars = [`SDD_REPO=${shellQuote(repo)}`]
+function setupEnv(participant: Participant, repo: string, provider: string): string {
+  const vars = [`SDD_REPO=${shellQuote(repo)}`, `SDD_PROVIDER=${shellQuote(provider)}`]
   for (const [name, path] of Object.entries(participant.mounts)) {
     vars.push(`SDD_MOUNT_${name.toUpperCase().replaceAll('-', '_')}=${shellQuote(path)}`)
   }
   return vars.join(' ')
 }
 
-function buildPrompt(task: Task, promptPath: string): string {
+function buildPrompt(task: Task, promptPath: string, provider: string): string {
   const intent = readFileSync(join(task.dir, task.intentFile), 'utf8').trim()
-  return readFileSync(promptPath, 'utf8').replaceAll('{{intent}}', intent)
+  const prompt = readFileSync(promptPath, 'utf8').replaceAll('{{intent}}', intent)
+  if (provider === 'claude') return prompt
+  return 'В Codex используй установленные навыки из .agents/skills для этапов процесса. Если указанная ниже слэш-команда недоступна, найди соответствующий SKILL.md и выполни его инструкции.\n\n' + prompt
 }
 
 function finish(

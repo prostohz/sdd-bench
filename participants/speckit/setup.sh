@@ -16,4 +16,4 @@ done
 uv tool install specify-cli
 
 cd "$SDD_REPO"
-specify init --here --integration claude --script sh --ignore-agent-tools --force
+specify init --here --integration "$SDD_PROVIDER" --script sh --ignore-agent-tools --force

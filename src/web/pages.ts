@@ -194,8 +194,8 @@ export function resultPage(result: ResultView): string {
     `<div class="crumbs"><a href="/">все результаты</a></div>
 <h1>${esc(result.id)}</h1>
 <p class="lede">${esc(STAGE_TITLES[config.stage ?? DEFAULT_STAGE])} ·
-участники <code>${esc(config.model)}</code> (effort ${esc(config.effort)}) ·
-судья <code>${esc(config.judgeModel)}</code> · повторов ${config.repeats}</p>
+участники <code>${esc(config.participantProvider)} / ${esc(config.participantModel)}</code> (effort ${esc(config.participantEffort)}) ·
+судья <code>${esc(config.judgeProvider)} / ${esc(config.judgeModel)}</code> · повторов ${config.repeats}</p>
 
 <div class="card"><table>
 <thead>

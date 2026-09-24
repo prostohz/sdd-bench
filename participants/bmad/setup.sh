@@ -6,9 +6,11 @@
 set -euo pipefail
 
 cd "$SDD_REPO"
+tool="$SDD_PROVIDER"
+if [ "$tool" = claude ]; then tool=claude-code; fi
 npx --yes bmad-method@latest install \
   --yes \
   --directory "$SDD_REPO" \
   --modules bmm \
-  --tools claude-code \
+  --tools "$tool" \
   --output-folder docs

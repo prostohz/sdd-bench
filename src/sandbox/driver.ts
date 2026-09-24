@@ -28,8 +28,7 @@ export interface Sandbox {
 export interface CreateOptions {
   name: string
   workspace: string
-  /** `claude` for a participant or a judge, `shell` for a checking sandbox. */
-  agent: 'claude' | 'shell'
+  agent: 'codex' | 'claude' | 'shell'
   /** Work on a private in-sandbox clone, host repository mounted read-only. */
   clone: boolean
   /** Extra host directories mounted read-only. */

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance for work in this repository.
 
 ## Проект
 
@@ -87,9 +87,13 @@ node dist/src/cli.js serve                     # просмотр в брауз�
 что и настоящего.
 
 `--dry-run` подменяет слой sandbox заглушкой: конвейер, скоринг и отчёт
-отлаживаются без обращений к API. Настройки — `bench.json` в корне
-(модель, effort, модель судьи, лимиты, повторы); без него берутся значения из
-`src/config.ts`.
+отлаживаются без обращений к API. Необязательный `bench.json` или `--config`
+задаёт `participantProvider`, `participantModel`, `participantEffort`,
+`judgeProvider`, `judgeModel`, `judgeEffort`, лимиты и повторы. Поддержаны
+провайдеры `codex` и `claude`;
+по умолчанию исполнитель — Codex / `gpt-5.6-terra`, судья — Codex /
+`gpt-6-sol`. Без файла используются значения из `src/config.ts`.
+`doctor` проверяет обе модели в отдельных sandbox до прогона.
 
 ## Архитектура
 
@@ -97,7 +101,7 @@ node dist/src/cli.js serve                     # просмотр в брауз�
 src/model/       Task, Participant, RunRecord, Verdict + валидация дескрипторов
 src/catalog.ts   загрузка tasks/ и participants/, все проблемы разом
 src/sandbox/     драйвер sbx, холостой драйвер, материализация seed, извлечение
-src/run/         запуск участника, вызов claude, телеметрия, тесты проекта
+src/run/         запуск участника, Codex и Claude, телеметрия, тесты проекта
 src/judge/       судья по метрике в отдельном sandbox, рубрики в judges/
                  судья решает по пунктам, балл считает tally.ts
 src/score/       spec-quality,spec-fit,impl-fit → Score_run, агрегация запуск→задача→класс→итог
@@ -109,7 +113,7 @@ results/<id>/    manifest.json, bench.log, runs/<задача>--<участни�
 ```
 
 Один прогон: seed → git-репозиторий с фиксированным коммитом → sandbox
-(`--clone`, `--no-share-skills`) → setup участника → `claude -p` → извлечение
+(`--clone`, `--no-share-skills`) → setup участника → CLI выбранного провайдера → извлечение
 `repo.bundle` и `spec/` → удаление sandbox → базовые и скрытые тесты в
 отдельном sandbox → три судьи → скор.
 

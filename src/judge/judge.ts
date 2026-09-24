@@ -20,7 +20,7 @@ import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import type { Task } from '../model/task.js'
 import { isRecord } from '../model/validate.js'
 import { tally } from './tally.js'
-import { runClaude, type ClaudeRun } from '../run/claude.js'
+import { providerHosts, runAgent, type AgentRun } from '../run/agent.js'
 import type { SandboxDriver } from '../sandbox/driver.js'
 import { restoreRepo } from '../sandbox/extract.js'
 
@@ -119,7 +119,8 @@ export interface JudgeRequest {
 
 export interface JudgeAnswer {
   sandboxName: string
-  run: ClaudeRun
+  cliVersion: string | undefined
+  run: AgentRun
   verdict: Verdict | undefined
   /** Why the answer is not a verdict, when it is not one. */
   parseError: string | undefined
@@ -152,14 +153,16 @@ export async function askJudge(ctx: JudgeContext, request: JudgeRequest): Promis
     const sandbox = await ctx.driver.create({
       name: request.sandboxName,
       workspace: request.materials,
-      agent: 'claude',
+      agent: ctx.config.judgeProvider,
       clone: false,
     })
     try {
-      await sandbox.allowHosts(request.allowHosts)
+      await sandbox.allowHosts([...providerHosts(ctx.config.judgeProvider), ...request.allowHosts])
       await sandbox.copyIn(promptFile, promptPath)
+      const version = await sandbox.exec(`${ctx.config.judgeProvider} --version`, { timeoutMs: 2 * 60 * 1000 })
+      const cliVersion = version.code === 0 ? version.stdout.trim() : undefined
 
-      const run = await runClaude(sandbox, {
+      const run = await runAgent(sandbox, ctx.config.judgeProvider, {
         model: ctx.config.judgeModel,
         effort: ctx.config.judgeEffort,
         promptPath,
@@ -168,9 +171,13 @@ export async function askJudge(ctx: JudgeContext, request: JudgeRequest): Promis
       })
 
       try {
+        if (run.proc.code !== 0 || run.result?.isError || run.parseError) {
+          throw new Error(run.parseError || run.result?.text || run.proc.stderr || 'судья завершился без ответа')
+        }
         const parsed = parseVerdict(run.result?.text ?? '', request.metric, requirements)
         return {
           sandboxName: sandbox.name,
+          cliVersion,
           run,
           verdict: { ...parsed, metric: request.metric, judgeModel: ctx.config.judgeModel },
           parseError: undefined,
@@ -178,6 +185,7 @@ export async function askJudge(ctx: JudgeContext, request: JudgeRequest): Promis
       } catch (error) {
         return {
           sandboxName: sandbox.name,
+          cliVersion,
           run,
           verdict: undefined,
           parseError: error instanceof Error ? error.message : String(error),
@@ -218,6 +226,7 @@ export async function judgeRun(
     }
   }
   record.versions['judgeModel'] = ctx.config.judgeModel
+  record.versions['judgeProvider'] = ctx.config.judgeProvider
   writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`)
   return record
 }
@@ -282,6 +291,7 @@ async function judgeMetric(
     })
 
     writeCapturedJson(join(runDir, `judge-${metric}.json`), answer.run.proc.stdout)
+    if (answer.cliVersion) record.versions['judgeCli'] = answer.cliVersion
     if (answer.verdict === undefined) throw new Error(answer.parseError ?? `судья ${metric} не ответил`)
     return answer.verdict
   } finally {

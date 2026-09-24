@@ -2,62 +2,73 @@ import { writeFileSync } from 'node:fs'
 
 import { isRecord } from './model/validate.js'
 
-/**
- * Saves what a CLI printed as readable JSON. The envelope arrives on a single
- * line, and its `result` field often carries JSON of its own as a string —
- * both are unreadable as written, and these files exist to be read. Output
- * that is not JSON at all is saved untouched, because then it is a diagnostic.
- */
 export function writeCapturedJson(path: string, stdout: string): void {
   const envelope = resultEnvelope(stdout)
-  if (envelope === undefined) {
+  if (envelope !== undefined) {
+    const result = isRecord(envelope) && typeof envelope['result'] === 'string'
+      ? parseJson(envelope['result']) ?? envelope['result']
+      : undefined
+    writeFileSync(path, `${JSON.stringify({ ...envelope, result }, null, 2)}\n`)
+    return
+  }
+  const events = readEvents(stdout)
+  if (events.length === 0) {
     writeFileSync(path, stdout)
     return
   }
-  writeFileSync(path, `${JSON.stringify(expandResult(envelope), null, 2)}\n`)
-}
-
-/** The agent's own words, without JSON escaping in the way. */
-export function resultText(stdout: string): string | undefined {
-  const envelope = resultEnvelope(stdout)
-  if (!isRecord(envelope) || typeof envelope['result'] !== 'string') return undefined
-  const text = envelope['result'].trim()
-  return text === '' ? undefined : `${text}\n`
-}
-
-function expandResult(envelope: unknown): unknown {
-  if (!isRecord(envelope) || typeof envelope['result'] !== 'string') return envelope
-  const inner = parseJson(envelope['result'])
-  return inner === undefined ? envelope : { ...envelope, result: inner }
-}
-
-/**
- * The envelope that closes a session, wherever it ended up. A streamed session
- * prints one event per line and the envelope is the last of them; a plain one
- * prints it alone. Either way the CLI may print notices of its own around it,
- * so a line that does not parse is passed over rather than believed.
- */
-export function resultEnvelope(stdout: string): unknown {
-  const lines = stdout.trim().split('\n')
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    const candidate = parseJson(lines[i] ?? '')
-    if (isRecord(candidate) && 'result' in candidate) return candidate
-  }
-  // Not one object per line: an envelope printed across several of them.
-  return parseJson(stdout)
-}
-
-/** The CLI may print notices before the JSON, so the first object also counts. */
-function parseJson(text: string): unknown {
-  const trimmed = text.trim()
-  if (trimmed === '') return undefined
-
-  for (let start = trimmed.indexOf('{'); start !== -1; start = trimmed.indexOf('{', start + 1)) {
+  const text = resultText(stdout)
+  let result: unknown = text?.trim()
+  if (typeof result === 'string') {
     try {
-      return JSON.parse(trimmed.slice(start)) as unknown
+      result = JSON.parse(result)
     } catch {
-      // Not a complete object at this offset; try the next one.
+      result = text?.trim()
     }
   }
-  return undefined
+  writeFileSync(path, `${JSON.stringify({ events, result }, null, 2)}\n`)
+}
+
+export function resultText(stdout: string): string | undefined {
+  const envelope = resultEnvelope(stdout)
+  if (isRecord(envelope) && typeof envelope['result'] === 'string') {
+    const text = envelope['result'].trim()
+    return text === '' ? undefined : `${text}\n`
+  }
+  let text = ''
+  for (const event of readEvents(stdout)) {
+    if (event['type'] !== 'item.completed' || !isRecord(event['item'])) continue
+    const item = event['item']
+    if (item['type'] === 'agent_message' && typeof item['text'] === 'string') text = item['text']
+  }
+  return text.trim() === '' ? undefined : `${text.trim()}\n`
+}
+
+export function resultEnvelope(stdout: string): Record<string, unknown> | undefined {
+  for (const line of stdout.trim().split('\n').reverse()) {
+    const parsed = parseJson(line)
+    if (isRecord(parsed) && parsed['type'] === 'result' && 'result' in parsed) return parsed
+  }
+  const parsed = parseJson(stdout)
+  return isRecord(parsed) && 'result' in parsed ? parsed : undefined
+}
+
+function parseJson(value: string): unknown {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return undefined
+  }
+}
+
+function readEvents(stdout: string): Record<string, unknown>[] {
+  const events: Record<string, unknown>[] = []
+  for (const line of stdout.split('\n')) {
+    try {
+      const event: unknown = JSON.parse(line)
+      if (isRecord(event) && typeof event['type'] === 'string') events.push(event)
+    } catch {
+      continue
+    }
+  }
+  return events
 }

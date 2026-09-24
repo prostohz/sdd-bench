@@ -42,39 +42,49 @@ function render(line: string): string | undefined {
     case 'system':
       return event['subtype'] === 'init' ? 'сессия начата' : undefined
     case 'assistant':
-      return renderContent(event, '')
     case 'user':
-      return renderContent(event, '')
+      return renderContent(event)
     case 'result':
       return `завершение: ${String(event['subtype'] ?? '')}`
+    case 'thread.started':
+      return 'сессия начата'
+    case 'item.completed':
+      return renderItem(event['item'])
+    case 'turn.completed':
+      return 'завершение: success'
+    case 'turn.failed':
+      return `завершение: failed ${brief(event['error'])}`
+    case 'error':
+      return `ошибка: ${brief(event)}`
     default:
       return undefined
   }
 }
 
-function renderContent(event: Record<string, unknown>, prefix: string): string | undefined {
+function renderContent(event: Record<string, unknown>): string | undefined {
   const message = event['message']
   if (!isRecord(message) || !Array.isArray(message['content'])) return undefined
-
   const said: string[] = []
   for (const block of message['content']) {
     if (!isRecord(block)) continue
-    switch (block['type']) {
-      case 'text':
-        if (typeof block['text'] === 'string' && block['text'].trim()) said.push(block['text'].trim())
-        break
-      case 'thinking':
-        said.push('[размышление]')
-        break
-      case 'tool_use':
-        said.push(`→ ${String(block['name'] ?? 'tool')} ${brief(block['input'])}`)
-        break
-      case 'tool_result':
-        said.push(`← ${brief(block['content'])}`)
-        break
-    }
+    if (block['type'] === 'text' && typeof block['text'] === 'string') said.push(block['text'])
+    if (block['type'] === 'thinking') said.push('[размышление]')
+    if (block['type'] === 'tool_use') said.push(`→ ${String(block['name'] ?? 'tool')} ${brief(block['input'])}`)
+    if (block['type'] === 'tool_result') said.push(`← ${brief(block['content'])}`)
   }
-  return said.length === 0 ? undefined : `${prefix}${said.join('\n')}`
+  return said.length === 0 ? undefined : said.join('\n')
+}
+
+function renderItem(value: unknown): string | undefined {
+  if (!isRecord(value)) return undefined
+  if (value['type'] === 'agent_message' && typeof value['text'] === 'string') return value['text'].trim()
+  if (value['type'] === 'reasoning') return '[размышление]'
+  if (value['type'] === 'command_execution') {
+    return `→ ${brief(value['command'])} (код ${String(value['exit_code'] ?? '—')})`
+  }
+  if (value['type'] === 'file_change') return `→ изменения файлов: ${brief(value['changes'])}`
+  if (value['type'] === 'mcp_tool_call') return `→ ${brief(value['server'])}.${brief(value['tool'])}`
+  return undefined
 }
 
 /** A tool's arguments and its output are quoted, not reproduced. */

@@ -43,21 +43,24 @@ class DrySandbox implements Sandbox {
   }
 
   async exec(script: string, options: ExecOptions = {}): Promise<ProcResult> {
-    if (script.includes('--json-schema')) return this.result(JSON.stringify(this.verdict(script)))
     if (script.includes('claude -p')) {
-      this.writeArtifacts()
-      const done = this.result('Спецификация и реализация готовы.')
-      // A stream was asked for, so the stub speaks in one too, envelope last.
-      if (options.onStdout) {
-        for (const event of this.session()) options.onStdout(`${JSON.stringify(event)}\n`)
-        options.onStdout(`${done.stdout}\n`)
-      }
+      const judge = script.includes('--json-schema')
+      if (!judge) this.writeArtifacts()
+      const done = this.claudeResult(judge ? JSON.stringify(this.verdict(script)) : 'Спецификация и реализация готовы.')
+      if (options.onStdout) options.onStdout(`${done.stdout}\n`)
+      return done
+    }
+    if (script.includes('codex exec')) {
+      const judge = script.includes('--output-schema')
+      if (!judge) this.writeArtifacts()
+      const done = this.result(judge ? JSON.stringify(this.verdict(script)) : 'Спецификация и реализация готовы.')
+      if (options.onStdout) options.onStdout(done.stdout)
       return done
     }
     // The extraction step reads real files back, so they have to be there.
     if (script.includes('git bundle create')) this.bundle()
     if (script.includes(SPEC_STAGING)) this.collectSpec()
-    return this.result('')
+    return this.plain(script.includes('codex --version') ? 'codex-cli dry-run\n' : script.includes('claude --version') ? 'claude dry-run\n' : '')
   }
 
   async allowHosts(): Promise<void> {}
@@ -156,45 +159,61 @@ class DrySandbox implements Sandbox {
     }
   }
 
-  private session(): unknown[] {
-    return [
-      { type: 'system', subtype: 'init', session_id: this.name },
-      { type: 'assistant', message: { content: [{ type: 'text', text: 'Читаю задание.' }] } },
-      {
-        type: 'assistant',
-        message: { content: [{ type: 'tool_use', name: 'Write', input: { file_path: 'spec/spec.md' } }] },
-      },
-      { type: 'user', message: { content: [{ type: 'tool_result', content: 'File created' }] } },
-    ]
-  }
-
   private result(text: string): ProcResult {
     const seed = hash(this.name)
-    const envelope = {
-      type: 'result',
-      subtype: 'success',
-      is_error: false,
-      duration_ms: 60_000 + (seed % 600) * 1000,
-      duration_api_ms: 50_000 + (seed % 500) * 1000,
-      num_turns: 5 + (seed % 20),
-      result: text,
-      total_cost_usd: Number((0.5 + (seed % 300) / 100).toFixed(2)),
-      usage: {
-        input_tokens: 10_000 + (seed % 5000),
-        output_tokens: 4_000 + (seed % 3000),
-        cache_creation_input_tokens: 20_000 + (seed % 9000),
-        cache_read_input_tokens: 100_000 + (seed % 50_000),
+    const durationMs = 60_000 + (seed % 600) * 1000
+    const events = [
+      { type: 'thread.started', thread_id: this.name },
+      { type: 'turn.started' },
+      { type: 'item.completed', item: { id: 'message', type: 'agent_message', text } },
+      {
+        type: 'turn.completed',
+        usage: {
+          input_tokens: 10_000 + (seed % 5000),
+          output_tokens: 4_000 + (seed % 3000),
+          cached_input_tokens: 5000 + (seed % 3000),
+        },
       },
-    }
-    // The harness measures wall time itself, so the stub has to spend it too.
+    ]
     return {
       code: 0,
-      stdout: JSON.stringify(envelope),
+      stdout: `${events.map((event) => JSON.stringify(event)).join('\n')}\n`,
       stderr: '',
       timedOut: false,
-      durationMs: envelope.duration_ms,
-      activeMs: envelope.duration_ms,
+      durationMs,
+      activeMs: durationMs,
     }
+  }
+
+  private claudeResult(text: string): ProcResult {
+    const seed = hash(this.name)
+    const durationMs = 60_000 + (seed % 600) * 1000
+    return {
+      code: 0,
+      stdout: JSON.stringify({
+        type: 'result',
+        subtype: 'success',
+        is_error: false,
+        duration_ms: durationMs,
+        num_turns: 5 + (seed % 20),
+        result: text,
+        total_cost_usd: Number((0.5 + (seed % 300) / 100).toFixed(2)),
+        usage: {
+          input_tokens: 10_000 + (seed % 5000),
+          output_tokens: 4_000 + (seed % 3000),
+          cache_creation_input_tokens: 20_000 + (seed % 9000),
+          cache_read_input_tokens: 100_000 + (seed % 50_000),
+        },
+      }),
+      stderr: '',
+      timedOut: false,
+      durationMs,
+      activeMs: durationMs,
+    }
+  }
+
+  private plain(stdout: string): ProcResult {
+    return { code: 0, stdout, stderr: '', timedOut: false, durationMs: 1, activeMs: 1 }
   }
 }
 

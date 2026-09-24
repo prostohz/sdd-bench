@@ -8,6 +8,7 @@ import { resultText, writeCapturedJson } from '../src/artifacts.js'
 
 import { parseVerdict } from '../src/judge/judge.js'
 import { parseClaudeResult } from '../src/run/claude.js'
+import { parseCodexResult } from '../src/run/codex.js'
 import { passRatio } from '../src/run/projectTests.js'
 import { run } from '../src/proc.js'
 import { uniqueHosts } from '../src/sandbox/sbx.js'
@@ -27,6 +28,47 @@ const ENVELOPE = JSON.stringify({
     cache_creation_input_tokens: 40_000,
     cache_read_input_tokens: 900_000,
   },
+})
+
+const CODEX_EVENTS = [
+  { type: 'thread.started', thread_id: 'test' },
+  { type: 'turn.started' },
+  { type: 'item.completed', item: { id: 'message', type: 'agent_message', text: '{"ok":true}' } },
+  { type: 'turn.completed', usage: { input_tokens: 1200, cached_input_tokens: 400, output_tokens: 80 } },
+].map((event) => JSON.stringify(event)).join('\n')
+
+test('Codex JSONL отдаёт итоговый ответ и телеметрию без двойного счёта кэша', () => {
+  const parsed = parseCodexResult(CODEX_EVENTS, 5000)
+  assert.equal(parsed.text, '{"ok":true}')
+  assert.equal(parsed.telemetry.activeMs, 5000)
+  assert.equal(parsed.telemetry.totalTokens, 1280)
+  assert.equal(parsed.telemetry.cacheReadTokens, 400)
+  assert.equal(parsed.isError, false)
+})
+
+test('ошибка Codex не принимается за успешный ответ', () => {
+  const output = [
+    JSON.stringify({ type: 'turn.started' }),
+    JSON.stringify({ type: 'turn.failed', error: { message: 'модель недоступна' } }),
+  ].join('\n')
+  const parsed = parseCodexResult(output, 5000)
+  assert.equal(parsed.isError, true)
+  assert.equal(parsed.text, 'модель недоступна')
+  assert.throws(() => parseCodexResult('{"type":"turn.started"}', 5000), /не содержит завершения/)
+})
+
+test('ответ Codex сохраняется вместе с событиями и читается для пересчёта', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sdd-bench-codex-artifacts-'))
+  try {
+    const path = join(dir, 'judge.json')
+    writeCapturedJson(path, CODEX_EVENTS)
+    const saved = JSON.parse(readFileSync(path, 'utf8')) as { result: { ok: boolean }; events: unknown[] }
+    assert.equal(saved.result.ok, true)
+    assert.equal(saved.events.length, 4)
+    assert.equal(resultText(CODEX_EVENTS), '{"ok":true}\n')
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })
 
 test('телеметрия читается из результата claude', () => {
