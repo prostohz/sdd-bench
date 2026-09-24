@@ -15,8 +15,9 @@ export function renderReport(manifest: ResultManifest): string {
 
   lines.push(`# Результат ${manifest.resultId}`, '')
   lines.push(
-    `Участники: \`${manifest.config.participantProvider ?? 'claude'}\` / \`${manifest.config.participantModel}\` (effort \`${manifest.config.participantEffort}\`). ` +
-      `Судья: \`${manifest.config.judgeProvider ?? 'claude'}\` / \`${manifest.config.judgeModel}\` (effort \`${manifest.config.judgeEffort}\`). ` +
+    `Провайдер: \`${manifest.config.provider}\`. ` +
+      `Участники: \`${manifest.config.participantModel}\` (effort \`${manifest.config.participantEffort}\`). ` +
+      `Судья: \`${manifest.config.judgeModel}\` (effort \`${manifest.config.judgeEffort}\`). ` +
       `Повторов: ${manifest.config.repeats}. ` +
       `Этап: ${STAGE_TITLES[manifest.config.stage ?? DEFAULT_STAGE]}.`,
     '',

@@ -61,7 +61,7 @@ export interface ScoreSpread {
 export interface ProbeReport {
   metric: Metric
   rubricPath: string
-  judgeProvider: string
+  provider: string
   judgeModel: string
   judgeEffort: string
   materials: { name: string; source: string; files: number }[]
@@ -123,7 +123,7 @@ export async function probeJudge(ctx: JudgeContext, options: ProbeOptions): Prom
     const report: ProbeReport = {
       metric: options.metric,
       rubricPath,
-      judgeProvider: ctx.config.judgeProvider,
+      provider: ctx.config.provider,
       judgeModel: ctx.config.judgeModel,
       judgeEffort: ctx.config.judgeEffort,
       materials: options.materials.map((material) => ({
@@ -184,7 +184,7 @@ export function renderProbe(report: ProbeReport): string {
   const lines = [
     `${report.metric} — ${METRIC_TITLES[report.metric]}`,
     `рубрика: ${report.rubricPath}`,
-    `судья: ${report.judgeProvider} / ${report.judgeModel} / ${report.judgeEffort}`,
+    `судья: ${report.provider} / ${report.judgeModel} / ${report.judgeEffort}`,
     'материалы:',
     ...(report.materials.length === 0
       ? ['  — (судья не видит ничего)']

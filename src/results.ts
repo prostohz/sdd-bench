@@ -18,10 +18,9 @@ export function createResult(dir: string, resultId: string, config: BenchConfig,
     resultId,
     createdAt: new Date().toISOString(),
     config: {
-      participantProvider: config.participantProvider,
+      provider: config.provider,
       participantModel: config.participantModel,
       participantEffort: config.participantEffort,
-      judgeProvider: config.judgeProvider,
       judgeModel: config.judgeModel,
       judgeEffort: config.judgeEffort,
       stage: config.stage,
@@ -45,15 +44,19 @@ export function readManifest(dir: string): ResultManifest {
   const path = join(dir, 'manifest.json')
   if (!existsSync(path)) throw new Error(`результат не найден: ${path}`)
   const manifest = JSON.parse(readFileSync(path, 'utf8')) as ResultManifest
-  const legacy = manifest.config as ResultManifest['config'] & { provider?: string; model?: string; effort?: string }
+  const legacy = manifest.config as ResultManifest['config'] & {
+    participantProvider?: string
+    judgeProvider?: string
+    model?: string
+    effort?: string
+  }
   return {
     ...manifest,
     config: {
       ...legacy,
-      participantProvider: legacy.participantProvider ?? legacy.provider ?? 'claude',
+      provider: legacy.provider ?? legacy.participantProvider ?? legacy.judgeProvider ?? 'claude',
       participantModel: legacy.participantModel ?? legacy.model ?? '',
       participantEffort: legacy.participantEffort ?? legacy.effort ?? '',
-      judgeProvider: legacy.judgeProvider ?? 'claude',
     },
     runs: readRuns(dir),
   }

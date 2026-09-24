@@ -22,15 +22,15 @@ export async function checkAgent(driver: SandboxDriver, config: BenchConfig): Pr
   const sandbox = await driver.create({
     name: 'sdd-bench-doctor',
     workspace: dir,
-    agent: config.participantProvider,
+    agent: config.provider,
     clone: false,
   })
 
   try {
-    await sandbox.allowHosts([...providerHosts(config.participantProvider), ...config.allowHosts])
+    await sandbox.allowHosts([...providerHosts(config.provider), ...config.allowHosts])
     await sandbox.copyIn(probe, PROBE_PATH)
 
-    const run = await runAgent(sandbox, config.participantProvider, {
+    const run = await runAgent(sandbox, config.provider, {
       model: config.participantModel,
       effort: config.participantEffort,
       promptPath: PROBE_PATH,
@@ -49,7 +49,7 @@ export async function checkAgent(driver: SandboxDriver, config: BenchConfig): Pr
 }
 
 /** What to do about the failures this check actually runs into. */
-export function agentHint(failure: string, provider: BenchConfig['participantProvider']): string {
+export function agentHint(failure: string, provider: BenchConfig['provider']): string {
   if (provider === 'claude') {
     return 'проверьте секрет Anthropic в Docker Sandboxes и доступ к api.anthropic.com'
   }

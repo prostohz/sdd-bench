@@ -153,16 +153,16 @@ export async function askJudge(ctx: JudgeContext, request: JudgeRequest): Promis
     const sandbox = await ctx.driver.create({
       name: request.sandboxName,
       workspace: request.materials,
-      agent: ctx.config.judgeProvider,
+      agent: ctx.config.provider,
       clone: false,
     })
     try {
-      await sandbox.allowHosts([...providerHosts(ctx.config.judgeProvider), ...request.allowHosts])
+      await sandbox.allowHosts([...providerHosts(ctx.config.provider), ...request.allowHosts])
       await sandbox.copyIn(promptFile, promptPath)
-      const version = await sandbox.exec(`${ctx.config.judgeProvider} --version`, { timeoutMs: 2 * 60 * 1000 })
+      const version = await sandbox.exec(`${ctx.config.provider} --version`, { timeoutMs: 2 * 60 * 1000 })
       const cliVersion = version.code === 0 ? version.stdout.trim() : undefined
 
-      const run = await runAgent(sandbox, ctx.config.judgeProvider, {
+      const run = await runAgent(sandbox, ctx.config.provider, {
         model: ctx.config.judgeModel,
         effort: ctx.config.judgeEffort,
         promptPath,
@@ -226,7 +226,6 @@ export async function judgeRun(
     }
   }
   record.versions['judgeModel'] = ctx.config.judgeModel
-  record.versions['judgeProvider'] = ctx.config.judgeProvider
   writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`)
   return record
 }

@@ -77,7 +77,7 @@ export async function runParticipant(
     baseline: undefined,
     hidden: undefined,
     verdicts: {},
-    versions: { provider: ctx.config.participantProvider, model: ctx.config.participantModel, effort: ctx.config.participantEffort, driver: ctx.driver.kind },
+    versions: { provider: ctx.config.provider, model: ctx.config.participantModel, effort: ctx.config.participantEffort, driver: ctx.driver.kind },
   }
 
   const note = runLog(runDir)
@@ -89,26 +89,26 @@ export async function runParticipant(
   const sandbox = await ctx.driver.create({
     name: runId,
     workspace,
-    agent: ctx.config.participantProvider,
+    agent: ctx.config.provider,
     clone: true,
     readOnlyMounts: Object.values(participant.mounts),
   })
 
   let bundlePath: string | undefined
   try {
-    await sandbox.allowHosts([...providerHosts(ctx.config.participantProvider), ...ctx.config.allowHosts, ...task.allowHosts, ...participant.allowHosts])
+    await sandbox.allowHosts([...providerHosts(ctx.config.provider), ...ctx.config.allowHosts, ...task.allowHosts, ...participant.allowHosts])
     const repo = await sandbox.repoPath()
     note(`sandbox: готов, репозиторий ${repo}`)
 
-    const setupFailure = await setUp(sandbox, participant, ctx.config.participantProvider, repo, runDir, record, note)
+    const setupFailure = await setUp(sandbox, participant, ctx.config.provider, repo, runDir, record, note)
     if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace, note)
 
     const promptOnHost = join(runDir, 'prompt.md')
-    writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile), ctx.config.participantProvider))
+    writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile), ctx.config.provider))
     await sandbox.copyIn(promptOnHost, PROMPT_PATH)
 
     note(`агент: старт, лимит ${Math.round(ctx.config.timeoutMs / 60000)} мин (диалог в agent.log)`)
-    const run = await runAgent(sandbox, ctx.config.participantProvider, {
+    const run = await runAgent(sandbox, ctx.config.provider, {
       model: ctx.config.participantModel,
       effort: ctx.config.participantEffort,
       promptPath: PROMPT_PATH,

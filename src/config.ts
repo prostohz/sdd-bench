@@ -15,10 +15,9 @@ export type Provider = (typeof PROVIDERS)[number]
  * canonical process differs between participants.
  */
 export interface BenchConfig {
-  participantProvider: Provider
+  provider: Provider
   participantModel: string
   participantEffort: Effort
-  judgeProvider: Provider
   judgeModel: string
   judgeEffort: Effort
   /** How much of the process a run exercises. */
@@ -35,10 +34,9 @@ export interface BenchConfig {
 }
 
 export const DEFAULT_CONFIG: BenchConfig = {
-  participantProvider: 'codex',
+  provider: 'codex',
   participantModel: 'gpt-5.6-terra',
   participantEffort: 'high',
-  judgeProvider: 'codex',
   judgeModel: 'gpt-6-sol',
   judgeEffort: 'high',
   stage: DEFAULT_STAGE,
@@ -55,11 +53,15 @@ export function loadConfig(root: string, path?: string): BenchConfig {
   if (!existsSync(file)) return { ...DEFAULT_CONFIG }
 
   const reader = Reader.of(file, JSON.parse(readFileSync(file, 'utf8')))
+  const sharedProvider = optionalProvider(reader, 'provider')
+  const participantProvider = optionalProvider(reader, 'participantProvider')
+  const judgeProvider = optionalProvider(reader, 'judgeProvider')
+  const providers = [sharedProvider, participantProvider, judgeProvider].filter((value) => value !== undefined)
+  if (new Set(providers).size > 1) reader.problem('provider: исполнитель и судья должны использовать одного провайдера')
   const config: BenchConfig = {
-    participantProvider: optionalProvider(reader, 'participantProvider') ?? optionalProvider(reader, 'provider') ?? DEFAULT_CONFIG.participantProvider,
+    provider: sharedProvider ?? participantProvider ?? judgeProvider ?? DEFAULT_CONFIG.provider,
     participantModel: reader.optionalString('participantModel') ?? reader.optionalString('model') ?? DEFAULT_CONFIG.participantModel,
     participantEffort: optionalEffort(reader, 'participantEffort') ?? optionalEffort(reader, 'effort') ?? DEFAULT_CONFIG.participantEffort,
-    judgeProvider: optionalProvider(reader, 'judgeProvider') ?? DEFAULT_CONFIG.judgeProvider,
     judgeModel: reader.optionalString('judgeModel') ?? DEFAULT_CONFIG.judgeModel,
     judgeEffort: optionalEffort(reader, 'judgeEffort') ?? DEFAULT_CONFIG.judgeEffort,
     stage: readStage(reader) ?? DEFAULT_CONFIG.stage,
@@ -71,7 +73,7 @@ export function loadConfig(root: string, path?: string): BenchConfig {
     resultsDir: reader.optionalString('resultsDir') ?? DEFAULT_CONFIG.resultsDir,
   }
   if (config.repeats < 1) reader.problem('repeats: expected at least one run')
-  if (config.participantProvider === 'codex' && config.maxBudgetUsd !== undefined) {
+  if (config.provider === 'codex' && config.maxBudgetUsd !== undefined) {
     reader.problem('maxBudgetUsd: Codex CLI не поддерживает лимит стоимости в USD')
   }
   reader.done()

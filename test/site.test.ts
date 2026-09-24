@@ -59,10 +59,9 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
     resultId: 'sample',
     createdAt: '2026-01-01T00:00:00Z',
     config: {
-      participantProvider: 'codex',
+      provider: 'codex',
       participantModel: 'model',
       participantEffort: 'medium',
-      judgeProvider: 'codex',
       judgeModel: 'judge',
       judgeEffort: 'medium',
       stage,

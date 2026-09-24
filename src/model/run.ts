@@ -142,10 +142,9 @@ export interface ResultManifest {
   resultId: string
   createdAt: string
   config: {
-    participantProvider: string
+    provider: string
     participantModel: string
     participantEffort: string
-    judgeProvider: string
     judgeModel: string
     judgeEffort: string
     stage: Stage
