@@ -703,6 +703,18 @@ tbody tr:hover {
   color: inherit;
   font: inherit;
 }
+.methodology-content .math-formula {
+  overflow-x: auto;
+  margin: 26px 0;
+  padding: 24px 22px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 17px;
+}
+.methodology-content .math-formula .katex-display {
+  margin: 0;
+}
 .methodology-content table {
   width: 100%;
   min-width: 0;
@@ -750,6 +762,10 @@ tbody tr:hover {
   }
   .methodology-content h2 {
     font-size: 29px;
+  }
+  .methodology-content .math-formula {
+    padding: 18px 14px;
+    font-size: 15px;
   }
 }
 @media (max-width: 430px) {

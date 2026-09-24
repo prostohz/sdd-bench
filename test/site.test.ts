@@ -179,7 +179,10 @@ test('the methodology page renders the current Markdown with navigation', () => 
   const sectionCount = [...source.matchAll(/^## /gm)].length
   assert.equal((html.match(/<h2 id="section-\d+">/g) ?? []).length, sectionCount)
   assert.match(html, new RegExp(`href="#section-${sectionCount}"`))
-  assert.match(html, /Score_run = 100/)
+  assert.match(html, /<link rel="stylesheet" href="\.\/katex\/katex\.min\.css">/)
+  assert.match(html, /<div class="math-formula"><span class="katex-display">/)
+  assert.match(html, /class="katex-mathml"/)
+  assert.doesNotMatch(html, /<pre><code class="language-math">/)
   assert.match(html, /<table>/)
 })
 

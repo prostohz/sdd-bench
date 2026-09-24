@@ -69,14 +69,15 @@ The substantive metric scores are normalized to the range `0` to `1`:
 - `spec-fit` — specification fit to requirements;
 - `impl-fit` — implementation fit to specification.
 
-A run score is the geometric mean of the metrics for its stage: three for `full` and two for `spec`.
+A run score is the geometric mean of its stage metrics. Here `m_i` is a metric normalized to `0–1`, and `n` is the number of applicable metrics: three for `full` and two for `spec`.
 
-~~~text
-Score_run = 100 × ⁿ√(∏ stage metrics)
-
-full: 100 × ∛(spec-quality × spec-fit × impl-fit)
-spec: 100 × √(spec-quality × spec-fit)
-~~~
+```math
+\begin{aligned}
+\mathrm{Score}_{\mathrm{run}} &= 100\sqrt[n]{\prod_{i=1}^{n}m_i} \\
+\mathrm{Score}_{\mathrm{full}} &= 100\sqrt[3]{\text{spec-quality}\cdot\text{spec-fit}\cdot\text{impl-fit}} \\
+\mathrm{Score}_{\mathrm{spec}} &= 100\sqrt{\text{spec-quality}\cdot\text{spec-fit}}
+\end{aligned}
+```
 
 For example, scores of `8/10`, `6/10`, and `9/10` at the `full` stage yield `100 × ∛(0.8 × 0.6 × 0.9) = 75.6`. A successful run has no aggregate score until all applicable judgments are available.
 

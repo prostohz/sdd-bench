@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
 
 import { loadConfig } from '../config.js'
@@ -46,5 +46,10 @@ writeFileSync(
 )
 copyFileSync(join(root, 'src/site/site.css'), join(destination, 'site.css'))
 copyFileSync(join(root, 'src/site/favicon.svg'), join(destination, 'favicon.svg'))
+const katexSource = join(root, 'node_modules/katex/dist')
+const katexDestination = join(destination, 'katex')
+mkdirSync(katexDestination, { recursive: true })
+copyFileSync(join(katexSource, 'katex.min.css'), join(katexDestination, 'katex.min.css'))
+cpSync(join(katexSource, 'fonts'), join(katexDestination, 'fonts'), { recursive: true })
 writeFileSync(join(destination, '.nojekyll'), '')
 process.stdout.write(`${join(destination, 'index.html')}\n`)
