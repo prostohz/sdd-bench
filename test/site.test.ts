@@ -78,7 +78,9 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 
 test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture(), version)
-  assert.match(html, /Run ranking/)
+  assert.match(html, /Overall scores/)
+  assert.match(html, /Task breakdown/)
+  assert.match(html, /Run scores/)
   assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
   assert.doesNotMatch(html, /RUN RESULT/)
   assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
@@ -110,7 +112,7 @@ test('the specification stage omits implementation checks', () => {
   assert.match(html, /spec-quality/)
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
-  assert.match(html, /<div class="section-head"><h2>All runs<\/h2><\/div>/)
+  assert.match(html, /<div class="section-head"><h2>Run scores<\/h2><\/div>/)
 })
 
 test('the site shows an empty state without a result', () => {

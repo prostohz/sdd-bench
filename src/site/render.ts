@@ -60,7 +60,7 @@ function leaderboard(manifest: ResultManifest): string {
       return `<tr><td class="rank">${String(index + 1).padStart(2, '0')}</td><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span><span class="participant-id">${esc(participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Run ranking', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -78,7 +78,7 @@ function tasks(manifest: ResultManifest): string {
       return `<article class="task-card"><div class="task-top"><span>TASK ${String(index + 1).padStart(2, '0')}</span><span>${esc(CLASS_NAMES[taskClass] ?? taskClass)}</span></div><h3>${esc(taskId)}</h3><p>Mean score across repeats</p><div class="task-bars">${rows}</div></article>`
     })
     .join('')
-  return `<section class="content task-section" id="tasks">${sectionHead('By task', 'Each card shows a participant’s mean score across repeats for one task.')}<div class="task-grid">${cards}</div></section>`
+  return `<section class="content task-section" id="tasks">${sectionHead('Task breakdown', 'Each card shows a participant’s mean score across repeats for one task.')}<div class="task-grid">${cards}</div></section>`
 }
 function runs(manifest: ResultManifest): string {
   const stage = manifest.config.stage ?? DEFAULT_STAGE
@@ -107,7 +107,7 @@ function runs(manifest: ResultManifest): string {
       return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)} · repeat ${run.repeat}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
     })
     .join('')
-  return `<section class="content runs-section" id="runs">${sectionHead('All runs', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content runs-section" id="runs">${sectionHead('Run scores', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function method(): string {
   return `<section class="method" id="method"><div class="content">${sectionHead('How to read this result', 'How scores are calculated and where comparisons apply.')}<div class="method-grid"><div class="method-item"><span>01 / SAME CONDITIONS</span><h3>One starting point</h3><p>Participants receive the same task, model, and limits. Only the SDD workflow and its tools differ.</p></div><div class="method-item"><span>02 / ITEM-LEVEL JUDGING</span><h3>Decisions before scores</h3><p>Judges assess individual requirements and defects. The harness calculates scores from those decisions.</p></div><div class="method-item"><span>03 / AGGREGATION</span><h3>Equal class weights</h3><p>A run score is the geometric mean of applicable metrics. Repeats average into tasks, tasks into classes, and classes into the final score.</p></div></div></div></section>`
