@@ -480,15 +480,10 @@ tbody tr:hover {
   border-left: 1px solid #cfdacd;
   padding-left: 30px;
 }
-.method-item > span {
-  color: var(--green-2);
-  font: 10px var(--mono);
-  letter-spacing: 0.08em;
-}
 .method-item h3 {
   font: 700 19px var(--display);
   letter-spacing: -0.035em;
-  margin: 23px 0 9px;
+  margin: 0 0 9px;
 }
 .method-item p {
   font-size: 13px;
@@ -591,9 +586,6 @@ tbody tr:hover {
     border-left: 0;
     border-top: 1px solid #cfdacd;
     padding: 24px 0;
-  }
-  .method-item h3 {
-    margin-top: 13px;
   }
 }
 @media (max-width: 430px) {
