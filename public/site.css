@@ -102,20 +102,6 @@ main {
     radial-gradient(circle at 88% 16%, #f0f4e6 0, transparent 32%), var(--bg);
   border-bottom: 1px solid var(--line);
 }
-.hero-kicker {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--green);
-  font: 11px var(--mono);
-  letter-spacing: 0.12em;
-}
-.kicker-line {
-  display: inline-block;
-  width: 26px;
-  height: 1px;
-  background: var(--green);
-}
 .hero-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.75fr);
@@ -596,9 +582,6 @@ tbody tr:hover {
   .hero {
     padding: 52px 5vw 65px;
   }
-  .hero-kicker {
-    font-size: 9px;
-  }
   .hero-layout {
     display: block;
   }
@@ -699,62 +682,9 @@ tbody tr:hover {
 .methodology-page {
   overflow: visible;
 }
-.methodology-hero {
-  background: var(--green);
-  color: #fff;
-  padding: 55px 5vw 70px;
-}
-.methodology-hero-inner,
 .methodology-layout {
   max-width: 1280px;
   margin: 0 auto;
-}
-.methodology-hero .hero-kicker {
-  color: #b6d9bb;
-}
-.methodology-hero .kicker-line {
-  background: #b6d9bb;
-}
-.methodology-hero-grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: 55px;
-  margin-top: 68px;
-}
-.methodology-eyebrow {
-  color: var(--lime);
-  font: 11px var(--mono);
-  letter-spacing: 0.12em;
-}
-.methodology-hero h1 {
-  margin: 15px 0 15px;
-  font: 800 clamp(56px, 6vw, 91px) / 1.05 var(--display);
-  letter-spacing: -0.07em;
-}
-.methodology-hero h1 span {
-  color: var(--lime);
-}
-.methodology-hero p {
-  max-width: 640px;
-  margin: 0;
-  color: #cae0ce;
-  font-size: 16px;
-  line-height: 1.65;
-}
-.methodology-sequence {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding-bottom: 8px;
-  white-space: nowrap;
-  color: #c5dfc9;
-  font: 10px var(--mono);
-  letter-spacing: 0.04em;
-}
-.methodology-sequence i {
-  color: var(--lime);
-  font-style: normal;
 }
 .methodology-layout {
   display: grid;
@@ -814,6 +744,12 @@ tbody tr:hover {
   font-size: 15px;
   line-height: 1.78;
 }
+.methodology-content h1 {
+  margin: 0 0 44px;
+  color: var(--ink);
+  font: 800 clamp(38px, 4vw, 56px) / 1.1 var(--display);
+  letter-spacing: -0.06em;
+}
 .methodology-content h2 {
   scroll-margin-top: 30px;
   margin: 0 0 21px;
@@ -823,11 +759,11 @@ tbody tr:hover {
   font: 800 clamp(28px, 3vw, 37px) / 1.22 var(--display);
   letter-spacing: -0.05em;
 }
-.methodology-content h2:first-child {
+.methodology-content h2:first-of-type {
   padding-top: 0;
   border-top: 0;
 }
-.methodology-content h2:not(:first-child) {
+.methodology-content h2:not(:first-of-type) {
   margin-top: 54px;
 }
 .methodology-content p {
@@ -899,31 +835,11 @@ tbody tr:hover {
   color: var(--ink);
 }
 @media (max-width: 1050px) {
-  .methodology-hero-grid {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
   .methodology-layout {
     gap: 5vw;
   }
 }
 @media (max-width: 760px) {
-  .methodology-hero {
-    padding: 48px 5vw 58px;
-  }
-  .methodology-hero-grid {
-    margin-top: 50px;
-  }
-  .methodology-hero h1 {
-    font-size: clamp(46px, 10vw, 67px);
-  }
-  .methodology-hero p {
-    font-size: 14px;
-  }
-  .methodology-sequence {
-    flex-wrap: wrap;
-    white-space: normal;
-  }
   .methodology-layout {
     display: block;
     padding: 47px 5vw 75px;

@@ -121,6 +121,8 @@ test('the methodology page renders the current Markdown with navigation', () => 
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
   assert.match(html, /Task classes/)
+  assert.match(html, /<article class="methodology-content"><h1>Methodology<\/h1>/)
+  assert.doesNotMatch(html, /methodology-hero|methodology-sequence/)
   assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.match(html, /Run protocol/)
