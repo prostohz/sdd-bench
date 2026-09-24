@@ -1,6 +1,7 @@
 import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, resolve } from 'node:path'
 
+import { loadCatalog } from '../catalog.js'
 import { loadConfig } from '../config.js'
 import { readManifest, resolveResult } from '../results.js'
 import { scoreRun } from '../score/score.js'
@@ -30,10 +31,15 @@ const root = process.cwd()
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
   version: string
 }
-const manifest =
+const sourceManifest =
   result === undefined ? undefined : readManifest(resolveResult(root, loadConfig(root), result))
+const activeParticipants = new Set(loadCatalog(root).participants.map((participant) => participant.id))
+const manifest = sourceManifest && {
+  ...sourceManifest,
+  runs: sourceManifest.runs.filter((run) => activeParticipants.has(run.participantId)),
+}
 if (manifest) {
-  if (manifest.runs.length === 0) throw new Error('the result has no runs')
+  if (manifest.runs.length === 0) throw new Error('the result has no active participant runs')
   const pending = manifest.runs.filter((run) => scoreRun(run).value === null)
   if (pending.length > 0) throw new Error(`the result is not fully judged: ${pending.length} runs`)
 }

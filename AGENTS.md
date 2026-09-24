@@ -28,4 +28,4 @@ npm run validate
 node dist/src/cli.js all --dry-run --task ledger-cli --participant neutral -n 1
 ~~~
 
-Real runs require Docker Sandboxes `sbx` and access to the selected model. The `canon` participant also requires a local Canon checkout at the path in `participants/canon/participant.json`; that path is checked when Canon runs.
+Real runs require Docker Sandboxes `sbx` and access to the selected model.

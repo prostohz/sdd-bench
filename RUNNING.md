@@ -32,8 +32,6 @@ node dist/src/cli.js all --task ledger-cli --participant neutral -n 1
 
 By default, both participant and judge use Codex; models, limits, and three repeats come from `src/config.ts`. Override them in a local `bench.json` or pass another file with `--config`. The `provider` setting applies to both participant and judge; their models can differ. The available fields are defined by `BenchConfig` in `src/config.ts`.
 
-The `canon` participant requires a local Canon checkout at the path in `participants/canon/participant.json`. Other participants install their tools inside the sandbox. Canon is not required to validate the catalog or run another participant.
-
 Inspect or process a saved result:
 
 ~~~sh

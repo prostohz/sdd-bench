@@ -10,7 +10,6 @@ const NAMES: Record<string, string> = {
   neutral: 'Neutral SDD',
   openspec: 'OpenSpec',
   speckit: 'Spec Kit',
-  canon: 'Canon',
   bmad: 'BMad Method',
 }
 const CLASS_NAMES: Record<string, string> = {
