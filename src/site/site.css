@@ -859,21 +859,6 @@ tbody tr:hover {
   }
 }
 
-.method-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 28px;
-  margin-top: 29px;
-  padding-bottom: 7px;
-  border-bottom: 1px solid var(--green);
-  color: var(--green);
-  font-size: 13px;
-  font-weight: 700;
-}
-.method-link span {
-  font-size: 18px;
-  font-weight: 400;
-}
 .methodology-page {
   overflow: visible;
 }

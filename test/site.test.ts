@@ -86,6 +86,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
   assert.match(html, /<th scope="col" class="number">Score<\/th>/)
   assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
+  assert.doesNotMatch(html, /Full methodology|class="method-link"/)
   assert.doesNotMatch(
     html,
     /<script>alert\(1\)<\/script>|PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/,
