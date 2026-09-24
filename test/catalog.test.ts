@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { loadCatalog } from '../src/catalog.js'
-import { parseParticipant } from '../src/model/participant.js'
+import { assertMountsAvailable, parseParticipant } from '../src/model/participant.js'
 import { parseTask } from '../src/model/task.js'
 import { ValidationError } from '../src/model/validate.js'
 import type { RunRecord } from '../src/model/run.js'
@@ -113,6 +113,23 @@ test('участник обязан объявить промт полного �
     (error: unknown) =>
       error instanceof ValidationError && error.problems.some((p) => p.startsWith('prompts.full:')),
   )
+})
+
+test('отсутствующий локальный mount не мешает читать каталог, но блокирует запуск участника', () => {
+  const root = mkdtempSync(join(tmpdir(), 'sdd-bench-mount-'))
+  try {
+    const participant = parseParticipant('participant.json', '/tmp', {
+      id: 'local-tool',
+      name: 'Local Tool',
+      prompts: { full: 'prompt.md' },
+      specPaths: ['spec'],
+      mounts: { tool: join(root, 'missing') },
+    })
+
+    assert.throws(() => assertMountsAvailable(participant), /mounts\.tool не найден/)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('выбор запуска сужается по задаче, участнику, этапу и повтору', () => {

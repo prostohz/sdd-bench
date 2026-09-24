@@ -50,9 +50,6 @@ export function parseParticipant(source: string, dir: string, value: unknown): P
   )
 
   if (!ID.test(id)) reader.problem(`id: "${id}" must match ${ID} to name a sandbox`)
-  for (const [name, path] of Object.entries(mounts)) {
-    if (!existsSync(path)) reader.problem(`mounts.${name}: "${path}" does not exist`)
-  }
   if (specPaths.length === 0) {
     reader.problem('specPaths: a participant must say where its specification lives')
   }
@@ -68,6 +65,14 @@ export function parseParticipant(source: string, dir: string, value: unknown): P
   reader.done()
 
   return { id, name, dir, setupFile, promptFiles, specPaths, allowHosts, mounts, versionProbe }
+}
+
+export function assertMountsAvailable(participant: Participant): void {
+  for (const [name, path] of Object.entries(participant.mounts)) {
+    if (!existsSync(path)) {
+      throw new Error(`участник "${participant.id}": mounts.${name} не найден: "${path}"`)
+    }
+  }
 }
 
 /** Every participant runs the full cycle; other stages are optional. */
