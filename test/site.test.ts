@@ -124,7 +124,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
   assert.doesNotMatch(html, /ON THIS PAGE|class="toc-label"|<a href="#section-1"><span>/)
-  assert.match(html, /<article class="methodology-content"><h1>Methodology<\/h1>/)
+  assert.match(html, /<div class="methodology-layout"><h1 class="methodology-title">Methodology<\/h1>/)
   assert.doesNotMatch(html, /methodology-hero|methodology-sequence/)
   assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)

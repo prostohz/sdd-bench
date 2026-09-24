@@ -13,6 +13,10 @@
   --mono: "DM Mono", ui-monospace, monospace;
   --sans: "DM Sans", Arial, sans-serif;
   --display: Manrope, Arial, sans-serif;
+  --page-max: 1280px;
+  --page-gutter: 5vw;
+  --page-inset: max(var(--page-gutter), calc((100% - var(--page-max)) / 2));
+  --page-width: min(calc(100% - var(--page-gutter) - var(--page-gutter)), var(--page-max));
 }
 * {
   box-sizing: border-box;
@@ -52,7 +56,7 @@ main {
   display: flex;
   align-items: center;
   gap: 40px;
-  padding: 0 max(5vw, calc((100vw - 1420px) / 2));
+  padding: 0 var(--page-inset);
   border-bottom: 1px solid var(--line);
   background: var(--bg);
 }
@@ -97,7 +101,7 @@ main {
   color: var(--green-2);
 }
 .hero {
-  padding: 67px max(5vw, calc((100vw - 1420px) / 2)) 78px;
+  padding: 67px var(--page-inset) 78px;
   background:
     radial-gradient(circle at 88% 16%, #f0f4e6 0, transparent 32%), var(--bg);
   border-bottom: 1px solid var(--line);
@@ -107,7 +111,7 @@ main {
   grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.75fr);
   align-items: center;
   gap: 9vw;
-  max-width: 1340px;
+  max-width: var(--page-max);
   margin: 0 auto;
 }
 .hero h1 {
@@ -198,9 +202,9 @@ main {
   color: var(--lime);
 }
 .content {
-  max-width: 1420px;
+  width: var(--page-width);
   margin: 0 auto;
-  padding: 74px 5vw 0;
+  padding: 74px 0 0;
   scroll-margin-top: 30px;
 }
 .section-head {
@@ -257,7 +261,7 @@ main {
   padding-bottom: 50px;
 }
 .results-hero-content {
-  max-width: 1340px;
+  max-width: var(--page-max);
   margin: 0 auto;
 }
 .results-hero h1 {
@@ -527,17 +531,6 @@ tbody tr:hover {
   margin: 0;
 }
 @media (max-width: 1050px) {
-  .topbar {
-    padding: 0 4vw;
-  }
-  .hero {
-    padding-left: 4vw;
-    padding-right: 4vw;
-  }
-  .content {
-    padding-left: 4vw;
-    padding-right: 4vw;
-  }
   .hero-layout {
     gap: 5vw;
   }
@@ -554,7 +547,7 @@ tbody tr:hover {
 @media (max-width: 760px) {
   .topbar {
     height: 64px;
-    padding: 0 5vw;
+    padding: 0 var(--page-inset);
   }
   .topbar nav {
     gap: 15px;
@@ -569,10 +562,10 @@ tbody tr:hover {
     font-size: 15px;
   }
   .hero {
-    padding: 52px 5vw 65px;
+    padding: 52px var(--page-inset) 65px;
   }
   .results-hero {
-    padding: 36px 5vw 40px;
+    padding: 36px var(--page-inset) 40px;
   }
   .hero-layout {
     display: block;
@@ -592,7 +585,7 @@ tbody tr:hover {
     min-height: 320px;
   }
   .content {
-    padding: 60px 5vw 0;
+    padding: 60px 0 0;
   }
   .section-head h2 {
     font-size: 30px;
@@ -669,14 +662,23 @@ tbody tr:hover {
   overflow: visible;
 }
 .methodology-layout {
-  max-width: 1280px;
+  width: var(--page-width);
   margin: 0 auto;
-}
-.methodology-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 8vw;
-  padding: 72px 5vw 110px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 44px;
+  padding: 72px 0 110px;
+}
+.methodology-title {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink);
+  font: 800 clamp(38px, 4vw, 56px) / 1.1 var(--display);
+  letter-spacing: -0.06em;
+}
+.methodology-aside {
+  grid-column: 1 / span 3;
 }
 .methodology-toc {
   position: sticky;
@@ -712,17 +714,12 @@ tbody tr:hover {
   font-weight: 700;
 }
 .methodology-content {
+  grid-column: 4 / -1;
   max-width: 850px;
   min-width: 0;
   color: #34463a;
   font-size: 15px;
   line-height: 1.78;
-}
-.methodology-content h1 {
-  margin: 0 0 44px;
-  color: var(--ink);
-  font: 800 clamp(38px, 4vw, 56px) / 1.1 var(--display);
-  letter-spacing: -0.06em;
 }
 .methodology-content h2 {
   scroll-margin-top: 30px;
@@ -808,15 +805,13 @@ tbody tr:hover {
   font-weight: 600;
   color: var(--ink);
 }
-@media (max-width: 1050px) {
-  .methodology-layout {
-    gap: 5vw;
-  }
-}
 @media (max-width: 760px) {
   .methodology-layout {
     display: block;
-    padding: 47px 5vw 75px;
+    padding: 47px 0 75px;
+  }
+  .methodology-title {
+    margin-bottom: 38px;
   }
   .methodology-toc {
     position: static;
