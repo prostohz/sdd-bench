@@ -237,15 +237,15 @@ main {
   white-space: nowrap;
 }
 .results-hero {
-  padding-top: 44px;
-  padding-bottom: 50px;
+  padding-top: 28px;
+  padding-bottom: 32px;
 }
 .results-hero-content {
   max-width: var(--page-max);
   margin: 0 auto;
 }
 .results-hero h1 {
-  font-size: clamp(50px, 5vw, 76px);
+  font-size: clamp(44px, 4.2vw, 62px);
 }
 .edition {
   display: inline-flex;
@@ -257,7 +257,7 @@ main {
   color: #fff;
   font: 500 11px var(--mono);
   letter-spacing: 0.08em;
-  margin-bottom: 19px;
+  margin-bottom: 14px;
 }
 .edition span {
   color: var(--lime);
@@ -266,7 +266,9 @@ main {
 }
 .results-hero .hero-intro {
   max-width: 680px;
-  margin-top: 20px;
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.55;
 }
 .table-shell {
   background: var(--paper);
@@ -507,7 +509,7 @@ tbody tr:hover {
     padding: 52px var(--page-inset) 65px;
   }
   .results-hero {
-    padding: 36px var(--page-inset) 40px;
+    padding: 24px var(--page-inset) 28px;
   }
   .hero-layout {
     display: block;
@@ -516,7 +518,7 @@ tbody tr:hover {
     font-size: clamp(49px, 12vw, 75px);
   }
   .results-hero h1 {
-    font-size: clamp(36px, 8vw, 48px);
+    font-size: clamp(34px, 7vw, 44px);
   }
   .hero-intro {
     font-size: 15px;
@@ -574,7 +576,7 @@ tbody tr:hover {
     font-size: 46px;
   }
   .results-hero h1 {
-    font-size: 36px;
+    font-size: 34px;
   }
   .hero-art {
     padding: 20px 22px;
