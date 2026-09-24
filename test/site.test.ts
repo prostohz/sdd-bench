@@ -82,6 +82,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
     html,
     /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Bench<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
+  assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Overall scores/)
   assert.match(html, /Task breakdown/)
   assert.match(html, /Run scores/)
@@ -143,6 +145,8 @@ test('the methodology page renders the current Markdown with navigation', () => 
     html,
     /<nav aria-label="Sections"><a href="\.\/index\.html">Bench<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
   )
+  assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
   assert.doesNotMatch(html, /ON THIS PAGE|class="toc-label"|<a href="#section-1"><span>/)

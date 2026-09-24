@@ -63,31 +63,11 @@ main {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 13px;
   font-family: var(--display);
   font-weight: 800;
   letter-spacing: -0.035em;
   font-size: 16px;
   white-space: nowrap;
-}
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  background: var(--green);
-  color: #fff;
-  border-radius: 8px;
-  font-family: var(--display);
-  font-weight: 800;
-  font-size: 17px;
-  letter-spacing: -0.12em;
-  padding-right: 3px;
-}
-.brand-mark span {
-  color: var(--lime);
-  margin: 0 2px;
 }
 .topbar nav {
   display: flex;
@@ -523,11 +503,6 @@ tbody tr:hover {
   .brand {
     font-size: 14px;
   }
-  .brand-mark {
-    width: 32px;
-    height: 32px;
-    font-size: 15px;
-  }
   .hero {
     padding: 52px var(--page-inset) 65px;
   }
@@ -595,9 +570,6 @@ tbody tr:hover {
   }
 }
 @media (max-width: 430px) {
-  .brand > span:last-child {
-    display: none;
-  }
   .hero h1 {
     font-size: 46px;
   }
