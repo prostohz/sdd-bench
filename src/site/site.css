@@ -361,16 +361,10 @@ tbody tr:hover {
   padding: 28px 31px 33px;
 }
 .task-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
   color: #6c886f;
   font: 10px var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.task-top span:last-child {
-  text-align: right;
 }
 .task-card h3 {
   font: 800 28px var(--display);

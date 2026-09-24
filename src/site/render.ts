@@ -66,7 +66,7 @@ function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
   const taskIds = [...new Set(manifest.runs.map((run) => run.taskId))].sort()
   const cards = taskIds
-    .map((taskId, index) => {
+    .map((taskId) => {
       const taskClass = manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
       const rows = participants
         .map((participant) => {
@@ -75,7 +75,7 @@ function tasks(manifest: ResultManifest): string {
           return `<div class="task-row"><span>${esc(NAMES[participant.participantId] ?? participant.participantId)}</span>${bar(value)}<strong>${score(value)}</strong></div>`
         })
         .join('')
-      return `<article class="task-card"><div class="task-top"><span>TASK ${String(index + 1).padStart(2, '0')}</span><span>${esc(CLASS_NAMES[taskClass] ?? taskClass)}</span></div><h3>${esc(taskId)}</h3><p>Mean score across repeats</p><div class="task-bars">${rows}</div></article>`
+      return `<article class="task-card"><div class="task-top">${esc(CLASS_NAMES[taskClass] ?? taskClass)}</div><h3>${esc(taskId)}</h3><p>Mean score across repeats</p><div class="task-bars">${rows}</div></article>`
     })
     .join('')
   return `<section class="content task-section" id="tasks">${sectionHead('Task breakdown', 'Each card shows a participant’s mean score across repeats for one task.')}<div class="task-grid">${cards}</div></section>`
