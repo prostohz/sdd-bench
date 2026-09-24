@@ -105,6 +105,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
   assert.match(html, /ledger-cli/)
+  assert.match(html, /<span class="run-sub">ledger-cli<\/span>/)
+  assert.doesNotMatch(html, /repeat 1/)
   assert.match(html, /80%/)
   assert.doesNotMatch(
     html,
@@ -129,6 +131,15 @@ test('the specification stage omits implementation checks', () => {
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
   assert.match(html, /<div class="section-head"><h2>Run scores<\/h2><\/div>/)
+})
+
+test('run scores identify repeats when a result includes multiple attempts', () => {
+  const manifest = fixture('spec')
+  manifest.config.repeats = 2
+  manifest.runs.push({ ...manifest.runs[0]!, runId: 'run-2', repeat: 2 })
+  const html = renderSite(manifest, version)
+  assert.match(html, /ledger-cli · repeat 1/)
+  assert.match(html, /ledger-cli · repeat 2/)
 })
 
 test('the site shows an empty state without a result', () => {
