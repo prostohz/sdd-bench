@@ -319,22 +319,11 @@ tbody tr:hover {
 .leaderboard tbody th {
   font-weight: 500;
 }
-.rank {
-  font: 12px var(--mono);
-  color: #78917b;
-  width: 45px;
-}
 .participant-name {
   display: block;
   font: 700 16px var(--display);
   letter-spacing: -0.025em;
   white-space: nowrap;
-}
-.participant-id {
-  display: block;
-  font: 11px var(--mono);
-  color: #97a39a;
-  margin-top: 3px;
 }
 .total-cell {
   white-space: nowrap;

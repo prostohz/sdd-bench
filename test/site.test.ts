@@ -85,6 +85,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Overall scores/)
+  assert.doesNotMatch(html, /class="rank"|class="participant-id"|<th scope="col">#<\/th>/)
+  assert.match(html, /<th scope="col">Participant<\/th><th scope="col">Score<\/th>/)
   assert.match(html, /Task breakdown/)
   assert.match(html, /Run scores/)
   assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))

@@ -50,17 +50,17 @@ function leaderboard(manifest: ResultManifest): string {
   const ranked = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
   const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
   const rows = ranked
-    .map((participant, index) => {
+    .map((participant) => {
       const classCells = classes
         .map((key) => {
           const value = participant.classes.find((item) => item.key === key)?.score ?? null
           return `<td class="class-cell"><span>${score(value)}</span>${bar(value)}</td>`
         })
         .join('')
-      return `<tr><td class="rank">${String(index + 1).padStart(2, '0')}</td><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span><span class="participant-id">${esc(participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
+      return `<tr><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
