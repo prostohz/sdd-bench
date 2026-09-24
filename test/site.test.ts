@@ -82,6 +82,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /Run ranking/)
   assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
   assert.doesNotMatch(html, /RUN RESULT/)
+  assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
@@ -110,6 +111,7 @@ test('the specification stage omits implementation checks', () => {
 test('the site shows an empty state without a result', () => {
   const html = renderSite(undefined, version)
   assert.match(html, /No public runs yet/)
+  assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /href="#tasks"/)
@@ -119,6 +121,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
   assert.match(html, /Task classes/)
+  assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.match(html, /Run protocol/)
   assert.match(html, /Aggregate score/)
