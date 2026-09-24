@@ -1,178 +1,119 @@
-# Методология
+# Methodology
 
-## Классы задач
+## Task classes
 
-Бенчмарк проверяет полный процесс: от намерения через спецификацию к реализации.
+The benchmark examines the path from an initial request through a specification to an implementation.
 
-| Класс | Исходное состояние | Задача |
+| Class | Starting point | Assignment |
 | --- | --- | --- |
-| Greenfield | Нет проекта и спецификации | Создать спецификацию и реализовать новую фичу с нуля |
-| Brownfield без спецификации | Есть кодовая база, формальная спецификация ранее не велась | Создать спецификацию и реализовать новую фичу в существующем проекте |
-| Brownfield с актуальной спецификацией | Есть кодовая база и актуальная спецификация | Обновить спецификацию и реализовать новую фичу в существующем проекте |
+| Greenfield | No project or specification | Write a specification and implement a new feature from scratch |
+| Brownfield without a specification | An existing codebase with no maintained formal specification | Write a specification and implement a new feature in the project |
+| Brownfield with a current specification | An existing codebase and an up-to-date specification | Update the specification and implement a new feature in the project |
 
-Это начальный набор классов. По мере развития бенчмарка список будет
-расширяться.
+These are the initial task classes. The set can expand as the benchmark develops.
 
-## Этапы цикла
+## Workflow stages
 
-Бенчмарк проверяет полный процесс, но его можно прогнать и по части — тогда
-сравнивается один участок процесса, а не весь путь.
+The benchmark can evaluate the full workflow or isolate the specification stage.
 
-| Этап | Что делает участник | Метрики |
+| Stage | Participant work | Metrics |
 | --- | --- | --- |
-| `full` | Спецификация и реализация по ней | `spec-quality`, `spec-fit`, `impl-fit` |
-| `spec` | Только спецификация, реализации нет | `spec-quality`, `spec-fit` |
+| `full` | Write a specification and implement it | `spec-quality`, `spec-fit`, `impl-fit` |
+| `spec` | Write a specification only | `spec-quality`, `spec-fit` |
 
-Неприменимая метрика не считается нулём: она не оценивается вовсе, и скор
-берётся как среднее геометрическое тех метрик, которые этап производит.
-Проверки, которым нужен код — регрессии и скрытые тесты — на этапе без
-реализации не выполняются.
+An inapplicable metric is omitted rather than scored as zero. The run score is the geometric mean of the metrics produced by its stage. Checks that require code, including regression and held-out tests, do not run at the `spec` stage.
 
-Прогон одного результата ведётся целиком на одном этапе: сравнивать участников
-имеет смысл внутри этапа, а не между разными.
+Every run in one result uses the same stage. Scores are comparable within a stage, not across different stages.
 
-## Конфигурация агента
+## Agent configuration
 
-Исполнитель и судья используют одного провайдера; их модели могут различаться.
-Все участники одного результата запускаются с одной моделью и версией модели, одинаковыми
-настройками рассуждения, лимитами времени и токенов, набором доступных
-инструментов и сетевыми ограничениями. Намерение задачи передаётся без изменений,
-вмешательство человека во время запуска не допускается.
+The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.
 
-Между участниками различаются только канонический SDD-процесс и необходимый для
-него инструментарий. Версии модели, инструментов и настройки сохраняются вместе
-с результатом запуска.
+Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.
 
-## Протокол прогона
+## Run protocol
 
-Для каждого сочетания задачи, участника и повтора создаётся отдельный запуск:
+Each task, participant, and repeat combination produces a separate run:
 
-1. Исходный проект фиксируется в Git и передаётся участнику в новом sandbox.
-2. Устанавливается инструментарий участника. Агент получает исходное намерение и
-   выполняет выбранный этап: пишет спецификацию либо спецификацию и код.
-3. Спецификация, итоговый репозиторий и телеметрия сохраняются; sandbox участника
-   удаляется.
-4. На полном этапе исходные тесты (если они есть) и скрытые тесты выполняются
-   отдельно от участника.
-5. Для каждой применимой метрики запускается отдельный судья. Его решения по
-   пунктам превращаются в балл запуска, затем баллы агрегируются по задаче,
-   классу и участнику.
+1. The starting project is committed to Git and placed in a fresh sandbox.
+2. The participant's tools are installed. The agent receives the task request and writes a specification, or a specification and code, according to the selected stage.
+3. The specification, final repository, and telemetry are saved. The participant's sandbox is removed.
+4. At the `full` stage, the project's original tests, when present, and the held-out tests run separately from the participant.
+5. A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.
 
-Судейство можно повторить по сохранённым материалам без повторного запуска
-участника. Каждый результат хранит конфигурацию и версии, с которыми был получен.
+Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.
 
-## Метрики
+## Metrics
 
-| Метрика | Метод оценки | Результат |
+| Metric | Evaluation | Output |
 | --- | --- | --- |
-| Качество спецификации | LLM-судья получает только спецификацию и перечисляет её дефекты по пяти признакам | Дефекты со степенью и местом в тексте |
-| Соответствие спецификации требованиям | LLM-судья получает намерение, его разбор на пункты и спецификацию | Решение по каждому пункту и список приписок |
-| Соответствие реализации спецификации | LLM-судья получает спецификацию и репозиторий, может запускать проверки | Решение по каждому требованию спецификации и запущенные проверки |
-| Отсутствие регрессий | Запуск исходного набора тестов проекта | Доля тестов, продолживших проходить |
-| Эффективность | Телеметрия запуска и внешний замер времени | Время выполнения и число использованных токенов |
+| Specification quality | An LLM judge reads only the specification and identifies defects across five criteria | Defects with severity and location |
+| Specification fit to requirements | An LLM judge reads the task request, its itemized requirements, and the specification | A decision for each item and a list of unsupported additions |
+| Implementation fit to specification | An LLM judge reads the specification and repository and may run checks | A decision for each specification requirement and the checks performed |
+| Regression avoidance | The project's original test suite is run | Share of tests that still pass |
+| Efficiency | Run telemetry and an external wall-clock measurement | Elapsed time and token use |
 
-Время выполнения измеряется снаружи, а не берётся из телеметрии участника:
-процесс, делегирующий работу подагентам, сообщает о себе лишь время головной
-сессии и занижает собственную длительность в разы. Число токенов и стоимость
-берутся из телеметрии — их участник не занижает.
+Elapsed time is measured externally rather than taken from the participant's telemetry. A process that delegates work to subagents may report only the lead session's time, substantially understating total duration. Token use and cost come from telemetry.
 
-Для всех участников используется один провайдер и одна версия модели-судьи, один промпт и
-одинаковые настройки. Судье не сообщается, какой участник создал результат.
+All participants are evaluated with the same judge model version, prompt, and settings. The judge is not told which participant produced the work.
 
-Балла судья не ставит. Он выносит решение по каждому пункту из фиксированного
-словаря — требование перенесено, перенесено частично, искажено, потеряно, — а
-балл считается арифметикой по этим решениям. Холистическая оценка от модели
-неизбежно садится в узкую полосу «хорошо, но не идеально» и участников не
-различает; решение по пункту различает, а шаг шкалы задаётся числом пунктов,
-а не готовностью модели сказать «семь» вместо «восемь». Побочные следствия:
-балл воспроизводим по решениям, и спорить с ним можно, споря с конкретным
-решением.
+The judge does not assign a numeric score. It chooses from a fixed set of decisions for each item: covered, partially covered, distorted, or missing. The harness computes the score from those decisions. A single holistic score tends to cluster around “good but not perfect” and distinguishes participants poorly. Item-level decisions make the score reproducible and allow disputes to focus on a specific decision.
 
-Пункты для метрики «соответствие спецификации требованиям» разбираются из
-намерения заранее и хранятся в задаче (`requirements.md`). Список один на всех
-участников и на все повторы, и участнику он не показывается: иначе каждый судья
-составлял бы свой список и сравнивал бы разное с разным.
+The requirements for `spec-fit` are extracted from the task request in advance and stored in `requirements.md`. Every participant and repeat uses the same list. The participant does not receive it; otherwise each judge could evaluate a different set of requirements.
 
-## Итоговый скор
+## Aggregate score
 
-Содержательные оценки нормируются в диапазон от `0` до `1`:
+The substantive metric scores are normalized to the range `0` to `1`:
 
-- `spec-quality` — качество спецификации;
-- `spec-fit` — соответствие спецификации требованиям;
-- `impl-fit` — соответствие реализации спецификации.
+- `spec-quality` — specification quality;
+- `spec-fit` — specification fit to requirements;
+- `impl-fit` — implementation fit to specification.
 
-Скор одного запуска — среднее геометрическое метрик его этапа. Для полного
-цикла это три метрики, для этапа `spec` — две:
+A run score is the geometric mean of the metrics for its stage: three for `full` and two for `spec`.
 
-```text
-Score_run = 100 × ⁿ√(∏ метрик этапа)
+~~~text
+Score_run = 100 × ⁿ√(∏ stage metrics)
 
 full: 100 × ∛(spec-quality × spec-fit × impl-fit)
 spec: 100 × √(spec-quality × spec-fit)
-```
+~~~
 
-Например, оценки `8/10`, `6/10` и `9/10` на полном этапе дают
-`100 × ∛(0,8 × 0,6 × 0,9) = 75,6`. Для успешного запуска итог не показывается,
-пока хотя бы одна применимая оценка не получена.
+For example, scores of `8/10`, `6/10`, and `9/10` at the `full` stage yield `100 × ∛(0.8 × 0.6 × 0.9) = 75.6`. A successful run has no aggregate score until all applicable judgments are available.
 
-Если запуск завершился ошибкой, превысил лимит времени или привёл к регрессии,
-его скор равен `0`. Для greenfield-задач проверка регрессий не применяется.
+A run scores `0` if it fails, times out, or regresses the original tests. Regression checks do not apply to greenfield tasks.
 
-Скор задачи — среднее всех её запусков. Скор класса — среднее всех задач этого
-класса. Итоговый скор — среднее по классам, поэтому каждый класс имеет одинаковый
-вес. Эффективность в итоговый скор не входит и публикуется отдельно.
+A task score is the mean of its runs. A class score is the mean of its tasks. The final score is the mean across classes, giving each class equal weight. Efficiency is reported separately and does not affect the final score.
 
-## Повторные запуски
+## Repeats
 
-По умолчанию каждая комбинация задачи и участника запускается три раза
-(`n = 3`); число повторов можно изменить в конфигурации. Каждый запуск
-начинается с одинакового исходного состояния.
+By default, each task and participant combination runs three times (`n = 3`). The repeat count can be changed in the configuration. Every repeat starts from the same initial state.
 
-## Как интерпретировать результат
+## Interpreting results
 
-Сравнивать итоговые баллы следует внутри одного результата: его участники
-прошли одни задачи на одном этапе и при одной конфигурации агента и судьи.
-Прямое сравнение баллов разных результатов может смешать влияние процесса,
-модели, задач и настроек.
+Compare final scores within one result: its participants ran the same tasks at the same stage with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.
 
-Текущий набор задач покрывает только включённые в него сценарии. Балл описывает
-поведение инструмента в этих условиях, а не качество всех его применений.
-Решения LLM-судьи допускают ошибки; спорную оценку проверяют по решениям для
-конкретных пунктов и сохранённым материалам запуска.
+The current task set covers only its included scenarios. A score describes behavior under those conditions, not the quality of every possible use of a tool. LLM judges can make mistakes; disputed scores should be checked against the item-level decisions and saved run artifacts.
 
-Задачи, чек-листы и тесты открыты в репозитории. Во время прогона чек-листы и
-тесты не передаются участнику, но публичность не исключает знакомства модели
-с ними до запуска. Поэтому такой прогон не является слепой проверкой на
-неизвестном наборе задач.
+Tasks, requirement checklists, and tests are public in this repository. They are withheld from the participant during a run, but publication cannot rule out prior exposure of the model to them. This is not a blind evaluation on unseen tasks.
 
-## Изоляция запусков
+## Run isolation
 
-Участники и LLM-судьи запускаются в отдельных
-[Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) — через CLI `sbx`.
-Для каждой комбинации задачи, участника и повтора создаётся новый sandbox со
-следующими ограничениями:
+Participants and LLM judges run in separate [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) through the `sbx` CLI. Each task, participant, and repeat combination gets a new sandbox with these restrictions:
 
-- репозиторий предоставляется в режиме `--clone`, работа ведётся в его приватной копии;
-- общие навыки отключаются через `--no-share-skills`;
-- сеть закрыта по умолчанию, разрешается только доступ к необходимым API;
-- скрытые тесты, эталонные решения и результаты других запусков не передаются;
-- после завершения сохраняются результат и телеметрия, затем sandbox удаляется.
+- the repository is provided through `--clone`, and work happens in a private copy;
+- shared skills are disabled with `--no-share-skills`;
+- network access is denied by default, with only required APIs allowed;
+- held-out tests, reference solutions, and results from other runs are not passed in;
+- the result and telemetry are saved after completion, then the sandbox is removed.
 
-Каждая оценка выполняется новым судьёй без истории предыдущих запусков. Судья
-получает только необходимые для метрики материалы:
+Each judgment uses a fresh judge without previous run history. The judge receives only the materials needed for its metric:
 
-| Метрика | Доступные материалы |
+| Metric | Available materials |
 | --- | --- |
-| Качество спецификации | Спецификация |
-| Соответствие спецификации требованиям | Исходное намерение, его разбор на пункты и спецификация |
-| Соответствие реализации спецификации | Спецификация и приватная копия итогового репозитория |
+| Specification quality | Specification |
+| Specification fit to requirements | Original task request, itemized requirements, and specification |
+| Implementation fit to specification | Specification and a private copy of the final repository |
 
-Спецификация передаётся судье в нейтральном каталоге `spec/`: каждый участник
-держит её у себя по-своему, и само расположение назвало бы автора. Полной
-анонимности это не даёт — при оценке соответствия реализации спецификации
-инструментарий участника виден по содержимому репозитория. Это известная
-граница метода, а не то, что скрывается.
+The specification is placed in a neutral `spec/` directory for judging. Participants store it in different locations, and the original path could reveal the author. This does not provide complete anonymity: for `impl-fit`, the participant's tooling may still be visible in the repository. That is a known limitation.
 
-Скрытые тесты запускаются отдельно после завершения участника и никогда не
-помещаются в его sandbox. В итоговый скор они не входят: они показывают, что
-получилось, а оценивает реализацию судья.
+Held-out tests run separately after the participant finishes and are never placed in its sandbox. They do not enter the final score. They show what the implementation does; the judge assesses how well it follows the specification.

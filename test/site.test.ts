@@ -6,6 +6,8 @@ import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderMethodology } from '../src/site/methodology.js'
 import { renderSite } from '../src/site/render.js'
 
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
+
 function verdict(metric: Verdict['metric'], score: number): Verdict {
   return {
     metric,
@@ -74,39 +76,61 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
   }
 }
 
-test('публичная витрина показывает сводку и не раскрывает материалы запуска', () => {
-  const html = renderSite(fixture())
-  assert.match(html, /Итоговый рейтинг/)
+test('the public site shows summaries without exposing run artifacts', () => {
+  const html = renderSite(fixture(), version)
+  assert.match(html, /Run ranking/)
+  assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
+  assert.doesNotMatch(html, /RUN RESULT/)
+  assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
+  assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
+  assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
+  assert.doesNotMatch(html, /section-index/)
+  assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
   assert.match(html, /ledger-cli/)
   assert.match(html, /80%/)
   assert.match(html, /\$0\.12/)
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
+  assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Score<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
+  assert.doesNotMatch(html, /Full methodology|class="method-link"/)
   assert.doesNotMatch(
     html,
     /<script>alert\(1\)<\/script>|PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/,
   )
 })
 
-test('этап спецификации не показывает оценку реализации', () => {
-  const html = renderSite(fixture('spec'))
-  assert.match(html, /Только спецификация/)
-  assert.doesNotMatch(html, /<th scope="col" title="Соответствие реализации спецификации">/)
+test('the specification stage omits implementation checks', () => {
+  const html = renderSite(fixture('spec'), version)
+  assert.doesNotMatch(html, /Specification only|class="hero-meta"/)
+  assert.match(html, /spec-quality/)
+  assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
+  assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
 })
 
-test('без результата витрина показывает пустое состояние', () => {
-  const html = renderSite()
-  assert.match(html, /Публичных прогонов пока нет/)
+test('the site shows an empty state without a result', () => {
+  const html = renderSite(undefined, version)
+  assert.match(html, /No public runs yet/)
+  assert.doesNotMatch(html, /<footer/)
+  assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
+  assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /href="#tasks"/)
 })
 
-test('полная методология строится из актуального Markdown и содержит навигацию', () => {
+test('the methodology page renders the current Markdown with navigation', () => {
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
-  assert.match(html, /Классы задач/)
-  assert.match(html, /Протокол прогона/)
-  assert.match(html, /Итоговый скор/)
-  assert.match(html, /Как интерпретировать результат/)
-  assert.match(html, /Изоляция запусков/)
+  assert.match(html, /Task classes/)
+  assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
+  assert.doesNotMatch(html, /ON THIS PAGE|class="toc-label"|<a href="#section-1"><span>/)
+  assert.match(html, /<div class="methodology-layout"><h1 class="methodology-title">Methodology<\/h1>/)
+  assert.doesNotMatch(html, /methodology-hero|methodology-sequence/)
+  assert.doesNotMatch(html, /<footer/)
+  assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
+  assert.match(html, /Run protocol/)
+  assert.match(html, /Aggregate score/)
+  assert.match(html, /Interpreting results/)
+  assert.match(html, /Run isolation/)
   const sectionCount = [...source.matchAll(/^## /gm)].length
   assert.equal((html.match(/<h2 id="section-\d+">/g) ?? []).length, sectionCount)
   assert.match(html, new RegExp(`href="#section-${sectionCount}"`))
@@ -114,8 +138,8 @@ test('полная методология строится из актуальн
   assert.match(html, /<table>/)
 })
 
-test('Markdown методологии не выполняет встроенный HTML', () => {
-  const html = renderMethodology('# Методология\n\n## Проверка\n\n<script>alert(1)</script>')
+test('methodology Markdown escapes embedded HTML', () => {
+  const html = renderMethodology('# Methodology\n\n## Check\n\n<script>alert(1)</script>')
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
   assert.doesNotMatch(html, /<script>/)
 })
