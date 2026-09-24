@@ -83,6 +83,9 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /80%/)
   assert.match(html, /\$0\.12/)
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
+  assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Score<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
   assert.doesNotMatch(
     html,
     /<script>alert\(1\)<\/script>|PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/,
@@ -92,8 +95,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
 test('the specification stage omits implementation checks', () => {
   const html = renderSite(fixture('spec'))
   assert.match(html, /Specification only/)
-  assert.doesNotMatch(html, /<th scope="col" title="Implementation fit to specification">/)
-  assert.doesNotMatch(html, /<th scope="col">Held-out tests<\/th>/)
+  assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
+  assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
 })
 
 test('the site shows an empty state without a result', () => {
