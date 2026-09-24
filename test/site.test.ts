@@ -90,6 +90,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /Task breakdown/)
   assert.match(html, /Run scores/)
   assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
+  assert.match(html, /<h1>From specification to <em>results\.<\/em><\/h1>/)
   assert.doesNotMatch(html, /RUN RESULT/)
   assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
