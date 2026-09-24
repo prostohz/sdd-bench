@@ -241,13 +241,22 @@ main {
   padding-bottom: 32px;
 }
 .results-hero-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.6fr);
+  column-gap: clamp(32px, 5vw, 80px);
+  align-items: end;
   max-width: var(--page-max);
   margin: 0 auto;
 }
 .results-hero h1 {
+  grid-column: 1;
+  grid-row: 2;
   font-size: clamp(44px, 4.2vw, 62px);
 }
 .edition {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -265,8 +274,10 @@ main {
   letter-spacing: 0;
 }
 .results-hero .hero-intro {
-  max-width: 680px;
-  margin-top: 12px;
+  grid-column: 2;
+  grid-row: 2;
+  max-width: 480px;
+  margin: 0 0 5px;
   font-size: 16px;
   line-height: 1.55;
 }
@@ -486,11 +497,23 @@ tbody tr:hover {
   .hero h1 {
     font-size: clamp(55px, 6vw, 78px);
   }
+  .results-hero h1 {
+    font-size: clamp(42px, 4.2vw, 58px);
+  }
   .hero-art {
     min-height: 325px;
   }
   .art-step {
     height: 65px;
+  }
+}
+@media (max-width: 860px) {
+  .results-hero-content {
+    display: block;
+  }
+  .results-hero .hero-intro {
+    max-width: 680px;
+    margin: 12px 0 0;
   }
 }
 @media (max-width: 760px) {
