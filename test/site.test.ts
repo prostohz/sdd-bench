@@ -78,6 +78,7 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture())
   assert.match(html, /Run ranking/)
+  assert.doesNotMatch(html, /section-index/)
   assert.match(html, /Repeats: 1/)
   assert.match(html, /ledger-cli/)
   assert.match(html, /80%/)
@@ -103,6 +104,7 @@ test('the specification stage omits implementation checks', () => {
 test('the site shows an empty state without a result', () => {
   const html = renderSite()
   assert.match(html, /No public runs yet/)
+  assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /href="#tasks"/)
 })
 
