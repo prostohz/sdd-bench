@@ -80,9 +80,10 @@ test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture(), version)
   assert.match(
     html,
-    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Bench<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
+    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Scores<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.match(html, /<title>Scores — SDD Bench<\/title>/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Overall scores/)
   assert.doesNotMatch(html, /class="rank"|class="participant-id"|<th scope="col">#<\/th>/)
@@ -132,7 +133,7 @@ test('the site shows an empty state without a result', () => {
   const html = renderSite(undefined, version)
   assert.match(
     html,
-    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Bench<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
+    /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Scores<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /No public runs yet/)
   assert.doesNotMatch(html, /<footer/)
@@ -146,9 +147,10 @@ test('the methodology page renders the current Markdown with navigation', () => 
   const html = renderMethodology(source)
   assert.match(
     html,
-    /<nav aria-label="Sections"><a href="\.\/index\.html">Bench<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
+    /<nav aria-label="Sections"><a href="\.\/index\.html">Scores<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.match(html, /← Back to scores/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
