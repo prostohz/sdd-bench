@@ -77,7 +77,8 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 
 test('публичная витрина показывает сводку и не раскрывает материалы запуска', () => {
   const html = renderSite(fixture())
-  assert.match(html, /Итоговый рейтинг/)
+  assert.match(html, /Рейтинг прогона/)
+  assert.match(html, /Повторов: 1/)
   assert.match(html, /ledger-cli/)
   assert.match(html, /80%/)
   assert.match(html, /\$0\.12/)
@@ -92,6 +93,7 @@ test('этап спецификации не показывает оценку �
   const html = renderSite(fixture('spec'))
   assert.match(html, /Только спецификация/)
   assert.doesNotMatch(html, /<th scope="col" title="Соответствие реализации спецификации">/)
+  assert.doesNotMatch(html, /<th scope="col">Скрытые тесты<\/th>/)
 })
 
 test('без результата витрина показывает пустое состояние', () => {

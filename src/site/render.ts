@@ -57,7 +57,7 @@ function summary(manifest: ResultManifest): string {
   const scored = manifest.runs.filter((run) => scoreRun(run).value !== null).length
   const taskCount = new Set(manifest.runs.map((run) => run.taskId)).size
   const stage = manifest.config.stage ?? DEFAULT_STAGE
-  return `<section class="hero results-hero"><div class="hero-kicker"><span class="kicker-line"></span> SPEC-DRIVEN DEVELOPMENT / BENCHMARK</div><div class="results-hero-grid"><div><div class="edition">РЕЗУЛЬТАТ ПРОГОНА <span>${esc(manifest.resultId)}</span></div><h1>От спецификации<br>к <em>результату.</em></h1><p class="hero-intro">Сравнение SDD-процессов на одинаковых задачах, модели и условиях. Все баллы рассчитаны по сохранённым решениям судей.</p><div class="hero-meta"><span>${date(manifest.createdAt)}</span><span>${esc(STAGE_TITLES[stage])}</span><span>${esc(manifest.config.participantModel)}</span></div></div><div class="hero-stat"><span class="hero-stat-label">НАБОР ДАННЫХ / 01</span><strong>${participants.length.toString().padStart(2, '0')}</strong><span>участников</span><div class="stat-rule"></div><div class="hero-stat-secondary"><div><b>${taskCount.toString().padStart(2, '0')}</b><span>задачи</span></div><div><b>${scored}<small>/${manifest.runs.length}</small></b><span>оценено запусков</span></div></div></div></div></section>`
+  return `<section class="hero results-hero"><div class="hero-kicker"><span class="kicker-line"></span> SPEC-DRIVEN DEVELOPMENT / BENCHMARK</div><div class="results-hero-grid"><div><div class="edition">РЕЗУЛЬТАТ ПРОГОНА <span>${esc(manifest.resultId)}</span></div><h1>От спецификации<br>к <em>результату.</em></h1><p class="hero-intro">Сравнение SDD-процессов на одинаковых задачах, модели и условиях. Все баллы рассчитаны по сохранённым решениям судей.</p><div class="hero-meta"><span>${date(manifest.createdAt)}</span><span>${esc(STAGE_TITLES[stage])}</span><span>${esc(manifest.config.participantModel)}</span><span>Повторов: ${manifest.config.repeats}</span></div></div><div class="hero-stat"><span class="hero-stat-label">НАБОР ДАННЫХ / 01</span><strong>${participants.length.toString().padStart(2, '0')}</strong><span>участников</span><div class="stat-rule"></div><div class="hero-stat-secondary"><div><b>${taskCount.toString().padStart(2, '0')}</b><span>задачи</span></div><div><b>${scored}<small>/${manifest.runs.length}</small></b><span>оценено запусков</span></div></div></div></div></section>`
 }
 function leaderboard(manifest: ResultManifest): string {
   const ranked = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -74,7 +74,7 @@ function leaderboard(manifest: ResultManifest): string {
       return `<tr><td class="rank">${String(index + 1).padStart(2, '0')}</td><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span><span class="participant-id">${esc(participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}<td class="efficiency">${duration(participant.efficiency.meanDurationMs)}</td><td class="efficiency">${cost === null ? '—' : `$${cost.toFixed(2)}`}</td></tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('01', 'Итоговый рейтинг', 'Среднее по классам задач. Время и стоимость показаны отдельно от балла.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Участник</th><th scope="col">Итог</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col">Ср. время</th><th scope="col">Ср. стоимость</th></tr></thead><tbody>${rows}</tbody></table></div><p class="table-footnote">Баллы от 0 до 100 · «—» означает, что данных нет.</p></section>`
+  return `<section class="content" id="results">${sectionHead('01', 'Рейтинг прогона', 'Среднее по представленным классам задач. Время и стоимость показаны отдельно от балла.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">#</th><th scope="col">Участник</th><th scope="col">Итог</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col">Ср. время</th><th scope="col">Ср. стоимость</th></tr></thead><tbody>${rows}</tbody></table></div><p class="table-footnote">Баллы от 0 до 100 · «—» означает, что данных нет.</p></section>`
 }
 function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
@@ -101,7 +101,9 @@ function runStatus(run: RunRecord): string {
   return '<span class="status complete">Оценён</span>'
 }
 function runs(manifest: ResultManifest): string {
-  const metrics = STAGE_METRICS[manifest.config.stage ?? DEFAULT_STAGE]
+  const stage = manifest.config.stage ?? DEFAULT_STAGE
+  const metrics = STAGE_METRICS[stage]
+  const showHidden = stage === 'full'
   const rows = [...manifest.runs]
     .sort(
       (a, b) =>
@@ -118,10 +120,13 @@ function runs(manifest: ResultManifest): string {
         )
         .join('')
       const hidden = run.hidden?.passRatio
-      return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)} · повтор ${run.repeat}</span></td>${cells}<td class="number run-score">${score(value.value)}</td><td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td><td>${runStatus(run)}</td></tr>`
+      const hiddenCell = showHidden
+        ? `<td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td>`
+        : ''
+      return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)} · повтор ${run.repeat}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}<td>${runStatus(run)}</td></tr>`
     })
     .join('')
-  return `<section class="content runs-section" id="runs">${sectionHead('03', 'Все запуски', 'Оценки судей по шкале 0–10. Скрытые тесты показаны отдельно от итогового балла.')}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Запуск</th>${metrics.map((metric) => `<th scope="col" title="${esc(METRIC_TITLES[metric])}">${esc(metric)}</th>`).join('')}<th scope="col">Score</th><th scope="col">Скрытые тесты</th><th scope="col">Статус</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content runs-section" id="runs">${sectionHead('03', 'Все запуски', 'Оценки судей по шкале 0–10. Скрытые тесты показаны отдельно от итогового балла.')}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Запуск</th>${metrics.map((metric) => `<th scope="col" title="${esc(METRIC_TITLES[metric])}">${esc(metric)}</th>`).join('')}<th scope="col">Score</th>${showHidden ? '<th scope="col">Скрытые тесты</th>' : ''}<th scope="col">Статус</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function method(index = '04'): string {
   return `<section class="method" id="method"><div class="content">${sectionHead(index, 'Как читать результат', 'Коротко о методе расчёта и границах сравнения.')}<div class="method-grid"><div class="method-item"><span>01 / ОДИНАКОВЫЕ УСЛОВИЯ</span><h3>Один вход для всех</h3><p>Участники получают одинаковую задачу, модель и лимиты. Отличается только SDD-процесс и его инструментарий.</p></div><div class="method-item"><span>02 / ПОПУНКТНАЯ ОЦЕНКА</span><h3>Решения, затем балл</h3><p>Судья оценивает отдельные требования и дефекты. Балл вычисляется по этим решениям, а не выбирается моделью целиком.</p></div><div class="method-item"><span>03 / АГРЕГАЦИЯ</span><h3>Равный вес классов</h3><p>Балл запуска — среднее геометрическое применимых метрик. Повторы усредняются в задачу, задачи — в класс, классы — в итог.</p></div></div><div class="method-note"><span>МЕТОДОЛОГИЯ</span><p>Ошибка, таймаут или регрессия исходных тестов дают запуску 0. Время и скрытые тесты не входят в итоговый балл. Этап «только спецификация» не включает метрику реализации.</p></div><a class="method-link" href="./methodology.html">Полная методология <span aria-hidden="true">↗</span></a></div></section>`
