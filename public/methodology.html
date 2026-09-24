@@ -1,223 +1,165 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Методология SDD Bench: задачи, судейство, расчёт балла и изоляция запусков."><meta name="theme-color" content="#155b3d"><title>Методология — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body><header class="topbar"><a class="brand" href="./index.html" aria-label="SDD Bench — главная"><span class="brand-mark">S<span>/</span>D</span><span>SDD BENCH</span></a><nav aria-label="Разделы"><a href="./index.html#results">Результаты</a><a href="./index.html#tasks">Задачи</a><a href="#top" aria-current="page">Методология</a></nav><span class="topbar-badge">OPEN BENCHMARK <span class="live-dot"></span></span></header><main id="top" class="methodology-page"><section class="methodology-hero"><div class="methodology-hero-inner"><div class="hero-kicker"><span class="kicker-line"></span> SDD BENCH / МЕТОД</div><div class="methodology-hero-grid"><div><span class="methodology-eyebrow">О БЕНЧМАРКЕ</span><h1>Методология<span>.</span></h1><p>Как устроены задачи и запуски, что видят судьи и как их решения превращаются в итоговый балл.</p></div><div class="methodology-sequence" aria-hidden="true"><span>НАМЕРЕНИЕ</span><i>→</i><span>СПЕЦИФИКАЦИЯ</span><i>→</i><span>РЕАЛИЗАЦИЯ</span></div></div></div></section><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><span class="toc-label">НА ЭТОЙ СТРАНИЦЕ</span><ol><li><a href="#section-1"><span>01</span>Классы задач</a></li><li><a href="#section-2"><span>02</span>Этапы цикла</a></li><li><a href="#section-3"><span>03</span>Конфигурация агента</a></li><li><a href="#section-4"><span>04</span>Протокол прогона</a></li><li><a href="#section-5"><span>05</span>Метрики</a></li><li><a href="#section-6"><span>06</span>Итоговый скор</a></li><li><a href="#section-7"><span>07</span>Повторные запуски</a></li><li><a href="#section-8"><span>08</span>Как интерпретировать результат</a></li><li><a href="#section-9"><span>09</span>Изоляция запусков</a></li></ol><a class="toc-back" href="./index.html#results">← К результатам</a></div></aside><article class="methodology-content"><h2 id="section-1">Классы задач</h2>
-<p>Бенчмарк проверяет полный процесс: от намерения через спецификацию к реализации.</p>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>Methodology — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body><header class="topbar"><a class="brand" href="./index.html" aria-label="SDD Bench home"><span class="brand-mark">S<span>/</span>D</span><span>SDD BENCH</span></a><nav aria-label="Sections"><a href="./index.html#results">Results</a><a href="./index.html#tasks">Tasks</a><a href="#top" aria-current="page">Methodology</a></nav><span class="topbar-badge">OPEN BENCHMARK <span class="live-dot"></span></span></header><main id="top" class="methodology-page"><section class="methodology-hero"><div class="methodology-hero-inner"><div class="hero-kicker"><span class="kicker-line"></span> SDD BENCH / METHOD</div><div class="methodology-hero-grid"><div><span class="methodology-eyebrow">ABOUT THE BENCHMARK</span><h1>Methodology<span>.</span></h1><p>How tasks and runs work, what judges see, and how their decisions become scores.</p></div><div class="methodology-sequence" aria-hidden="true"><span>INTENT</span><i>→</i><span>SPECIFICATION</span><i>→</i><span>IMPLEMENTATION</span></div></div></div></section><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><span class="toc-label">ON THIS PAGE</span><ol><li><a href="#section-1"><span>01</span>Task classes</a></li><li><a href="#section-2"><span>02</span>Workflow stages</a></li><li><a href="#section-3"><span>03</span>Agent configuration</a></li><li><a href="#section-4"><span>04</span>Run protocol</a></li><li><a href="#section-5"><span>05</span>Metrics</a></li><li><a href="#section-6"><span>06</span>Aggregate score</a></li><li><a href="#section-7"><span>07</span>Repeats</a></li><li><a href="#section-8"><span>08</span>Interpreting results</a></li><li><a href="#section-9"><span>09</span>Run isolation</a></li></ol><a class="toc-back" href="./index.html#results">← Back to results</a></div></aside><article class="methodology-content"><h2 id="section-1">Task classes</h2>
+<p>The benchmark examines the path from an initial request through a specification to an implementation.</p>
 <table>
 <thead>
 <tr>
-<th>Класс</th>
-<th>Исходное состояние</th>
-<th>Задача</th>
+<th>Class</th>
+<th>Starting point</th>
+<th>Assignment</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Greenfield</td>
-<td>Нет проекта и спецификации</td>
-<td>Создать спецификацию и реализовать новую фичу с нуля</td>
+<td>No project or specification</td>
+<td>Write a specification and implement a new feature from scratch</td>
 </tr>
 <tr>
-<td>Brownfield без спецификации</td>
-<td>Есть кодовая база, формальная спецификация ранее не велась</td>
-<td>Создать спецификацию и реализовать новую фичу в существующем проекте</td>
+<td>Brownfield without a specification</td>
+<td>An existing codebase with no maintained formal specification</td>
+<td>Write a specification and implement a new feature in the project</td>
 </tr>
 <tr>
-<td>Brownfield с актуальной спецификацией</td>
-<td>Есть кодовая база и актуальная спецификация</td>
-<td>Обновить спецификацию и реализовать новую фичу в существующем проекте</td>
+<td>Brownfield with a current specification</td>
+<td>An existing codebase and an up-to-date specification</td>
+<td>Update the specification and implement a new feature in the project</td>
 </tr>
 </tbody>
 </table>
-<p>Это начальный набор классов. По мере развития бенчмарка список будет
-расширяться.</p>
-<h2 id="section-2">Этапы цикла</h2>
-<p>Бенчмарк проверяет полный процесс, но его можно прогнать и по части — тогда
-сравнивается один участок процесса, а не весь путь.</p>
+<p>These are the initial task classes. The set can expand as the benchmark develops.</p>
+<h2 id="section-2">Workflow stages</h2>
+<p>The benchmark can evaluate the full workflow or isolate the specification stage.</p>
 <table>
 <thead>
 <tr>
-<th>Этап</th>
-<th>Что делает участник</th>
-<th>Метрики</th>
+<th>Stage</th>
+<th>Participant work</th>
+<th>Metrics</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>full</code></td>
-<td>Спецификация и реализация по ней</td>
+<td>Write a specification and implement it</td>
 <td><code>spec-quality</code>, <code>spec-fit</code>, <code>impl-fit</code></td>
 </tr>
 <tr>
 <td><code>spec</code></td>
-<td>Только спецификация, реализации нет</td>
+<td>Write a specification only</td>
 <td><code>spec-quality</code>, <code>spec-fit</code></td>
 </tr>
 </tbody>
 </table>
-<p>Неприменимая метрика не считается нулём: она не оценивается вовсе, и скор
-берётся как среднее геометрическое тех метрик, которые этап производит.
-Проверки, которым нужен код — регрессии и скрытые тесты — на этапе без
-реализации не выполняются.</p>
-<p>Прогон одного результата ведётся целиком на одном этапе: сравнивать участников
-имеет смысл внутри этапа, а не между разными.</p>
-<h2 id="section-3">Конфигурация агента</h2>
-<p>Все участники одного результата запускаются с одним провайдером, моделью и версией модели, одинаковыми
-настройками рассуждения, лимитами времени и токенов, набором доступных
-инструментов и сетевыми ограничениями. Намерение задачи передаётся без изменений,
-вмешательство человека во время запуска не допускается.</p>
-<p>Между участниками различаются только канонический SDD-процесс и необходимый для
-него инструментарий. Версии модели, инструментов и настройки сохраняются вместе
-с результатом запуска.</p>
-<h2 id="section-4">Протокол прогона</h2>
-<p>Для каждого сочетания задачи, участника и повтора создаётся отдельный запуск:</p>
+<p>An inapplicable metric is omitted rather than scored as zero. The run score is the geometric mean of the metrics produced by its stage. Checks that require code, including regression and held-out tests, do not run at the <code>spec</code> stage.</p>
+<p>Every run in one result uses the same stage. Scores are comparable within a stage, not across different stages.</p>
+<h2 id="section-3">Agent configuration</h2>
+<p>Within one result, all participants use the same provider, model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.</p>
+<p>Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.</p>
+<h2 id="section-4">Run protocol</h2>
+<p>Each task, participant, and repeat combination produces a separate run:</p>
 <ol>
-<li>Исходный проект фиксируется в Git и передаётся участнику в новом sandbox.</li>
-<li>Устанавливается инструментарий участника. Агент получает исходное намерение и
-выполняет выбранный этап: пишет спецификацию либо спецификацию и код.</li>
-<li>Спецификация, итоговый репозиторий и телеметрия сохраняются; sandbox участника
-удаляется.</li>
-<li>На полном этапе исходные тесты (если они есть) и скрытые тесты выполняются
-отдельно от участника.</li>
-<li>Для каждой применимой метрики запускается отдельный судья. Его решения по
-пунктам превращаются в балл запуска, затем баллы агрегируются по задаче,
-классу и участнику.</li>
+<li>The starting project is committed to Git and placed in a fresh sandbox.</li>
+<li>The participant’s tools are installed. The agent receives the task request and writes a specification, or a specification and code, according to the selected stage.</li>
+<li>The specification, final repository, and telemetry are saved. The participant’s sandbox is removed.</li>
+<li>At the <code>full</code> stage, the project’s original tests, when present, and the held-out tests run separately from the participant.</li>
+<li>A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.</li>
 </ol>
-<p>Судейство можно повторить по сохранённым материалам без повторного запуска
-участника. Каждый результат хранит конфигурацию и версии, с которыми был получен.</p>
-<h2 id="section-5">Метрики</h2>
+<p>Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.</p>
+<h2 id="section-5">Metrics</h2>
 <table>
 <thead>
 <tr>
-<th>Метрика</th>
-<th>Метод оценки</th>
-<th>Результат</th>
+<th>Metric</th>
+<th>Evaluation</th>
+<th>Output</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Качество спецификации</td>
-<td>LLM-судья получает только спецификацию и перечисляет её дефекты по пяти признакам</td>
-<td>Дефекты со степенью и местом в тексте</td>
+<td>Specification quality</td>
+<td>An LLM judge reads only the specification and identifies defects across five criteria</td>
+<td>Defects with severity and location</td>
 </tr>
 <tr>
-<td>Соответствие спецификации требованиям</td>
-<td>LLM-судья получает намерение, его разбор на пункты и спецификацию</td>
-<td>Решение по каждому пункту и список приписок</td>
+<td>Specification fit to requirements</td>
+<td>An LLM judge reads the task request, its itemized requirements, and the specification</td>
+<td>A decision for each item and a list of unsupported additions</td>
 </tr>
 <tr>
-<td>Соответствие реализации спецификации</td>
-<td>LLM-судья получает спецификацию и репозиторий, может запускать проверки</td>
-<td>Решение по каждому требованию спецификации и запущенные проверки</td>
+<td>Implementation fit to specification</td>
+<td>An LLM judge reads the specification and repository and may run checks</td>
+<td>A decision for each specification requirement and the checks performed</td>
 </tr>
 <tr>
-<td>Отсутствие регрессий</td>
-<td>Запуск исходного набора тестов проекта</td>
-<td>Доля тестов, продолживших проходить</td>
+<td>Regression avoidance</td>
+<td>The project’s original test suite is run</td>
+<td>Share of tests that still pass</td>
 </tr>
 <tr>
-<td>Эффективность</td>
-<td>Телеметрия запуска и внешний замер времени</td>
-<td>Время выполнения и число использованных токенов</td>
+<td>Efficiency</td>
+<td>Run telemetry and an external wall-clock measurement</td>
+<td>Elapsed time and token use</td>
 </tr>
 </tbody>
 </table>
-<p>Время выполнения измеряется снаружи, а не берётся из телеметрии участника:
-процесс, делегирующий работу подагентам, сообщает о себе лишь время головной
-сессии и занижает собственную длительность в разы. Число токенов и стоимость
-берутся из телеметрии — их участник не занижает.</p>
-<p>Для всех участников используется один провайдер и одна версия модели-судьи, один промпт и
-одинаковые настройки. Судье не сообщается, какой участник создал результат.</p>
-<p>Балла судья не ставит. Он выносит решение по каждому пункту из фиксированного
-словаря — требование перенесено, перенесено частично, искажено, потеряно, — а
-балл считается арифметикой по этим решениям. Холистическая оценка от модели
-неизбежно садится в узкую полосу «хорошо, но не идеально» и участников не
-различает; решение по пункту различает, а шаг шкалы задаётся числом пунктов,
-а не готовностью модели сказать «семь» вместо «восемь». Побочные следствия:
-балл воспроизводим по решениям, и спорить с ним можно, споря с конкретным
-решением.</p>
-<p>Пункты для метрики «соответствие спецификации требованиям» разбираются из
-намерения заранее и хранятся в задаче (<code>requirements.md</code>). Список один на всех
-участников и на все повторы, и участнику он не показывается: иначе каждый судья
-составлял бы свой список и сравнивал бы разное с разным.</p>
-<h2 id="section-6">Итоговый скор</h2>
-<p>Содержательные оценки нормируются в диапазон от <code>0</code> до <code>1</code>:</p>
+<p>Elapsed time is measured externally rather than taken from the participant’s telemetry. A process that delegates work to subagents may report only the lead session’s time, substantially understating total duration. Token use and cost come from telemetry.</p>
+<p>All participants use the same judge provider, model version, prompt, and settings. The judge is not told which participant produced the work.</p>
+<p>The judge does not assign a numeric score. It chooses from a fixed set of decisions for each item: covered, partially covered, distorted, or missing. The harness computes the score from those decisions. A single holistic score tends to cluster around “good but not perfect” and distinguishes participants poorly. Item-level decisions make the score reproducible and allow disputes to focus on a specific decision.</p>
+<p>The requirements for <code>spec-fit</code> are extracted from the task request in advance and stored in <code>requirements.md</code>. Every participant and repeat uses the same list. The participant does not receive it; otherwise each judge could evaluate a different set of requirements.</p>
+<h2 id="section-6">Aggregate score</h2>
+<p>The substantive metric scores are normalized to the range <code>0</code> to <code>1</code>:</p>
 <ul>
-<li><code>spec-quality</code> — качество спецификации;</li>
-<li><code>spec-fit</code> — соответствие спецификации требованиям;</li>
-<li><code>impl-fit</code> — соответствие реализации спецификации.</li>
+<li><code>spec-quality</code> — specification quality;</li>
+<li><code>spec-fit</code> — specification fit to requirements;</li>
+<li><code>impl-fit</code> — implementation fit to specification.</li>
 </ul>
-<p>Скор одного запуска — среднее геометрическое метрик его этапа. Для полного
-цикла это три метрики, для этапа <code>spec</code> — две:</p>
-<pre><code class="language-text">Score_run = 100 × ⁿ√(∏ метрик этапа)
+<p>A run score is the geometric mean of the metrics for its stage: three for <code>full</code> and two for <code>spec</code>.</p>
+<pre><code class="language-text">Score_run = 100 × ⁿ√(∏ stage metrics)
 
 full: 100 × ∛(spec-quality × spec-fit × impl-fit)
 spec: 100 × √(spec-quality × spec-fit)
 </code></pre>
-<p>Например, оценки <code>8/10</code>, <code>6/10</code> и <code>9/10</code> на полном этапе дают
-<code>100 × ∛(0,8 × 0,6 × 0,9) = 75,6</code>. Для успешного запуска итог не показывается,
-пока хотя бы одна применимая оценка не получена.</p>
-<p>Если запуск завершился ошибкой, превысил лимит времени или привёл к регрессии,
-его скор равен <code>0</code>. Для greenfield-задач проверка регрессий не применяется.</p>
-<p>Скор задачи — среднее всех её запусков. Скор класса — среднее всех задач этого
-класса. Итоговый скор — среднее по классам, поэтому каждый класс имеет одинаковый
-вес. Эффективность в итоговый скор не входит и публикуется отдельно.</p>
-<h2 id="section-7">Повторные запуски</h2>
-<p>По умолчанию каждая комбинация задачи и участника запускается три раза
-(<code>n = 3</code>); число повторов можно изменить в конфигурации. Каждый запуск
-начинается с одинакового исходного состояния.</p>
-<h2 id="section-8">Как интерпретировать результат</h2>
-<p>Сравнивать итоговые баллы следует внутри одного результата: его участники
-прошли одни задачи на одном этапе и при одной конфигурации агента и судьи.
-Прямое сравнение баллов разных результатов может смешать влияние процесса,
-модели, задач и настроек.</p>
-<p>Текущий набор задач покрывает только включённые в него сценарии. Балл описывает
-поведение инструмента в этих условиях, а не качество всех его применений.
-Решения LLM-судьи допускают ошибки; спорную оценку проверяют по решениям для
-конкретных пунктов и сохранённым материалам запуска.</p>
-<p>Задачи, чек-листы и тесты открыты в репозитории. Во время прогона чек-листы и
-тесты не передаются участнику, но публичность не исключает знакомства модели
-с ними до запуска. Поэтому такой прогон не является слепой проверкой на
-неизвестном наборе задач.</p>
-<h2 id="section-9">Изоляция запусков</h2>
-<p>Участники и LLM-судьи запускаются в отдельных
-<a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a> — через CLI <code>sbx</code>.
-Для каждой комбинации задачи, участника и повтора создаётся новый sandbox со
-следующими ограничениями:</p>
+<p>For example, scores of <code>8/10</code>, <code>6/10</code>, and <code>9/10</code> at the <code>full</code> stage yield <code>100 × ∛(0.8 × 0.6 × 0.9) = 75.6</code>. A successful run has no aggregate score until all applicable judgments are available.</p>
+<p>A run scores <code>0</code> if it fails, times out, or regresses the original tests. Regression checks do not apply to greenfield tasks.</p>
+<p>A task score is the mean of its runs. A class score is the mean of its tasks. The final score is the mean across classes, giving each class equal weight. Efficiency is reported separately and does not affect the final score.</p>
+<h2 id="section-7">Repeats</h2>
+<p>By default, each task and participant combination runs three times (<code>n = 3</code>). The repeat count can be changed in the configuration. Every repeat starts from the same initial state.</p>
+<h2 id="section-8">Interpreting results</h2>
+<p>Compare final scores within one result: its participants ran the same tasks at the same stage with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.</p>
+<p>The current task set covers only its included scenarios. A score describes behavior under those conditions, not the quality of every possible use of a tool. LLM judges can make mistakes; disputed scores should be checked against the item-level decisions and saved run artifacts.</p>
+<p>Tasks, requirement checklists, and tests are public in this repository. They are withheld from the participant during a run, but publication cannot rule out prior exposure of the model to them. This is not a blind evaluation on unseen tasks.</p>
+<h2 id="section-9">Run isolation</h2>
+<p>Participants and LLM judges run in separate <a href="https://docs.docker.com/ai/sandboxes/">Docker Sandboxes</a> through the <code>sbx</code> CLI. Each task, participant, and repeat combination gets a new sandbox with these restrictions:</p>
 <ul>
-<li>репозиторий предоставляется в режиме <code>--clone</code>, работа ведётся в его приватной копии;</li>
-<li>общие навыки отключаются через <code>--no-share-skills</code>;</li>
-<li>сеть закрыта по умолчанию, разрешается только доступ к необходимым API;</li>
-<li>скрытые тесты, эталонные решения и результаты других запусков не передаются;</li>
-<li>после завершения сохраняются результат и телеметрия, затем sandbox удаляется.</li>
+<li>the repository is provided through <code>--clone</code>, and work happens in a private copy;</li>
+<li>shared skills are disabled with <code>--no-share-skills</code>;</li>
+<li>network access is denied by default, with only required APIs allowed;</li>
+<li>held-out tests, reference solutions, and results from other runs are not passed in;</li>
+<li>the result and telemetry are saved after completion, then the sandbox is removed.</li>
 </ul>
-<p>Каждая оценка выполняется новым судьёй без истории предыдущих запусков. Судья
-получает только необходимые для метрики материалы:</p>
+<p>Each judgment uses a fresh judge without previous run history. The judge receives only the materials needed for its metric:</p>
 <table>
 <thead>
 <tr>
-<th>Метрика</th>
-<th>Доступные материалы</th>
+<th>Metric</th>
+<th>Available materials</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Качество спецификации</td>
-<td>Спецификация</td>
+<td>Specification quality</td>
+<td>Specification</td>
 </tr>
 <tr>
-<td>Соответствие спецификации требованиям</td>
-<td>Исходное намерение, его разбор на пункты и спецификация</td>
+<td>Specification fit to requirements</td>
+<td>Original task request, itemized requirements, and specification</td>
 </tr>
 <tr>
-<td>Соответствие реализации спецификации</td>
-<td>Спецификация и приватная копия итогового репозитория</td>
+<td>Implementation fit to specification</td>
+<td>Specification and a private copy of the final repository</td>
 </tr>
 </tbody>
 </table>
-<p>Спецификация передаётся судье в нейтральном каталоге <code>spec/</code>: каждый участник
-держит её у себя по-своему, и само расположение назвало бы автора. Полной
-анонимности это не даёт — при оценке соответствия реализации спецификации
-инструментарий участника виден по содержимому репозитория. Это известная
-граница метода, а не то, что скрывается.</p>
-<p>Скрытые тесты запускаются отдельно после завершения участника и никогда не
-помещаются в его sandbox. В итоговый скор они не входят: они показывают, что
-получилось, а оценивает реализацию судья.</p>
-</article></div></main><footer class="footer"><span class="brand-mark">S<span>/</span>D</span><div><strong>SDD BENCH</strong><span>Бенчмарк инструментов разработки через спецификацию</span></div><span class="footer-id">ПУБЛИЧНЫХ РЕЗУЛЬТАТОВ ПОКА НЕТ</span></footer></body></html>
+<p>The specification is placed in a neutral <code>spec/</code> directory for judging. Participants store it in different locations, and the original path could reveal the author. This does not provide complete anonymity: for <code>impl-fit</code>, the participant’s tooling may still be visible in the repository. That is a known limitation.</p>
+<p>Held-out tests run separately after the participant finishes and are never placed in its sandbox. They do not enter the final score. They show what the implementation does; the judge assesses how well it follows the specification.</p>
+</article></div></main><footer class="footer"><span class="brand-mark">S<span>/</span>D</span><div><strong>SDD BENCH</strong><span>A benchmark for specification-driven development</span></div><span class="footer-id">NO PUBLIC RESULTS YET</span></footer></body></html>

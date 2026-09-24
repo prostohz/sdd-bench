@@ -1,31 +1,31 @@
-# Инструкции проекта
+# Project instructions
 
-`sdd-bench` сравнивает процессы разработки через спецификацию на одинаковых задачах и настройках агента. Источник правил оценки — [METHODOLOGY.md](METHODOLOGY.md). Пользовательские команды описаны в [RUNNING.md](RUNNING.md), публикация результатов — в [PUBLISHING.md](PUBLISHING.md).
+`sdd-bench` compares specification-driven development workflows under the same tasks and agent settings. [METHODOLOGY.md](METHODOLOGY.md) defines the scoring rules. User-facing commands are in [RUNNING.md](RUNNING.md); result publication is in [PUBLISHING.md](PUBLISHING.md).
 
-## Структура
+## Structure
 
-- `tasks/<class>/<id>/` — намерение, чек-лист требований, исходный проект и тесты задачи.
-- `participants/<id>/` — описание участника, установка и промты для полного цикла и этапа спецификации.
-- `src/run/`, `src/sandbox/` — запуск агента в Docker Sandbox и сохранение артефактов.
-- `src/judge/`, `judges/`, `src/score/` — решения судей по пунктам и расчёт баллов.
-- `src/web/` — локальный просмотр полных результатов; `src/site/` — статическая публичная витрина.
-- `results/` и `judge-probes/` — локальные артефакты, исключённые из Git.
+- `tasks/<class>/<id>/`: task request, requirement checklist, seed project, and tests.
+- `participants/<id>/`: participant descriptor, setup, and prompts for the full and specification-only stages.
+- `src/run/` and `src/sandbox/`: agent execution in Docker Sandboxes and artifact capture.
+- `src/judge/`, `judges/`, and `src/score/`: item-level judge decisions and score calculation.
+- `src/web/`: local view of full results; `src/site/`: static public results site.
+- `results/` and `judge-probes/`: local artifacts excluded from Git.
 
-## Инварианты
+## Invariants
 
-- Все участники одного результата получают одинаковую задачу, модель, настройки и лимиты. Отличается только процесс и его инструментарий.
-- Каждый запуск начинается с отдельного Git seed и sandbox. Чек-листы требований, тесты и результаты других запусков не передаются участнику, хотя исходники этих материалов доступны в публичном репозитории.
-- Судьи получают только материалы своей метрики. Они выносят решения по пунктам; числовой балл считает код в `src/judge/tally.ts` и `src/score/`.
-- Публичная витрина содержит сводные показатели. Логи, ответы судей и репозитории запусков остаются в `results/`.
-- Не добавляй комментарии в код.
+- Within a result, all participants receive the same task, model, settings, and limits. Only the workflow and its required tools differ.
+- Every run starts from a separate Git seed and sandbox. Requirement checklists, tests, and other runs' results are withheld from the participant, although their source files are public.
+- Each judge receives only the materials for its metric and makes item-level decisions. `src/judge/tally.ts` and `src/score/` compute numeric scores.
+- The public site contains summaries. Logs, judge responses, and run repositories remain in `results/`.
+- Do not add comments to code.
 
-## Проверка изменений
+## Checks
 
-```sh
+~~~sh
 npm ci
 npm test
 npm run validate
 node dist/src/cli.js all --dry-run --task ledger-cli --participant neutral -n 1
-```
+~~~
 
-Настоящий прогон требует Docker Sandboxes CLI `sbx` и доступа к выбранной модели. Участник `canon` также требует локальную копию Canon; путь задан в `participants/canon/participant.json` и проверяется при запуске этого участника.
+Real runs require Docker Sandboxes `sbx` and access to the selected model. The `canon` participant also requires a local Canon checkout at the path in `participants/canon/participant.json`; that path is checked when Canon runs.

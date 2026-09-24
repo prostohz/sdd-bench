@@ -1,13 +1,13 @@
-# Участие в проекте
+# Contributing
 
-Перед изменением задач, участников или расчёта баллов прочитайте [методологию](METHODOLOGY.md). Описывайте в pull request, какое поведение меняется и как оно проверено.
+Read the [methodology](METHODOLOGY.md) before changing tasks, participants, or scoring. In a pull request, describe the behavior changed and how you checked it.
 
-```sh
+~~~sh
 npm ci
 npm test
 npm run validate
-```
+~~~
 
-Для изменений конвейера проверьте [холостой прогон](RUNNING.md). Новая задача должна содержать `task.json`, `intent.md`, `requirements.md` и необходимые исходники и тесты; новый участник — `participant.json` и промты. `npm run validate` проверяет каталог.
+For pipeline changes, also run the [dry-run example](RUNNING.md). A new task needs `task.json`, `intent.md`, `requirements.md`, and any required seed files or tests. A new participant needs `participant.json` and stage prompts. `npm run validate` checks the catalog.
 
-Чек-листы и тесты задач находятся в публичном репозитории ради проверяемости метода. Во время прогона не передавайте их агенту-участнику: изоляция материалов является частью протокола.
+Requirement checklists and task tests are public so the method can be inspected. Do not pass them to the participant agent during a run; material isolation is part of the protocol.

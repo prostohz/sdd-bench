@@ -14,7 +14,7 @@ for (let i = 0; i < args.length; i += 1) {
   const arg = args[i]
   const next = args[i + 1]
   if ((arg === '--result' || arg === '--out') && next === undefined)
-    throw new Error(`${arg}: ожидается значение`)
+    throw new Error(`${arg}: a value is required`)
   if (arg === '--result') {
     result = next
     i += 1
@@ -22,7 +22,7 @@ for (let i = 0; i < args.length; i += 1) {
     out = next ?? out
     i += 1
   } else {
-    throw new Error(`неизвестная опция: ${arg}`)
+    throw new Error(`unknown option: ${arg}`)
   }
 }
 
@@ -30,9 +30,9 @@ const root = process.cwd()
 const manifest =
   result === undefined ? undefined : readManifest(resolveResult(root, loadConfig(root), result))
 if (manifest) {
-  if (manifest.runs.length === 0) throw new Error('результат не содержит запусков')
+  if (manifest.runs.length === 0) throw new Error('the result has no runs')
   const pending = manifest.runs.filter((run) => scoreRun(run).value === null)
-  if (pending.length > 0) throw new Error(`результат ещё не оценён полностью: ${pending.length} запусков`)
+  if (pending.length > 0) throw new Error(`the result is not fully judged: ${pending.length} runs`)
 }
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })

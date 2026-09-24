@@ -1,10 +1,12 @@
-# Публикация результатов
+# Publishing results
 
-```sh
+~~~sh
 npm ci
 npm run site -- --result <id>
-```
+~~~
 
-Команда собирает статическую витрину в `public/` из локального `results/<id>/` и страницу методологии из `METHODOLOGY.md`. Публикация требует, чтобы все запуски результата получили оценку. Из результатов в `public/` попадают только сводные показатели: логи, вердикты и файлы запусков остаются локальными. Проверьте страницы и закоммитьте `public/`; при push в `main` или `master` GitHub Actions развернёт их через GitHub Pages. В настройках репозитория Pages выберите источник **GitHub Actions**.
+The command builds the static site in `public/` from a local `results/<id>/` and renders the methodology page from `METHODOLOGY.md`. Every run in the selected result must be fully judged. Only aggregate scores and run summaries enter `public/`; logs, verdict details, and run repositories stay local.
 
-Пока результатов нет, `npm run site` создаёт страницу с пустым состоянием.
+Review the generated pages, commit `public/`, and push to `main`. GitHub Actions deploys the site through GitHub Pages. The repository's Pages source is **GitHub Actions**.
+
+Running `npm run site` without `--result` generates an empty-state page.
