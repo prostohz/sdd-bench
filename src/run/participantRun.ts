@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { resultText, writeCapturedJson } from '../artifacts.js'
 import type { BenchConfig } from '../config.js'
-import type { Participant } from '../model/participant.js'
+import { assertMountsAvailable, type Participant } from '../model/participant.js'
 import type { Task } from '../model/task.js'
 import { runDirName, type RunRecord, type RunStatus, type TestOutcome } from '../model/run.js'
 import { producesCode } from '../model/stage.js'
@@ -52,6 +52,7 @@ export async function runParticipant(
   if (promptFile === undefined) {
     throw new Error(`участник "${participant.id}" не объявил промт для этапа "${stage}"`)
   }
+  if (ctx.driver.kind !== 'dry-run') assertMountsAvailable(participant)
 
   const runId = `${task.id}-${participant.id}-${stage}-${repeat}`
   const runDir = join(
