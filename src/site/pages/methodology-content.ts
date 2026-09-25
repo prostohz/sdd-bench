@@ -11,7 +11,7 @@ if (!renderFence) throw new Error('Markdown fence renderer unavailable')
 markdown.renderer.rules.fence = (tokens, index, options, env, self) => {
   const token = tokens[index]
   if (token?.info.trim() === 'math') {
-    return `<div class="math-formula">${katex.renderToString(
+    return `<div class="my-[26px] overflow-x-auto py-3 text-xl leading-[1.78] text-ink max-[760px]:py-[10px] max-[760px]:text-base [&_.katex-display]:m-0!">${katex.renderToString(
       token.content.trim(),
       {
         displayMode: true,

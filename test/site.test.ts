@@ -10,6 +10,10 @@ import { renderSite } from '../src/site/pages/results-build.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
+function withoutClasses(html: string): string {
+  return html.replace(/ class="[^"]*"/g, '')
+}
+
 function verdict(metric: Verdict['metric'], score: number): Verdict {
   return {
     metric,
@@ -80,34 +84,35 @@ function fixture(stage: 'full' | 'spec' = 'full'): ResultManifest {
 
 test('the public site shows summaries without exposing run artifacts', () => {
   const html = renderSite(fixture(), version)
+  const markup = withoutClasses(html)
   assert.match(
-    html,
+    markup,
     /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Scores<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
-  assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.match(markup, /<a href="\.\/index\.html">SDD BENCH<\/a>/)
   assert.match(html, /<title>Scores — SDD Bench<\/title>/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Overall scores/)
   assert.doesNotMatch(html, /class="rank"|class="participant-id"|<th scope="col">#<\/th>/)
   assert.match(html, /<th[^>]*scope="col">Participant<\/th><th[^>]*scope="col">Score<\/th>/)
   assert.match(html, /Task breakdown/)
-  assert.match(html, /<div class="task-top">Greenfield<\/div>/)
+  assert.match(markup, /<div>Greenfield<\/div>/)
   assert.doesNotMatch(html, /<span>TASK 01<\/span>/)
   assert.match(html, /Run scores/)
-  assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
-  assert.match(html, /<h1>From specification to <em>results\.<\/em><\/h1>/)
+  assert.ok(markup.includes('<div>VERSION <span>' + version + '</span></div>'))
+  assert.match(markup, /<h1>From specification to <em>results\.<\/em><\/h1>/)
   assert.doesNotMatch(html, /RUN RESULT/)
   assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
   assert.doesNotMatch(html, /01 \/ SAME CONDITIONS|02 \/ ITEM-LEVEL JUDGING|03 \/ AGGREGATION/)
-  assert.match(html, /<h3>One starting point<\/h3>/)
-  assert.match(html, /<h3>Decisions before scores<\/h3>/)
-  assert.match(html, /<h3>Quality, time, and cost<\/h3>/)
+  assert.match(markup, /<h3>One starting point<\/h3>/)
+  assert.match(markup, /<h3>Decisions before scores<\/h3>/)
+  assert.match(markup, /<h3>Quality, time, and cost<\/h3>/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
   assert.match(html, /ledger-cli/)
-  assert.match(html, /<span class="run-sub">ledger-cli<\/span>/)
+  assert.match(markup, /<span>ledger-cli<\/span>/)
   assert.doesNotMatch(html, /repeat 1/)
   assert.match(html, /80%/)
   assert.doesNotMatch(
@@ -166,7 +171,7 @@ test('the specification stage omits implementation checks', () => {
   assert.match(html, /spec-quality/)
   assert.doesNotMatch(html, /<th[^>]*title="Implementation fit to specification">/)
   assert.doesNotMatch(html, /<th[^>]*>Held-out tests<\/th>/)
-  assert.match(html, /<div class="section-head"><h2>Run scores<\/h2><\/div>/)
+  assert.match(withoutClasses(html), /<div><h2>Run scores<\/h2><\/div>/)
 })
 
 test('run scores identify repeats when a result includes multiple attempts', () => {
@@ -192,10 +197,10 @@ test('the baseline appears first even when another method scores higher', () => 
   }
   manifest.runs = [high, low]
 
-  const html = renderSite(manifest, version)
-  assert.match(html, /<table[^>]*leaderboard[^>]*>.*?<tbody[^>]*><tr[^>]*baseline-row[^>]*><th scope="row"><span class="participant-name">Baseline<\/span>/s)
-  assert.match(html, /<div class="task-bars"><div class="task-row"><span>Baseline<\/span>/)
-  assert.match(html, /<table[^>]*runs-table[^>]*>.*?<tbody[^>]*><tr[^>]*><td[^>]*><strong>Baseline<\/strong>/s)
+  const html = withoutClasses(renderSite(manifest, version))
+  assert.match(html, /<tbody[^>]*><tr[^>]*><th scope="row"><span>Baseline<\/span>/s)
+  assert.match(html, /<h3>ledger-cli<\/h3><div><div><span>Baseline<\/span>/)
+  assert.match(html, /<tbody[^>]*><tr[^>]*><td[^>]*><strong>Baseline<\/strong>/s)
 })
 
 test('saved tool versions appear in each report view', () => {
@@ -206,7 +211,7 @@ test('saved tool versions appear in each report view', () => {
   manifest.runs.push({ ...first, runId: 'run-2', repeat: 2, versions: { openspec: '1.14.0' } })
 
   const site = renderSite(manifest, version)
-  assert.match(site, /<span class="tool-version">Tool version: 1\.13\.2, 1\.14\.0<\/span>/)
+  assert.match(withoutClasses(site), /<span>Tool version: 1\.13\.2, 1\.14\.0<\/span>/)
 
   const report = renderReport(manifest)
   assert.match(report, /\| Запуск \| Версия инструмента \| Статус \|/)
@@ -231,14 +236,14 @@ test('methodology names open their GitHub repositories in a new tab', () => {
   for (const repository of repositories) {
     assert.equal(html.split(`href="${repository}" target="_blank" rel="noopener noreferrer"`).length - 1, 3)
   }
-  assert.match(html, /<span class="participant-name">Baseline<\/span>/)
+  assert.match(withoutClasses(html), /<span>Baseline<\/span>/)
   assert.doesNotMatch(html, /href="[^"]*neutral/)
 })
 
 test('the site shows an empty state without a result', () => {
   const html = renderSite(undefined, version)
   assert.match(
-    html,
+    withoutClasses(html),
     /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Scores<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /No public runs yet/)
@@ -251,15 +256,16 @@ test('the site shows an empty state without a result', () => {
 test('the methodology page renders the current Markdown with navigation', () => {
   const source = readFileSync('METHODOLOGY.md', 'utf8')
   const html = renderMethodology(source)
+  const markup = withoutClasses(html)
   assert.match(
-    html,
+    markup,
     /<nav aria-label="Sections"><a href="\.\/index\.html">Scores<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
   )
-  assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
+  assert.match(markup, /<a href="\.\/index\.html">SDD BENCH<\/a>/)
   assert.doesNotMatch(html, /Back to scores|class="toc-back"/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
-  assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
+  assert.match(markup, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
   assert.doesNotMatch(html, /Workflow stages/)
   assert.match(html, /<h2 id="section-2">Run protocol<\/h2>/)
   assert.match(html, /<h2 id="section-3">Agent configuration<\/h2>/)
@@ -272,12 +278,12 @@ test('the methodology page renders the current Markdown with navigation', () => 
   assert.match(html, /Aggregate score/)
   assert.match(html, /Interpreting results/)
   assert.match(html, /Run isolation/)
-  assert.match(html, /<li><a href="#section-7">Run isolation<\/a><\/li><li><a href="#section-8">Interpreting results<\/a><\/li><\/ul>/)
+  assert.match(markup, /<li><a href="#section-7">Run isolation<\/a><\/li><li><a href="#section-8">Interpreting results<\/a><\/li><\/ul>/)
   const sectionCount = [...source.matchAll(/^## /gm)].length - 1
   assert.equal((html.match(/<h2 id="section-\d+">/g) ?? []).length, sectionCount)
   assert.match(html, new RegExp(`href="#section-${sectionCount}"`))
   assert.match(html, /<link rel="stylesheet" href="\.\/katex\/katex\.min\.css">/)
-  assert.match(html, /<div class="math-formula"><span class="katex-display">/)
+  assert.match(html, /<div class="[^"]*overflow-x-auto[^"]*"><span class="katex-display">/)
   assert.match(html, /class="katex-mathml"/)
   assert.doesNotMatch(html, /<pre><code class="language-math">/)
   assert.match(html, /<table>/)

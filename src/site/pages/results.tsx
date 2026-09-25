@@ -42,6 +42,11 @@ const CLASS_NAMES: Record<string, string> = {
   'brownfield-spec': 'Brownfield · current specification',
 }
 
+const sectionClass = 'mx-auto w-[var(--page-width)] scroll-mt-[30px] pt-[74px] max-[760px]:pt-[60px]'
+const numberClass = 'text-right font-mono whitespace-nowrap'
+const tableClass = 'min-w-[760px] w-full border-collapse text-left tabular-nums [&_th]:border-b [&_th]:border-line [&_th]:px-5 [&_th]:py-[18px] [&_td]:border-b [&_td]:border-line [&_td]:px-5 [&_td]:py-[18px] [&_thead]:bg-[#edf1e9] [&_thead_th]:whitespace-nowrap [&_thead_th]:font-mono [&_thead_th]:text-[10px] [&_thead_th]:leading-[normal] [&_thead_th]:font-medium [&_thead_th]:tracking-[0.08em] [&_thead_th]:text-[#5a6b5d] [&_thead_th]:uppercase [&_tbody_tr:hover]:bg-[#f9fbf7] [&_tbody_tr:last-child>*]:border-b-0'
+const runTableClass = `${tableClass} [&_th]:px-[19px] [&_th]:py-[15px] [&_td]:px-[19px] [&_td]:py-[15px] [&_td]:text-[13px]`
+
 function score(value: number | null): string {
   return value === null ? '—' : value.toFixed(1)
 }
@@ -57,8 +62,8 @@ function cost(value: number | null): string {
 function Bar({ value }: { value: number | null }) {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
   return (
-    <span className="bar" aria-hidden="true">
-      <span style={{ width: `${width}%` }} />
+    <span className="block h-[5px] w-full overflow-hidden bg-[#e8ede5]" aria-hidden="true">
+      <span className="block h-full bg-green-2" style={{ width: `${width}%` }} />
     </span>
   )
 }
@@ -71,9 +76,9 @@ function SectionHead({
   note?: string | undefined
 }) {
   return (
-    <div className="section-head">
-      <h2>{title}</h2>
-      {note && <p>{note}</p>}
+    <div className="mb-[34px]">
+      <h2 className="mb-[9px] font-serif text-[clamp(29px,3vw,43px)] leading-[1.2] font-extrabold tracking-[-0.055em] max-[760px]:text-[30px]">{title}</h2>
+      {note && <p className="m-0 text-sm leading-[1.5] text-muted">{note}</p>}
     </div>
   )
 }
@@ -83,7 +88,7 @@ function ParticipantName({ id }: { id: string }): ReactNode {
   const repository = REPOSITORIES[id]
   return repository ? (
     <a
-      className="participant-link"
+      className="hover:text-green-2 hover:underline hover:underline-offset-[3px]"
       href={repository}
       target="_blank"
       rel="noopener noreferrer"
@@ -110,37 +115,37 @@ function compareParticipants(a: ParticipantScore, b: ParticipantScore): number {
 
 function EmptySite() {
   return (
-    <main id="top">
-      <section className="hero empty-hero">
-        <div className="hero-layout">
+    <main id="top" className="overflow-hidden">
+      <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-[67px] pb-[78px] max-[760px]:pt-[52px] max-[760px]:pb-[65px]">
+        <div className="mx-auto max-w-[var(--page-max)]">
           <div>
-            <h1>
-              From intent to working <em>code.</em>
+            <h1 className="m-0 font-serif text-[clamp(29px,3vw,52px)] leading-[1.07] font-extrabold tracking-[-0.075em] max-[1050px]:text-[clamp(27.5px,3vw,39px)] max-[760px]:text-[clamp(24.5px,6vw,37.5px)] max-[430px]:text-[23px]">
+              From intent to working <em className="not-italic text-green-2">code.</em>
             </h1>
-            <p className="hero-intro">
+            <p className="mt-[27px] max-w-[570px] text-[17px] leading-[1.65] text-[#57675c] max-[760px]:text-[15px] max-[760px]:leading-[1.6]">
               Comparing specification-driven workflows by specification quality,
               implementation fidelity, and effort.
             </p>
-            <Button asChild variant="link" size="link" className="hero-link">
+            <Button asChild variant="link" size="link" className="mt-[35px] inline-flex items-center border-b border-green pb-2 text-sm font-bold text-green">
               <a href="./methodology.html">How the benchmark works</a>
             </Button>
           </div>
         </div>
       </section>
-      <section id="results" className="content empty-state">
+      <section id="results" className={`${sectionClass} pb-3`}>
         <SectionHead title="Results" note="No public runs yet." />
-        <div className="empty-panel">
-          <span className="empty-icon" aria-hidden="true">
+        <div className="flex min-h-[175px] items-center gap-[25px] border border-dashed border-[#b9c7b9] bg-[#f9faf6] px-[42px] py-9 max-[760px]:items-start max-[760px]:gap-[17px] max-[760px]:p-6">
+          <span className="font-serif text-[64px] leading-none text-[#b3cdb6] max-[760px]:text-[44px]" aria-hidden="true">
             ∅
           </span>
           <div>
-            <h3>The first result is in progress</h3>
-            <p>
+            <h3 className="mb-1.5 font-serif text-xl font-bold tracking-[-0.03em]">The first result is in progress</h3>
+            <p className="m-0 max-w-[600px] text-sm leading-[1.5] text-muted">
               Once a run is complete and reviewed, participant scores and task
               comparisons will appear here.
             </p>
           </div>
-          <span className="empty-label">AWAITING DATA</span>
+          <span className="ml-auto whitespace-nowrap font-mono text-[10px] tracking-[0.12em] text-[#89978b] max-[760px]:hidden">AWAITING DATA</span>
         </div>
       </section>
       <MethodSummary />
@@ -150,15 +155,15 @@ function EmptySite() {
 
 function Summary({ version }: { version: string }) {
   return (
-    <section className="hero results-hero">
-      <div className="results-hero-content">
-        <div className="edition">
-          VERSION <span>{version}</span>
+    <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-7 pb-8 max-[760px]:pt-6 max-[760px]:pb-7">
+      <div className="mx-auto max-w-[var(--page-max)]">
+        <div className="mb-3.5 inline-flex items-center gap-2.5 rounded bg-green px-[11px] py-2 font-mono text-[11px] leading-[normal] font-medium tracking-[0.08em] text-white">
+          VERSION <span className="text-xs leading-[normal] tracking-normal text-lime">{version}</span>
         </div>
-        <h1>
-          From specification to <em>results.</em>
+        <h1 className="m-0 font-serif text-[clamp(44px,4.5vw,68px)] leading-[1.07] font-extrabold tracking-[-0.075em] max-[1050px]:text-[clamp(42px,4.5vw,58px)] max-[760px]:text-[clamp(34px,7vw,44px)] max-[430px]:text-[34px]">
+          From specification to <em className="not-italic text-green-2">results.</em>
         </h1>
-        <p className="hero-intro">
+        <p className="mt-3 max-w-[900px] text-base leading-[1.55] text-[#57675c] max-[760px]:text-[15px]">
           SDD workflows compared on the same tasks, model, and settings.
         </p>
       </div>
@@ -173,13 +178,13 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
   ).sort(compareParticipants)
   const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
   return (
-    <section className="content" id="results">
+    <section className={sectionClass} id="results">
       <SectionHead
         title="Overall scores"
         note="Baseline first; methods ranked by score across included task classes."
       />
-      <div className="table-shell">
-        <Table className="leaderboard">
+      <div className="overflow-x-auto border border-line bg-paper">
+        <Table className={tableClass}>
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Participant</TableHead>
@@ -189,10 +194,10 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
                   {CLASS_NAMES[key] ?? key}
                 </TableHead>
               ))}
-              <TableHead scope="col" className="number">
+              <TableHead scope="col" className={numberClass}>
                 Avg. time
               </TableHead>
-              <TableHead scope="col" className="number">
+              <TableHead scope="col" className={numberClass}>
                 Avg. cost
               </TableHead>
             </TableRow>
@@ -208,45 +213,45 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
                   key={participant.participantId}
                   className={
                     participant.participantId === 'neutral'
-                      ? 'baseline-row'
-                      : undefined
+                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#d4dbd1]'
+                      : 'hover:bg-[#f9fbf7]'
                   }
                 >
-                  <th scope="row">
-                    <span className="participant-name">
+                  <th scope="row" className="font-medium">
+                    <span className="block whitespace-nowrap font-serif text-base leading-[normal] font-bold tracking-[-0.025em]">
                       <ParticipantName id={participant.participantId} />
                     </span>
                     {participant.participantId === 'neutral' ? (
-                      <span className="baseline-meta">
+                      <span className="mt-1 block font-mono text-[9px] leading-[1.4] text-[#8c978e]">
                         Naive model planning
                       </span>
                     ) : versions.length > 0 ? (
-                      <span className="tool-version">
+                      <span className="mt-1 block font-mono text-[11px] leading-[normal] text-muted">
                         Tool version: {versions.join(', ')}
                       </span>
                     ) : null}
                   </th>
-                  <TableCell className="total-cell">
-                    <strong>{score(participant.score)}</strong>
-                    <span>/ 100</span>
+                  <TableCell className="whitespace-nowrap">
+                    <strong className="font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.06em] text-green">{score(participant.score)}</strong>
+                    <span className="ml-[3px] font-mono text-[11px] leading-[normal] text-[#9aa59a]">/ 100</span>
                   </TableCell>
                   {classes.map((key) => {
                     const value =
                       participant.classes.find((item) => item.key === key)
                         ?.score ?? null
                     return (
-                      <TableCell className="class-cell" key={key}>
-                        <span>{score(value)}</span>
+                      <TableCell className="min-w-[150px]" key={key}>
+                        <span className="mb-2 block font-mono text-[13px] leading-[normal] font-semibold">{score(value)}</span>
                         <Bar value={value} />
                       </TableCell>
                     )
                   })}
-                  <TableCell className="number">
+                  <TableCell className={numberClass}>
                     {duration(
                       participant.efficiency.meanDurationMs ?? undefined,
                     )}
                   </TableCell>
-                  <TableCell className="number">
+                  <TableCell className={numberClass}>
                     {cost(participant.efficiency.meanCostUsd)}
                   </TableCell>
                 </TableRow>
@@ -266,33 +271,33 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
   ).sort(compareParticipants)
   const taskIds = [...new Set(manifest.runs.map((run) => run.taskId))].sort()
   return (
-    <section className="content task-section" id="tasks">
+    <section className={`${sectionClass} pt-[94px] max-[760px]:pt-[70px]`} id="tasks">
       <SectionHead
         title="Task breakdown"
         note="Each card shows a participant’s mean score across repeats for one task."
       />
-      <div className="task-grid">
+      <div className="grid grid-cols-2 gap-[18px] max-[760px]:grid-cols-1">
         {taskIds.map((taskId) => {
           const taskClass =
             manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
           return (
-            <article className="task-card" key={taskId}>
-              <div className="task-top">
+            <article className="border border-line bg-paper px-[31px] pt-7 pb-[33px] max-[430px]:p-[22px]" key={taskId}>
+              <div className="font-mono text-[10px] leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
                 {CLASS_NAMES[taskClass] ?? taskClass}
               </div>
-              <h3>{taskId}</h3>
-              <div className="task-bars">
+              <h3 className="mt-[29px] mb-[30px] font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.05em]">{taskId}</h3>
+              <div className="flex flex-col gap-[18px]">
                 {participants.map((participant) => {
                   const value =
                     participant.tasks.find((item) => item.key === taskId)
                       ?.score ?? null
                   return (
-                    <div className="task-row" key={participant.participantId}>
-                      <span>
+                    <div className="grid grid-cols-[130px_1fr_35px] items-center gap-4 max-[430px]:grid-cols-[105px_1fr_30px] max-[430px]:gap-2" key={participant.participantId}>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-[1.5] font-semibold max-[430px]:text-[11px]">
                         <ParticipantName id={participant.participantId} />
                       </span>
                       <Bar value={value} />
-                      <strong>{score(value)}</strong>
+                      <strong className="text-right font-mono text-xs leading-[normal] font-semibold">{score(value)}</strong>
                     </div>
                   )
                 })}
@@ -320,10 +325,10 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
       a.repeat - b.repeat,
   )
   return (
-    <section className="content runs-section" id="runs">
+    <section className={`${sectionClass} pt-[94px] pb-[90px] max-[760px]:pt-[70px] max-[760px]:pb-[65px]`} id="runs">
       <SectionHead title="Run scores" note={note} />
-      <div className="table-shell">
-        <Table className="runs-table">
+      <div className="overflow-x-auto border border-line bg-paper">
+        <Table className={runTableClass}>
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Run</TableHead>
@@ -331,23 +336,23 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
                 <TableHead
                   key={metric}
                   scope="col"
-                  className="number"
+                  className={numberClass}
                   title={METRIC_LABELS[metric]}
                 >
                   {metric}
                 </TableHead>
               ))}
-              <TableHead scope="col" className="number">
+              <TableHead scope="col" className={numberClass}>
                 Time
               </TableHead>
-              <TableHead scope="col" className="number">
+              <TableHead scope="col" className={numberClass}>
                 Cost
               </TableHead>
-              <TableHead scope="col" className="number">
+              <TableHead scope="col" className={numberClass}>
                 Score
               </TableHead>
               {showHidden && (
-                <TableHead scope="col" className="number">
+                <TableHead scope="col" className={numberClass}>
                   Held-out tests
                 </TableHead>
               )}
@@ -365,10 +370,10 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
               return (
                 <TableRow key={run.runId}>
                   <TableCell>
-                    <strong>
+                    <strong className="font-bold">
                       <ParticipantName id={run.participantId} />
                     </strong>
-                    <span className="run-sub">
+                    <span className="mt-1 block font-mono text-[11px] leading-[normal] text-[#95a196]">
                       {run.taskId}
                       {manifest.config.repeats > 1
                         ? ` · repeat ${run.repeat}`
@@ -376,23 +381,23 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
                     </span>
                   </TableCell>
                   {metrics.map((metric) => (
-                    <TableCell className="number" key={metric}>
+                    <TableCell className={numberClass} key={metric}>
                       {run.verdicts[metric] === undefined
                         ? '—'
                         : score(run.verdicts[metric]?.score ?? null)}
                     </TableCell>
                   ))}
-                  <TableCell className="number">
+                  <TableCell className={numberClass}>
                     {duration(
                       run.telemetry?.activeMs ?? run.telemetry?.durationMs,
                     )}
                   </TableCell>
-                  <TableCell className="number">{cost(price.value)}</TableCell>
-                  <TableCell className="number run-score">
+                  <TableCell className={numberClass}>{cost(price.value)}</TableCell>
+                  <TableCell className={`${numberClass} font-bold text-green`}>
                     {score(value.value)}
                   </TableCell>
                   {showHidden && (
-                    <TableCell className="number">
+                    <TableCell className={numberClass}>
                       {hidden === undefined
                         ? '—'
                         : `${Math.round(hidden * 100)}%`}
@@ -410,30 +415,30 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
 
 function MethodSummary() {
   return (
-    <section className="method" id="method">
-      <div className="content">
+    <section className="scroll-mt-0 border-t border-[#dce4d9] bg-[#e9eee5]" id="method">
+      <div className={`${sectionClass} pt-[78px] max-[760px]:pt-[62px]`}>
         <SectionHead
           title="How to read this result"
           note="How scores are calculated and where comparisons apply."
         />
-        <div className="method-grid">
-          <div className="method-item">
-            <h3>One starting point</h3>
-            <p>
+        <div className="grid grid-cols-3 border-y border-[#cfdacd] max-[760px]:grid-cols-1">
+          <div className="min-h-[215px] pt-[29px] pr-[27px] pb-7 max-[760px]:min-h-0 max-[760px]:py-6">
+            <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">One starting point</h3>
+            <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
               Participants receive the same task, model, and limits. Only the
               SDD workflow and its tools differ.
             </p>
           </div>
-          <div className="method-item">
-            <h3>Decisions before scores</h3>
-            <p>
+          <div className="min-h-[215px] border-l border-[#cfdacd] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
+            <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">Decisions before scores</h3>
+            <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
               Judges assess individual requirements and defects. The harness
               calculates scores from those decisions.
             </p>
           </div>
-          <div className="method-item">
-            <h3>Quality, time, and cost</h3>
-            <p>
+          <div className="min-h-[215px] border-l border-[#cfdacd] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
+            <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">Quality, time, and cost</h3>
+            <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
               Quality is the geometric mean of applicable metrics. Time
               contributes up to 5% and cost up to 2% within a task. Repeats
               average into tasks, tasks into classes, and classes into the final
@@ -454,7 +459,7 @@ export function ResultsBody({
   version: string
 }) {
   return manifest && manifest.runs.length > 0 ? (
-      <main id="top">
+      <main id="top" className="overflow-hidden">
         <Summary version={version} />
         <Leaderboard manifest={manifest} />
         <Tasks manifest={manifest} />
