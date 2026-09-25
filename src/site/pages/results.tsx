@@ -349,7 +349,9 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
   const metrics = STAGE_METRICS[stage]
   const showHidden = stage === 'full'
   const note = showHidden
-    ? 'Held-out tests are reported separately from the score.'
+    ? manifest.resultId === '2026-09-24T22-57-32-852'
+      ? 'Held-out tests are reported separately from the score. GSD Core had no time limit; other participants had a 45-minute limit.'
+      : 'Held-out tests are reported separately from the score.'
     : undefined
   const sorted = [...manifest.runs].sort(
     (a, b) =>
@@ -459,8 +461,8 @@ function MethodSummary() {
           <div className="min-h-[215px] pt-[29px] pr-[27px] pb-7 max-[760px]:min-h-0 max-[760px]:py-6">
             <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">One starting point</h3>
             <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
-              Participants receive the same task, model, and limits. Only the
-              SDD workflow and its tools differ.
+              Participants receive the same task and model. Each follows its
+              own SDD workflow and required tools.
             </p>
           </div>
           <div className="min-h-[215px] border-l border-[#cfdacd] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">

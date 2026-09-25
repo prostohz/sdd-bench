@@ -41,9 +41,9 @@ Judging can be repeated from saved artifacts without rerunning the participant. 
 
 ## Agent configuration
 
-The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.
+The participant and judge use the same provider, although their models may differ. Within one result, participants use the same model, model version, reasoning settings, and shared network policy. Each participant receives the original task request unchanged. There is no human intervention during a run.
 
-Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.
+The SDD workflow and its required tools differ between participants. In the currently published result, GSD Core had no time limit; other participants had a 45-minute limit. No other run reached that limit. The result records model and tool versions and run settings.
 
 ## Metrics
 
