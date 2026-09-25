@@ -79,11 +79,11 @@ A run's quality score is the geometric mean of these three metrics. In the formu
 Q_{\mathrm{run}} &= 100\sqrt[3]{m_1m_2m_3} \\
 T_{\mathrm{run}} &= \frac{\min(T_{\mathrm{successful\ runs\ of\ task}})}{T_{\mathrm{run}}} \\
 C_{\mathrm{run}} &= \frac{\min(C_{\mathrm{successful\ runs\ of\ task}})}{C_{\mathrm{run}}} \\
-\mathrm{Score}_{\mathrm{run}} &= Q_{\mathrm{run}}(0.8+0.1T_{\mathrm{run}}+0.1C_{\mathrm{run}})
+\mathrm{Score}_{\mathrm{run}} &= Q_{\mathrm{run}}(0.93+0.05T_{\mathrm{run}}+0.02C_{\mathrm{run}})
 \end{aligned}
 ```
 
-For example, scores of `8/10`, `6/10`, and `9/10` give `Q = 75.6`. If that run takes twice the fastest successful run of the same task and costs the same as the cheapest, its final score is `75.6 × (0.8 + 0.1 × 0.5 + 0.1 × 1) = 71.8`. The reference minima use all successful participants and repeats of that task within the result. A zero minimum gives a factor of `1` only to zero-valued runs and `0` to positive-valued runs.
+For example, scores of `8/10`, `6/10`, and `9/10` give `Q = 75.6`. If that run takes twice the fastest successful run of the same task and costs the same as the cheapest, its final score is `75.6 × (0.93 + 0.05 × 0.5 + 0.02 × 1) = 73.7`. The reference minima use all successful participants and repeats of that task within the result. A zero minimum gives a factor of `1` only to zero-valued runs and `0` to positive-valued runs.
 
 A successful run has no aggregate score until all applicable judgments and every successful peer's time and cost are available. Missing data is not treated as zero. The published table shows each run's time and cost. Token-based costs are estimates, as described above.
 

@@ -5,6 +5,8 @@ import type { TaskClass } from '../model/task.js'
 
 /** The rubric every judge answers on. */
 export const JUDGE_SCALE_MAX = 10
+export const TIME_WEIGHT = 0.05
+export const COST_WEIGHT = 0.02
 
 export interface RunScore {
   runId: string
@@ -108,7 +110,7 @@ export function scoreRun(record: RunRecord, peers: RunRecord[] = [record], prici
   }
   const timeFactor = ratio(Math.min(...durations as number[]), duration)
   const costFactor = ratio(Math.min(...costs as number[]), cost)
-  return { ...base, value: quality * (0.8 + 0.1 * timeFactor + 0.1 * costFactor), quality, timeFactor, costFactor, normalized, zeroReason: undefined }
+  return { ...base, value: quality * (1 - TIME_WEIGHT - COST_WEIGHT + TIME_WEIGHT * timeFactor + COST_WEIGHT * costFactor), quality, timeFactor, costFactor, normalized, zeroReason: undefined }
 }
 
 function ratio(best: number, actual: number): number {

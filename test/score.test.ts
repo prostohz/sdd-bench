@@ -152,12 +152,12 @@ test('эффективность считается по телеметрии и
   })
 })
 
-test('время и цена дают по десять процентов внутри одной задачи', () => {
+test('время даёт до пяти процентов, цена — до двух внутри одной задачи', () => {
   const fast = record({ runId: 'fast', telemetry: { ...record().telemetry!, activeMs: 300_000, costUsd: 2 } })
   const cheap = record({ runId: 'cheap', participantId: 'other', telemetry: { ...record().telemetry!, activeMs: 600_000, costUsd: 1 } })
   const runs = [fast, cheap]
-  assert.equal(scoreRun(fast, runs).value, 95)
-  assert.equal(scoreRun(cheap, runs).value, 95)
+  assert.equal(scoreRun(fast, runs).value, 99)
+  assert.equal(scoreRun(cheap, runs).value, 97.5)
   assert.equal(scoreRun(fast, runs).timeFactor, 1)
   assert.equal(scoreRun(fast, runs).costFactor, 0.5)
 })
