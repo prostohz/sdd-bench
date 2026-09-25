@@ -1,5 +1,6 @@
 import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { isAbsolute, join, resolve } from 'node:path'
 
 import { loadSiteManifest } from './data.js'
@@ -32,17 +33,18 @@ const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const manifest = loadSiteManifest(root, result)
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })
-writeFileSync(join(destination, 'index.html'), renderSite(manifest, version))
-writeFileSync(
-  join(destination, 'methodology.html'),
-  renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8')),
-)
 execFileSync(process.execPath, [
   join(root, 'node_modules/@tailwindcss/cli/dist/index.mjs'),
   '-i', join(root, 'src/site/site.css'),
   '-o', join(destination, 'site.css'),
   '--minify',
 ], { stdio: 'inherit' })
+const cssVersion = createHash('sha256').update(readFileSync(join(destination, 'site.css'))).digest('hex').slice(0, 12)
+writeFileSync(join(destination, 'index.html'), renderSite(manifest, version, cssVersion))
+writeFileSync(
+  join(destination, 'methodology.html'),
+  renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8'), cssVersion),
+)
 copyFileSync(join(root, 'src/site/favicon.svg'), join(destination, 'favicon.svg'))
 copyFileSync(join(root, 'src/site/PHOSPHOR-LICENSE.txt'), join(destination, 'PHOSPHOR-LICENSE.txt'))
 const katexSource = join(root, 'node_modules/katex/dist')

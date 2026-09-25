@@ -160,6 +160,11 @@ test('the newest completed run is visible above the score tables', () => {
   assert.match(hero, /href="#runs">View run scores<\/a>/)
 })
 
+test('published pages use a versioned stylesheet URL', () => {
+  assert.match(renderSite(fixture(), version, 'abc123'), /href="\.\/site\.css\?v=abc123"/)
+  assert.match(renderMethodology('# Methodology', 'abc123'), /href="\.\/site\.css\?v=abc123"/)
+})
+
 test('estimated costs have no prefix in site or report', () => {
   const manifest = fixture()
   manifest.config.participantPricing = {
