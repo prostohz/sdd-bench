@@ -1,7 +1,7 @@
 import type { Metric, ResultManifest } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import { participantVersions } from '../model/versions.js'
-import { scoreParticipants, scoreRun } from '../score/score.js'
+import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
 const METRIC_LABELS: Record<Metric, string> = {
   'spec-quality': 'Specification quality',
   'spec-fit': 'Specification fit to requirements',
@@ -47,21 +47,31 @@ function participantName(id: string): string {
   const name = NAMES[id] ?? id
   const repository = REPOSITORIES[id]
   return repository
-    ? `<a class="participant-link" href="${esc(repository)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)} on GitHub (opens in a new tab)">${esc(name)}<span aria-hidden="true">↗</span></a>`
+    ? `<a class="participant-link" href="${esc(repository)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)} on GitHub (opens in a new tab)">${esc(name)}</a>`
     : esc(name)
+}
+function baselinePriority(a: string, b: string): number {
+  return Number(b === 'neutral') - Number(a === 'neutral')
+}
+function compareParticipants(a: ParticipantScore, b: ParticipantScore): number {
+  return (
+    baselinePriority(a.participantId, b.participantId) ||
+    (b.score ?? -1) - (a.score ?? -1) ||
+    a.participantId.localeCompare(b.participantId)
+  )
 }
 export function siteHeader(current: 'home' | 'methodology' = 'home'): string {
   const home = current === 'home'
   return `<header class="topbar"><a class="brand" href="./index.html">SDD BENCH</a><nav aria-label="Sections"><a href="./index.html"${home ? ' aria-current="page"' : ''}>Scores</a><a href="./methodology.html"${home ? '' : ' aria-current="page"'}>Methodology</a></nav></header>`
 }
 function empty(): string {
-  return `<main id="top"><section class="hero empty-hero"><div class="hero-layout"><div><h1>From intent<br>to working<br><em>code.</em></h1><p class="hero-intro">Comparing specification-driven workflows by specification quality, implementation fidelity, and effort.</p><a class="hero-link" href="./methodology.html">How the benchmark works <span aria-hidden="true">↗</span></a></div><div class="hero-art" aria-hidden="true"><div class="art-caption">BENCHMARK PIPELINE <span>01 / 03</span></div><div class="art-step"><span>01</span><strong>Intent</strong><i></i></div><div class="art-step"><span>02</span><strong>Specification</strong><i></i></div><div class="art-step"><span>03</span><strong>Implementation</strong><i></i></div><div class="art-bottom">INTENT <span>→</span> SPEC <span>→</span> CODE</div></div></div></section><section id="results" class="content empty-state">${sectionHead('Results', 'No public runs yet.')}<div class="empty-panel"><div class="empty-icon">∅</div><div><h3>The first result is in progress</h3><p>Once a run is complete and reviewed, participant scores and task comparisons will appear here.</p></div><span class="empty-label">AWAITING DATA</span></div></section>${method()}</main>`
+  return `<main id="top"><section class="hero empty-hero"><div class="hero-layout"><div><h1>From intent<br>to working<br><em>code.</em></h1><p class="hero-intro">Comparing specification-driven workflows by specification quality, implementation fidelity, and effort.</p><a class="hero-link" href="./methodology.html">How the benchmark works</a></div><div class="hero-art" aria-hidden="true"><div class="art-caption">BENCHMARK PIPELINE <span>01 / 03</span></div><div class="art-step"><span>01</span><strong>Intent</strong><i></i></div><div class="art-step"><span>02</span><strong>Specification</strong><i></i></div><div class="art-step"><span>03</span><strong>Implementation</strong><i></i></div><div class="art-bottom">INTENT <span>→</span> SPEC <span>→</span> CODE</div></div></div></section><section id="results" class="content empty-state">${sectionHead('Results', 'No public runs yet.')}<div class="empty-panel"><div class="empty-icon">∅</div><div><h3>The first result is in progress</h3><p>Once a run is complete and reviewed, participant scores and task comparisons will appear here.</p></div><span class="empty-label">AWAITING DATA</span></div></section>${method()}</main>`
 }
 function summary(version: string): string {
   return `<section class="hero results-hero"><div class="results-hero-content"><div class="edition">VERSION <span>${esc(version)}</span></div><h1>From specification to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings.</p></div></section>`
 }
 function leaderboard(manifest: ResultManifest): string {
-  const ranked = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+  const ranked = scoreParticipants(manifest.runs).sort(compareParticipants)
   const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
   const rows = ranked
     .map((participant) => {
@@ -74,17 +84,17 @@ function leaderboard(manifest: ResultManifest): string {
         .join('')
       const detail =
         participant.participantId === 'neutral'
-          ? '<span class="baseline-meta"><span class="baseline-tag">No SDD framework</span><span>Naive model planning</span></span>'
+          ? '<span class="baseline-meta">Naive model planning</span>'
           : versions.length > 0
             ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>`
             : ''
-      return `<tr><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
+      return `<tr${participant.participantId === 'neutral' ? ' class="baseline-row"' : ''}><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content" id="results">${sectionHead('Overall scores', 'Baseline first; methods ranked by score across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
-  const participants = scoreParticipants(manifest.runs).sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+  const participants = scoreParticipants(manifest.runs).sort(compareParticipants)
   const taskIds = [...new Set(manifest.runs.map((run) => run.taskId))].sort()
   const cards = taskIds
     .map((taskId) => {
@@ -110,6 +120,7 @@ function runs(manifest: ResultManifest): string {
     .sort(
       (a, b) =>
         a.taskId.localeCompare(b.taskId) ||
+        baselinePriority(a.participantId, b.participantId) ||
         a.participantId.localeCompare(b.participantId) ||
         a.repeat - b.repeat,
     )

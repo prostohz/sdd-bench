@@ -113,17 +113,12 @@ main {
 .hero-link {
   display: inline-flex;
   align-items: center;
-  gap: 31px;
   margin-top: 35px;
   color: var(--green);
   font-weight: 700;
   font-size: 14px;
   border-bottom: 1px solid var(--green);
   padding-bottom: 8px;
-}
-.hero-link span {
-  font-size: 19px;
-  font-weight: 400;
 }
 .hero-art {
   position: relative;
@@ -308,6 +303,15 @@ tbody tr:hover {
 .leaderboard tbody th {
   font-weight: 500;
 }
+.leaderboard tbody tr.baseline-row {
+  background: #f2f3ef;
+}
+.leaderboard tbody tr.baseline-row:hover {
+  background: #ebeee8;
+}
+.leaderboard tbody tr.baseline-row > * {
+  border-bottom: 2px solid #d4dbd1;
+}
 .participant-name {
   display: block;
   font: 700 16px var(--display);
@@ -319,10 +323,6 @@ tbody tr:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.participant-link span {
-  margin-left: 4px;
-  font-size: 0.85em;
-}
 .tool-version {
   display: block;
   margin-top: 4px;
@@ -330,22 +330,10 @@ tbody tr:hover {
   font: 11px var(--mono);
 }
 .baseline-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px 7px;
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 11px;
-}
-.baseline-tag {
-  padding: 2px 5px;
-  border: 1px solid #b9cbb9;
-  border-radius: 3px;
-  color: var(--green);
-  font: 10px var(--mono);
-  text-transform: uppercase;
-  white-space: nowrap;
+  display: block;
+  margin-top: 4px;
+  color: #8c978e;
+  font: 9px/1.4 var(--mono);
 }
 .total-cell {
   white-space: nowrap;

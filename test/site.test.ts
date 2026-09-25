@@ -144,6 +144,26 @@ test('run scores identify repeats when a result includes multiple attempts', () 
   assert.match(html, /ledger-cli · repeat 2/)
 })
 
+test('the baseline appears first even when another method scores higher', () => {
+  const manifest = fixture('spec')
+  const high = { ...manifest.runs[0]!, runId: 'bmad-run', participantId: 'bmad' }
+  const low = {
+    ...manifest.runs[0]!,
+    runId: 'baseline-run',
+    participantId: 'neutral',
+    verdicts: {
+      'spec-quality': verdict('spec-quality', 1),
+      'spec-fit': verdict('spec-fit', 1),
+    },
+  }
+  manifest.runs = [high, low]
+
+  const html = renderSite(manifest, version)
+  assert.match(html, /<table class="leaderboard">.*?<tbody><tr class="baseline-row"><th scope="row"><span class="participant-name">Baseline<\/span>/s)
+  assert.match(html, /<div class="task-bars"><div class="task-row"><span>Baseline<\/span>/)
+  assert.match(html, /<table class="runs-table">.*?<tbody><tr><td><strong>Baseline<\/strong>/s)
+})
+
 test('saved tool versions appear in each report view', () => {
   const manifest = fixture('spec')
   const first = manifest.runs[0]!
@@ -214,7 +234,8 @@ test('the methodology page renders the current Markdown with navigation', () => 
     /<nav aria-label="Sections"><a href="\.\/index\.html">Scores<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
-  assert.match(html, /← Back to scores/)
+  assert.match(html, /Back to scores/)
+  assert.doesNotMatch(html, /← Back to scores/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
