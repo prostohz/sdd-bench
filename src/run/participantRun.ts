@@ -108,7 +108,7 @@ export async function runParticipant(
     writeFileSync(promptOnHost, buildPrompt(task, join(participant.dir, promptFile), ctx.config.provider))
     await sandbox.copyIn(promptOnHost, PROMPT_PATH)
 
-    note(`агент: старт, лимит ${Math.round(ctx.config.timeoutMs / 60000)} мин (диалог в agent.log)`)
+    note(`агент: старт, ${ctx.config.timeoutMs > 0 ? `лимит ${Math.round(ctx.config.timeoutMs / 60000)} мин` : 'без лимита времени'} (диалог в agent.log)`)
     const run = await runAgent(sandbox, ctx.config.provider, {
       model: ctx.config.participantModel,
       effort: ctx.config.participantEffort,

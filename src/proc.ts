@@ -74,7 +74,7 @@ export function run(cmd: string, args: string[], options: ProcOptions = {}): Pro
       // A gap far past the tick is the host having slept; the command did not
       // run through it, so it is not charged for it.
       if (delta <= TICK_MS * 2) activeMs += delta
-      if (options.timeoutMs !== undefined && activeMs >= options.timeoutMs) {
+      if (options.timeoutMs !== undefined && options.timeoutMs > 0 && activeMs >= options.timeoutMs) {
         timedOut = true
         child.kill('SIGTERM')
         setTimeout(() => child.kill('SIGKILL'), 5000).unref()

@@ -170,3 +170,10 @@ test('лимит расходуется и обрывает команду', asy
   assert.ok(result.activeMs >= 2000, `ожидается расход лимита, получено ${result.activeMs}`)
   assert.ok(result.durationMs < 20_000, 'команда оборвана, а не досижена до конца')
 })
+
+test('нулевой лимит не обрывает команду', async () => {
+  const result = await run('bash', ['-c', 'sleep 0.1'], { timeoutMs: 0 })
+
+  assert.equal(result.code, 0)
+  assert.equal(result.timedOut, false)
+})

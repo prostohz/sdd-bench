@@ -55,7 +55,7 @@ export const DEFAULT_CONFIG: BenchConfig = {
   judgeModel: 'gpt-6-sol',
   judgeEffort: 'high',
   stage: DEFAULT_STAGE,
-  timeoutMs: 45 * 60 * 1000,
+  timeoutMs: 0,
   judgeTimeoutMs: 20 * 60 * 1000,
   maxBudgetUsd: undefined,
   participantPricing: TERRA_PRICING,
@@ -91,6 +91,7 @@ export function loadConfig(root: string, path?: string): BenchConfig {
     resultsDir: reader.optionalString('resultsDir') ?? DEFAULT_CONFIG.resultsDir,
   }
   if (config.repeats < 1) reader.problem('repeats: expected at least one run')
+  if (config.timeoutMs < 0) reader.problem('timeoutMs: expected zero or a positive duration')
   if (config.provider === 'codex' && config.maxBudgetUsd !== undefined) {
     reader.problem('maxBudgetUsd: Codex CLI не поддерживает лимит стоимости в USD')
   }
