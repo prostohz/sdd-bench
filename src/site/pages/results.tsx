@@ -41,6 +41,10 @@ const CLASS_NAMES: Record<string, string> = {
   'brownfield-nospec': 'Brownfield · no specification',
   'brownfield-spec': 'Brownfield · current specification',
 }
+const TASK_DESCRIPTIONS: Record<string, string> = {
+  'ledger-cli': 'Build a standalone CLI to record income and expenses, list transactions, and calculate balances.',
+  'tasks-cli': 'Add priorities, sorting, and filtering to an existing task CLI while preserving saved tasks and existing behavior.',
+}
 
 const sectionClass = 'mx-auto w-[var(--page-width)] scroll-mt-[30px] pt-[74px] max-[760px]:pt-[60px]'
 const numberClass = 'text-right font-mono whitespace-nowrap'
@@ -285,7 +289,10 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
               <div className="font-mono text-[10px] leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
                 {CLASS_NAMES[taskClass] ?? taskClass}
               </div>
-              <h3 className="mt-[29px] mb-[30px] font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.05em]">{taskId}</h3>
+              <h3 className={`mt-[29px] font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.05em] ${TASK_DESCRIPTIONS[taskId] ? 'mb-2' : 'mb-[30px]'}`}>{taskId}</h3>
+              {TASK_DESCRIPTIONS[taskId] && (
+                <p className="mb-[30px] text-[13px] leading-[1.5] text-muted">{TASK_DESCRIPTIONS[taskId]}</p>
+              )}
               <div className="flex flex-col gap-[18px]">
                 {participants.map((participant) => {
                   const value =
