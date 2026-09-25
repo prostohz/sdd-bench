@@ -1,6 +1,7 @@
 import { costly, findingLine, findingSummary } from '../judge/explain.js'
 import { METRICS, METRIC_LABELS, METRIC_TITLES, type RunRecord } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
+import { toolVersion } from '../model/versions.js'
 import type { RunEntry } from '../results.js'
 import { scoreRun } from '../score/score.js'
 import { describe, runDirName, type ResultView } from './data.js'
@@ -200,9 +201,9 @@ export function resultPage(result: ResultView): string {
 
 <div class="card"><table>
 <thead>
-<tr class="groups"><th colspan="2"></th><th colspan="3" class="grp num">Оценки судей</th>
+<tr class="groups"><th colspan="3"></th><th colspan="3" class="grp num">Оценки судей</th>
 <th></th><th></th><th colspan="2" class="grp num">Эффективность</th></tr>
-<tr class="head"><th>Запуск</th><th>Статус</th>
+<tr class="head"><th>Запуск</th><th>Версия инструмента</th><th>Статус</th>
 ${METRICS.map((m) => `<th class="num" title="${esc(METRIC_TITLES[m])}">${esc(METRIC_LABELS[m])}</th>`).join('')}
 <th class="num">Score</th><th class="num">Скрытые тесты</th>
 <th class="num">Время</th><th class="num">$</th></tr>
@@ -232,6 +233,7 @@ function runRow(result: ResultView, entry: RunEntry, firstOfGroup: boolean): str
   return `<tr${firstOfGroup ? ' class="first-of-group"' : ''}>
 <td class="who"><a href="${href}">${esc(record.participantId)}</a>
 <span class="rep">повтор ${record.repeat}</span></td>
+<td class="dim"><code>${esc(toolVersion(record) ?? '—')}</code></td>
 <td>${state(record.status)}</td>
 ${metrics}
 <td class="score">${gauge(score.value)}</td>
@@ -290,10 +292,12 @@ ${fileList(data.impl, `${base}/impl`)}`,
 function statusLine(record: RunRecord): string {
   const score = scoreRun(record)
   const telemetry = record.telemetry
+  const version = toolVersion(record)
   const parts = [
     state(record.status),
     `Score <b>${score.value === null ? '—' : score.value.toFixed(1)}</b>`,
   ]
+  if (version) parts.push(`версия инструмента <code>${esc(version)}</code>`)
   if (record.hidden) parts.push(`скрытые тесты ${hiddenCell(record)}`)
   if (telemetry) {
     parts.push(`${minutes(telemetry.activeMs ?? telemetry.durationMs)}`)

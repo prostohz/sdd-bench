@@ -13,7 +13,7 @@ for profile in "$HOME/.profile" "$HOME/.bashrc"; do
     printf '# sdd-bench: uv tools\nexport PATH="$HOME/.local/bin:$PATH"\n' >>"$profile"
 done
 
-uv tool install specify-cli
+uv tool install specify-cli==1.0.11
 
 cd "$SDD_REPO"
 specify init --here --integration "$SDD_PROVIDER" --script sh --ignore-agent-tools --force

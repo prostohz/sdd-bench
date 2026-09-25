@@ -314,6 +314,12 @@ tbody tr:hover {
   letter-spacing: -0.025em;
   white-space: nowrap;
 }
+.tool-version {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
 .total-cell {
   white-space: nowrap;
 }

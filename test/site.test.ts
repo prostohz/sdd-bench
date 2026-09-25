@@ -3,8 +3,10 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
+import { renderReport } from '../src/report/report.js'
 import { renderMethodology } from '../src/site/methodology.js'
 import { renderSite } from '../src/site/render.js'
+import { resultPage, runPage } from '../src/web/pages.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
@@ -140,6 +142,33 @@ test('run scores identify repeats when a result includes multiple attempts', () 
   const html = renderSite(manifest, version)
   assert.match(html, /ledger-cli · repeat 1/)
   assert.match(html, /ledger-cli · repeat 2/)
+})
+
+test('saved tool versions appear in each report view', () => {
+  const manifest = fixture('spec')
+  const first = manifest.runs[0]!
+  first.participantId = 'openspec'
+  first.versions = { openspec: '1.13.2' }
+  manifest.runs.push({ ...first, runId: 'run-2', repeat: 2, versions: { openspec: '1.14.0' } })
+
+  const site = renderSite(manifest, version)
+  assert.match(site, /<span class="tool-version">Tool version: 1\.13\.2, 1\.14\.0<\/span>/)
+
+  const result = {
+    id: manifest.resultId,
+    dir: '/tmp/sample',
+    manifest,
+    entries: manifest.runs.map((record) => ({ record, dir: `/tmp/sample/runs/${record.runId}` })),
+  }
+  const local = resultPage(result)
+  assert.match(local, /<th>Версия инструмента<\/th>/)
+  assert.match(local, /<code>1\.13\.2<\/code>/)
+  assert.match(local, /<code>1\.14\.0<\/code>/)
+  assert.match(runPage({ result, entry: result.entries[0]!, spec: [], impl: [] }), /версия инструмента <code>1\.13\.2<\/code>/)
+
+  const report = renderReport(manifest)
+  assert.match(report, /\| Запуск \| Версия инструмента \| Статус \|/)
+  assert.match(report, /ledger-cli \/ openspec \/ 1 \| 1\.13\.2 \|/)
 })
 
 test('the site shows an empty state without a result', () => {

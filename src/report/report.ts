@@ -1,6 +1,7 @@
 import { METRICS, METRIC_LABELS, type ResultManifest, type RunRecord } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import { TASK_CLASSES, type TaskClass } from '../model/task.js'
+import { toolVersion } from '../model/versions.js'
 import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
 
 const CLASS_TITLES: Record<TaskClass, string> = {
@@ -67,11 +68,12 @@ function efficiencyTable(participants: ParticipantScore[]): string[] {
 }
 
 function runTable(runs: RunRecord[]): string[] {
-  const header = ['Запуск', 'Статус', ...METRICS.map((m) => METRIC_LABELS[m]), 'Score', 'Примечание']
+  const header = ['Запуск', 'Версия инструмента', 'Статус', ...METRICS.map((m) => METRIC_LABELS[m]), 'Score', 'Примечание']
   const rows = runs.map((run) => {
     const score = scoreRun(run)
     return [
       `${run.taskId} / ${run.participantId} / ${run.repeat}`,
+      toolVersion(run) ?? '—',
       run.status,
       ...METRICS.map((m) => {
         const verdict = run.verdicts[m]

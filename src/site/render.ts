@@ -1,5 +1,6 @@
 import type { Metric, ResultManifest } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
+import { participantVersions } from '../model/versions.js'
 import { scoreParticipants, scoreRun } from '../score/score.js'
 const METRIC_LABELS: Record<Metric, string> = {
   'spec-quality': 'Specification quality',
@@ -50,13 +51,14 @@ function leaderboard(manifest: ResultManifest): string {
   const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
   const rows = ranked
     .map((participant) => {
+      const versions = participantVersions(manifest.runs, participant.participantId)
       const classCells = classes
         .map((key) => {
           const value = participant.classes.find((item) => item.key === key)?.score ?? null
           return `<td class="class-cell"><span>${score(value)}</span>${bar(value)}</td>`
         })
         .join('')
-      return `<tr><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span></th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
+      return `<tr><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span>${versions.length > 0 ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>` : ''}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
   return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
