@@ -72,14 +72,14 @@ The three quality metrics are normalized to the range `0` to `1`:
 - `spec-fit` — specification fit to requirements;
 - `impl-fit` — implementation fit to specification.
 
-A run's quality score is the geometric mean of these three metrics. In the formula, `m_1`, `m_2`, and `m_3` correspond to the metrics listed above.
+A run's quality score is the geometric mean of these three metrics. In the formula, `m_1`, `m_2`, and `m_3` correspond to the metrics listed above. `t` and `c` are the run's duration and cost; `t_min` and `c_min` are the lowest values among successful runs of the same task. `S` is the final run score.
 
 ```math
 \begin{aligned}
-Q_{\mathrm{run}} &= 100\sqrt[3]{m_1m_2m_3} \\
-T_{\mathrm{run}} &= \frac{\min(T_{\mathrm{successful\ runs\ of\ task}})}{T_{\mathrm{run}}} \\
-C_{\mathrm{run}} &= \frac{\min(C_{\mathrm{successful\ runs\ of\ task}})}{C_{\mathrm{run}}} \\
-\mathrm{Score}_{\mathrm{run}} &= Q_{\mathrm{run}}(0.93+0.05T_{\mathrm{run}}+0.02C_{\mathrm{run}})
+Q &= 100\sqrt[3]{m_1m_2m_3} \\[0.6em]
+T &= \frac{t_{\mathrm{min}}}{t} \\[0.6em]
+C &= \frac{c_{\mathrm{min}}}{c} \\[0.6em]
+S &= Q(0.93+0.05T+0.02C)
 \end{aligned}
 ```
 

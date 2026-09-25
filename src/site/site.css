@@ -720,11 +720,9 @@ tbody tr:hover {
 .methodology-content .math-formula {
   overflow-x: auto;
   margin: 26px 0;
-  padding: 24px 22px;
-  border: 1px solid var(--line);
-  background: var(--paper);
+  padding: 12px 0;
   color: var(--ink);
-  font-size: 17px;
+  font-size: 20px;
 }
 .methodology-content .math-formula .katex-display {
   margin: 0;
@@ -775,8 +773,8 @@ tbody tr:hover {
     font-size: 29px;
   }
   .methodology-content .math-formula {
-    padding: 18px 14px;
-    font-size: 15px;
+    padding: 10px 0;
+    font-size: 16px;
   }
 }
 @media (max-width: 430px) {
