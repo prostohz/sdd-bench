@@ -171,6 +171,28 @@ test('saved tool versions appear in each report view', () => {
   assert.match(report, /ledger-cli \/ openspec \/ 1 \| 1\.13\.2 \|/)
 })
 
+test('methodology names open their GitHub repositories in a new tab', () => {
+  const manifest = fixture('spec')
+  const ids = ['openspec', 'speckit', 'bmad', 'gsd', 'neutral']
+  manifest.runs = ids.map((participantId, index) => ({
+    ...manifest.runs[0]!,
+    runId: `run-${index}`,
+    participantId,
+  }))
+  const html = renderSite(manifest, version)
+  const repositories = [
+    'https://github.com/Fission-AI/OpenSpec',
+    'https://github.com/github/spec-kit',
+    'https://github.com/bmad-code-org/BMAD-METHOD',
+    'https://github.com/open-gsd/gsd-core',
+  ]
+  for (const repository of repositories) {
+    assert.equal(html.split(`href="${repository}" target="_blank" rel="noopener noreferrer"`).length - 1, 3)
+  }
+  assert.match(html, /<span class="participant-name">Baseline<\/span>/)
+  assert.doesNotMatch(html, /href="[^"]*neutral/)
+})
+
 test('the site shows an empty state without a result', () => {
   const html = renderSite(undefined, version)
   assert.match(

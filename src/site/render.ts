@@ -8,10 +8,17 @@ const METRIC_LABELS: Record<Metric, string> = {
   'impl-fit': 'Implementation fit to specification',
 }
 const NAMES: Record<string, string> = {
-  neutral: 'Neutral SDD',
+  neutral: 'Baseline',
   openspec: 'OpenSpec',
+  gsd: 'GSD Core',
   speckit: 'Spec Kit',
   bmad: 'BMad Method',
+}
+const REPOSITORIES: Record<string, string> = {
+  openspec: 'https://github.com/Fission-AI/OpenSpec',
+  gsd: 'https://github.com/open-gsd/gsd-core',
+  speckit: 'https://github.com/github/spec-kit',
+  bmad: 'https://github.com/bmad-code-org/BMAD-METHOD',
 }
 const CLASS_NAMES: Record<string, string> = {
   greenfield: 'Greenfield',
@@ -36,6 +43,13 @@ function bar(value: number | null, className = ''): string {
 function sectionHead(title: string, note?: string): string {
   return `<div class="section-head"><h2>${title}</h2>${note ? `<p>${note}</p>` : ''}</div>`
 }
+function participantName(id: string): string {
+  const name = NAMES[id] ?? id
+  const repository = REPOSITORIES[id]
+  return repository
+    ? `<a class="participant-link" href="${esc(repository)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(name)} on GitHub (opens in a new tab)">${esc(name)}<span aria-hidden="true">↗</span></a>`
+    : esc(name)
+}
 export function siteHeader(current: 'home' | 'methodology' = 'home'): string {
   const home = current === 'home'
   return `<header class="topbar"><a class="brand" href="./index.html">SDD BENCH</a><nav aria-label="Sections"><a href="./index.html"${home ? ' aria-current="page"' : ''}>Scores</a><a href="./methodology.html"${home ? '' : ' aria-current="page"'}>Methodology</a></nav></header>`
@@ -58,7 +72,13 @@ function leaderboard(manifest: ResultManifest): string {
           return `<td class="class-cell"><span>${score(value)}</span>${bar(value)}</td>`
         })
         .join('')
-      return `<tr><th scope="row"><span class="participant-name">${esc(NAMES[participant.participantId] ?? participant.participantId)}</span>${versions.length > 0 ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>` : ''}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
+      const detail =
+        participant.participantId === 'neutral'
+          ? '<span class="baseline-meta"><span class="baseline-tag">No SDD framework</span><span>Naive model planning</span></span>'
+          : versions.length > 0
+            ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>`
+            : ''
+      return `<tr><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
     })
     .join('')
   return `<section class="content" id="results">${sectionHead('Overall scores', 'Mean across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
@@ -73,7 +93,7 @@ function tasks(manifest: ResultManifest): string {
         .map((participant) => {
           const task = participant.tasks.find((item) => item.key === taskId)
           const value = task?.score ?? null
-          return `<div class="task-row"><span>${esc(NAMES[participant.participantId] ?? participant.participantId)}</span>${bar(value)}<strong>${score(value)}</strong></div>`
+          return `<div class="task-row"><span>${participantName(participant.participantId)}</span>${bar(value)}<strong>${score(value)}</strong></div>`
         })
         .join('')
       return `<article class="task-card"><div class="task-top">${esc(CLASS_NAMES[taskClass] ?? taskClass)}</div><h3>${esc(taskId)}</h3><div class="task-bars">${rows}</div></article>`
@@ -105,7 +125,7 @@ function runs(manifest: ResultManifest): string {
       const hiddenCell = showHidden
         ? `<td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td>`
         : ''
-      return `<tr><td><strong>${esc(NAMES[run.participantId] ?? run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
+      return `<tr><td><strong>${participantName(run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
     })
     .join('')
   return `<section class="content runs-section" id="runs">${sectionHead('Run scores', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`

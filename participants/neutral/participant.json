@@ -1,6 +1,6 @@
 {
   "id": "neutral",
-  "name": "Neutral SDD",
+  "name": "Baseline",
   "prompts": {
     "full": "prompt.md",
     "spec": "prompt-spec.md"
