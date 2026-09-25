@@ -1,7 +1,7 @@
 import type { Metric, ResultManifest } from '../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import { participantVersions } from '../model/versions.js'
-import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
+import { runCost, scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
 const METRIC_LABELS: Record<Metric, string> = {
   'spec-quality': 'Specification quality',
   'spec-fit': 'Specification fit to requirements',
@@ -35,6 +35,12 @@ function esc(value: unknown): string {
 }
 function score(value: number | null): string {
   return value === null ? '—' : value.toFixed(1)
+}
+function duration(value: number | undefined): string {
+  return value === undefined ? '—' : `${(value / 60_000).toFixed(1)} min`
+}
+function cost(value: number | null, estimated: boolean): string {
+  return value === null ? '—' : `${estimated ? '~' : ''}$${value.toFixed(3)}`
 }
 function bar(value: number | null, className = ''): string {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
@@ -71,7 +77,7 @@ function summary(version: string): string {
   return `<section class="hero results-hero"><div class="results-hero-content"><div class="edition">VERSION <span>${esc(version)}</span></div><h1>From specification to <em>results.</em></h1><p class="hero-intro">SDD workflows compared on the same tasks, model, and settings.</p></div></section>`
 }
 function leaderboard(manifest: ResultManifest): string {
-  const ranked = scoreParticipants(manifest.runs).sort(compareParticipants)
+  const ranked = scoreParticipants(manifest.runs, manifest.config.participantPricing).sort(compareParticipants)
   const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
   const rows = ranked
     .map((participant) => {
@@ -88,13 +94,14 @@ function leaderboard(manifest: ResultManifest): string {
           : versions.length > 0
             ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>`
             : ''
-      return `<tr${participant.participantId === 'neutral' ? ' class="baseline-row"' : ''}><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}</tr>`
+      const estimated = manifest.runs.some((run) => run.participantId === participant.participantId && runCost(run, manifest.config.participantPricing).estimated)
+      return `<tr${participant.participantId === 'neutral' ? ' class="baseline-row"' : ''}><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}<td class="number">${duration(participant.efficiency.meanDurationMs ?? undefined)}</td><td class="number">${cost(participant.efficiency.meanCostUsd, estimated)}</td></tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Overall scores', 'Baseline first; methods ranked by score across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content" id="results">${sectionHead('Overall scores', 'Baseline first; methods ranked by score across included task classes. ~ marks estimated cost.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col" class="number">Avg. time</th><th scope="col" class="number">Avg. cost</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
-  const participants = scoreParticipants(manifest.runs).sort(compareParticipants)
+  const participants = scoreParticipants(manifest.runs, manifest.config.participantPricing).sort(compareParticipants)
   const taskIds = [...new Set(manifest.runs.map((run) => run.taskId))].sort()
   const cards = taskIds
     .map((taskId) => {
@@ -125,7 +132,8 @@ function runs(manifest: ResultManifest): string {
         a.repeat - b.repeat,
     )
     .map((run) => {
-      const value = scoreRun(run)
+      const value = scoreRun(run, manifest.runs, manifest.config.participantPricing)
+      const price = runCost(run, manifest.config.participantPricing)
       const cells = metrics
         .map(
           (metric) =>
@@ -136,13 +144,13 @@ function runs(manifest: ResultManifest): string {
       const hiddenCell = showHidden
         ? `<td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td>`
         : ''
-      return `<tr><td><strong>${participantName(run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
+      return `<tr><td><strong>${participantName(run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number">${duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs)}</td><td class="number">${cost(price.value, price.estimated)}</td><td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
     })
     .join('')
-  return `<section class="content runs-section" id="runs">${sectionHead('Run scores', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content runs-section" id="runs">${sectionHead('Run scores', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Time</th><th scope="col" class="number">Cost</th><th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function method(): string {
-  return `<section class="method" id="method"><div class="content">${sectionHead('How to read this result', 'How scores are calculated and where comparisons apply.')}<div class="method-grid"><div class="method-item"><h3>One starting point</h3><p>Participants receive the same task, model, and limits. Only the SDD workflow and its tools differ.</p></div><div class="method-item"><h3>Decisions before scores</h3><p>Judges assess individual requirements and defects. The harness calculates scores from those decisions.</p></div><div class="method-item"><h3>Equal class weights</h3><p>A run score is the geometric mean of applicable metrics. Repeats average into tasks, tasks into classes, and classes into the final score.</p></div></div></div></section>`
+  return `<section class="method" id="method"><div class="content">${sectionHead('How to read this result', 'How scores are calculated and where comparisons apply.')}<div class="method-grid"><div class="method-item"><h3>One starting point</h3><p>Participants receive the same task, model, and limits. Only the SDD workflow and its tools differ.</p></div><div class="method-item"><h3>Decisions before scores</h3><p>Judges assess individual requirements and defects. The harness calculates scores from those decisions.</p></div><div class="method-item"><h3>Quality, time, and cost</h3><p>Quality is the geometric mean of applicable metrics. Time and cost each contribute 10% within a task. Repeats average into tasks, tasks into classes, and classes into the final score.</p></div></div></div></section>`
 }
 export function renderSite(manifest: ResultManifest | undefined, version: string): string {
   const body =

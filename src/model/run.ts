@@ -1,5 +1,6 @@
 import type { Stage } from './stage.js'
 import type { TaskClass } from './task.js'
+import type { TokenPricing } from '../config.js'
 
 /**
  * The three judged metrics that make up the score of a run, each named after
@@ -150,6 +151,7 @@ export interface ResultManifest {
     stage: Stage
     timeoutMs: number
     maxBudgetUsd: number | undefined
+    participantPricing?: TokenPricing | undefined
     repeats: number
   }
   versions: Record<string, string>

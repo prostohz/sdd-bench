@@ -4,6 +4,8 @@
 
 The benchmark examines the path from an initial request through a specification to an implementation.
 
+Published results cover the full workflow: each participant writes a specification and implements the task.
+
 | Class | Starting point | Assignment |
 | --- | --- | --- |
 | Greenfield | No project or specification | Write a specification and implement a new feature from scratch |
@@ -14,14 +16,14 @@ These are the initial task classes. The set can expand as the benchmark develops
 
 ## Workflow stages
 
-The benchmark can evaluate the full workflow or isolate the specification stage.
+The full workflow is the default and the only stage used for published results. The `spec` stage isolates specification writing for diagnostic runs.
 
 | Stage | Participant work | Metrics |
 | --- | --- | --- |
-| `full` | Write a specification and implement it | `spec-quality`, `spec-fit`, `impl-fit` |
-| `spec` | Write a specification only | `spec-quality`, `spec-fit` |
+| `full` | Write a specification and implement it | `spec-quality`, `spec-fit`, `impl-fit`, time, cost |
+| `spec` | Write a specification only | `spec-quality`, `spec-fit`, time, cost |
 
-An inapplicable metric is omitted rather than scored as zero. The run score is the geometric mean of the metrics produced by its stage. Checks that require code, including regression and held-out tests, do not run at the `spec` stage.
+For diagnostic `spec` runs, quality is the geometric mean of `spec-quality` and `spec-fit`; `impl-fit` is inapplicable. Checks that require code, including regression and held-out tests, do not run at the `spec` stage.
 
 Every run in one result uses the same stage. Scores are comparable within a stage, not across different stages.
 
@@ -36,9 +38,9 @@ Only the SDD workflow and the tooling it requires differ between participants. T
 Each task, participant, and repeat combination produces a separate run:
 
 1. The starting project is committed to Git and placed in a fresh sandbox.
-2. The participant's tools are installed. The agent receives the task request and writes a specification, or a specification and code, according to the selected stage.
+2. The participant's tools are installed. The agent receives the task request, writes a specification, and implements it.
 3. The specification, final repository, and telemetry are saved. The participant's sandbox is removed.
-4. At the `full` stage, the project's original tests, when present, and the held-out tests run separately from the participant.
+4. The project's original tests, when present, and the held-out tests run separately from the participant.
 5. A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.
 
 Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.
@@ -51,9 +53,10 @@ Judging can be repeated from saved artifacts without rerunning the participant. 
 | Specification fit to requirements | An LLM judge reads the task request, its itemized requirements, and the specification | A decision for each item and a list of unsupported additions |
 | Implementation fit to specification | An LLM judge reads the specification and repository and may run checks | A decision for each specification requirement and the checks performed |
 | Regression avoidance | The project's original test suite is run | Share of tests that still pass |
-| Efficiency | Run telemetry and an external wall-clock measurement | Elapsed time and token use |
+| Duration | External measurement around the participant agent invocation | Active execution time |
+| Cost | Provider-reported cost or a token-based estimate using saved rates | USD per participant run |
 
-Elapsed time is measured externally rather than taken from the participant's telemetry. A process that delegates work to subagents may report only the lead session's time, substantially understating total duration. Token use and cost come from telemetry.
+Duration is measured externally, excluding host sleep, rather than taken from the participant's telemetry. It includes the participant agent and its delegated work, but excludes setup, tests, and judging. A provider-reported USD cost is used when available. Otherwise, cost is estimated from uncached input, cached input, cache writes, and output tokens using the participant model's rates saved with the result. Unreported tool charges and cache writes cannot be included, so the estimate is not a bill. The default GPT-5.6 Terra rates were recorded from the [OpenAI API pricing page](https://developers.openai.com/api/docs/models/gpt-5.6-terra) on 2026-09-25; other models require explicit `participantPricing` in `bench.json` if the provider does not report cost. Judge costs do not enter the participant score.
 
 All participants are evaluated with the same judge model version, prompt, and settings. The judge is not told which participant produced the work.
 
@@ -63,27 +66,30 @@ The requirements for `spec-fit` are extracted from the task request in advance a
 
 ## Aggregate score
 
-The substantive metric scores are normalized to the range `0` to `1`:
+The three quality metrics are normalized to the range `0` to `1`:
 
 - `spec-quality` — specification quality;
 - `spec-fit` — specification fit to requirements;
 - `impl-fit` — implementation fit to specification.
 
-A run score is the geometric mean of its stage metrics. Here `m_i` is a metric normalized to `0–1`, and `n` is the number of applicable metrics: three for `full` and two for `spec`.
+A run's quality score is the geometric mean of these three metrics. In the formula, `m_1`, `m_2`, and `m_3` correspond to the metrics listed above.
 
 ```math
 \begin{aligned}
-\mathrm{Score}_{\mathrm{run}} &= 100\sqrt[n]{\prod_{i=1}^{n}m_i} \\
-\mathrm{Score}_{\mathrm{full}} &= 100\sqrt[3]{\text{spec-quality}\cdot\text{spec-fit}\cdot\text{impl-fit}} \\
-\mathrm{Score}_{\mathrm{spec}} &= 100\sqrt{\text{spec-quality}\cdot\text{spec-fit}}
+Q_{\mathrm{run}} &= 100\sqrt[3]{m_1m_2m_3} \\
+T_{\mathrm{run}} &= \frac{\min(T_{\mathrm{successful\ runs\ of\ task}})}{T_{\mathrm{run}}} \\
+C_{\mathrm{run}} &= \frac{\min(C_{\mathrm{successful\ runs\ of\ task}})}{C_{\mathrm{run}}} \\
+\mathrm{Score}_{\mathrm{run}} &= Q_{\mathrm{run}}(0.8+0.1T_{\mathrm{run}}+0.1C_{\mathrm{run}})
 \end{aligned}
 ```
 
-For example, scores of `8/10`, `6/10`, and `9/10` at the `full` stage yield `100 × ∛(0.8 × 0.6 × 0.9) = 75.6`. A successful run has no aggregate score until all applicable judgments are available.
+For example, scores of `8/10`, `6/10`, and `9/10` give `Q = 75.6`. If that run takes twice the fastest successful run of the same task and costs the same as the cheapest, its final score is `75.6 × (0.8 + 0.1 × 0.5 + 0.1 × 1) = 71.8`. The reference minima use all successful participants and repeats of that task within the result. A zero minimum gives a factor of `1` only to zero-valued runs and `0` to positive-valued runs.
+
+A successful run has no aggregate score until all applicable judgments and every successful peer's time and cost are available. Missing data is not treated as zero. The published table shows each run's time and cost; estimated costs are marked `~`.
 
 A run scores `0` if it fails, times out, or regresses the original tests. Regression checks do not apply to greenfield tasks.
 
-A task score is the mean of its runs. A class score is the mean of its tasks. The final score is the mean across classes, giving each class equal weight. Efficiency is reported separately and does not affect the final score.
+A task score is the mean of its runs. A class score is the mean of its tasks. The final score is the mean across classes, giving each class equal weight.
 
 ## Repeats
 
@@ -91,7 +97,7 @@ By default, each task and participant combination runs three times (`n = 3`). Th
 
 ## Interpreting results
 
-Compare final scores within one result: its participants ran the same tasks at the same stage with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.
+Compare final scores within one result: its participants ran the same tasks with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.
 
 The current task set covers only its included scenarios. A score describes behavior under those conditions, not the quality of every possible use of a tool. LLM judges can make mistakes; disputed scores should be checked against the item-level decisions and saved run artifacts.
 

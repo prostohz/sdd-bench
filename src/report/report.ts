@@ -2,7 +2,7 @@ import { METRICS, METRIC_LABELS, type ResultManifest, type RunRecord } from '../
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import { TASK_CLASSES, type TaskClass } from '../model/task.js'
 import { toolVersion } from '../model/versions.js'
-import { scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
+import { runCost, scoreParticipants, scoreRun, type ParticipantScore } from '../score/score.js'
 
 const CLASS_TITLES: Record<TaskClass, string> = {
   greenfield: 'Greenfield',
@@ -11,7 +11,7 @@ const CLASS_TITLES: Record<TaskClass, string> = {
 }
 
 export function renderReport(manifest: ResultManifest): string {
-  const participants = scoreParticipants(manifest.runs)
+  const participants = scoreParticipants(manifest.runs, manifest.config.participantPricing)
   const lines: string[] = []
 
   lines.push(`# Результат ${manifest.resultId}`, '')
@@ -26,8 +26,8 @@ export function renderReport(manifest: ResultManifest): string {
 
   lines.push('## Итог', '', ...totalTable(participants, manifest.runs), '')
   lines.push('## Задачи', '', ...taskTable(participants), '')
-  lines.push('## Эффективность', '', ...efficiencyTable(participants), '')
-  lines.push('## Запуски', '', ...runTable(manifest.runs), '')
+  lines.push('## Эффективность', '', ...efficiencyTable(participants, manifest), '')
+  lines.push('## Запуски', '', ...runTable(manifest), '')
 
   return lines.join('\n')
 }
@@ -55,22 +55,23 @@ function taskTable(participants: ParticipantScore[]): string[] {
   return table(header, rows)
 }
 
-function efficiencyTable(participants: ParticipantScore[]): string[] {
+function efficiencyTable(participants: ParticipantScore[], manifest: ResultManifest): string[] {
   const header = ['Участник', 'Запусков', 'Среднее время', 'Средние токены', 'Средняя стоимость']
   const rows = participants.map((p) => [
     p.participantId,
     String(p.efficiency.runs),
     duration(p.efficiency.meanDurationMs),
     p.efficiency.meanTotalTokens === null ? '—' : Math.round(p.efficiency.meanTotalTokens).toLocaleString('ru-RU'),
-    p.efficiency.meanCostUsd === null ? '—' : `$${p.efficiency.meanCostUsd.toFixed(2)}`,
+    p.efficiency.meanCostUsd === null ? '—' : `${manifest.runs.some((run) => run.participantId === p.participantId && runCost(run, manifest.config.participantPricing).estimated) ? '≈' : ''}$${p.efficiency.meanCostUsd.toFixed(2)}`,
   ])
   return table(header, rows)
 }
 
-function runTable(runs: RunRecord[]): string[] {
-  const header = ['Запуск', 'Версия инструмента', 'Статус', ...METRICS.map((m) => METRIC_LABELS[m]), 'Score', 'Примечание']
-  const rows = runs.map((run) => {
-    const score = scoreRun(run)
+function runTable(manifest: ResultManifest): string[] {
+  const header = ['Запуск', 'Версия инструмента', 'Статус', ...METRICS.map((m) => METRIC_LABELS[m]), 'Время', 'Стоимость', 'Score', 'Примечание']
+  const rows = manifest.runs.map((run) => {
+    const score = scoreRun(run, manifest.runs, manifest.config.participantPricing)
+    const price = runCost(run, manifest.config.participantPricing)
     return [
       `${run.taskId} / ${run.participantId} / ${run.repeat}`,
       toolVersion(run) ?? '—',
@@ -79,6 +80,8 @@ function runTable(runs: RunRecord[]): string[] {
         const verdict = run.verdicts[m]
         return verdict === undefined ? '—' : verdict.score.toFixed(1)
       }),
+      duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs ?? null),
+      price.value === null ? '—' : `${price.estimated ? '≈' : ''}$${price.value.toFixed(3)}`,
       number(score.value),
       score.zeroReason ?? run.statusDetail ?? '',
     ]

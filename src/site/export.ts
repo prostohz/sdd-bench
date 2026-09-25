@@ -40,8 +40,8 @@ const manifest = sourceManifest && {
 }
 if (manifest) {
   if (manifest.runs.length === 0) throw new Error('the result has no active participant runs')
-  const pending = manifest.runs.filter((run) => scoreRun(run).value === null)
-  if (pending.length > 0) throw new Error(`the result is not fully judged: ${pending.length} runs`)
+  const pending = manifest.runs.filter((run) => scoreRun(run, manifest.runs, manifest.config.participantPricing).value === null)
+  if (pending.length > 0) throw new Error(`the result lacks judgments or efficiency data: ${pending.length} runs`)
 }
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })

@@ -102,6 +102,7 @@ export function parseCodexResult(stdout: string, activeMs: number): CodexResult 
   const inputTokens = numberOr(usage['input_tokens'])
   const outputTokens = numberOr(usage['output_tokens'])
   const cacheReadTokens = numberOr(usage['cached_input_tokens'])
+  const cacheCreationTokens = numberOr(usage['cache_write_tokens'])
   return {
     isError: subtype === 'failed',
     subtype,
@@ -113,7 +114,7 @@ export function parseCodexResult(stdout: string, activeMs: number): CodexResult 
       inputTokens,
       outputTokens,
       cacheReadTokens,
-      cacheCreationTokens: 0,
+      cacheCreationTokens,
       totalTokens: inputTokens + outputTokens,
       costUsd: undefined,
       numTurns: turns,

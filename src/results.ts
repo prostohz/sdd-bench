@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join } from 'node:path'
 
-import type { BenchConfig } from './config.js'
+import { DEFAULT_CONFIG, type BenchConfig } from './config.js'
 import type { Metric, ResultManifest, RunRecord, Verdict } from './model/run.js'
 
 export function resultsRoot(root: string, config: BenchConfig): string {
@@ -26,6 +26,7 @@ export function createResult(dir: string, resultId: string, config: BenchConfig,
       stage: config.stage,
       timeoutMs: config.timeoutMs,
       maxBudgetUsd: config.maxBudgetUsd,
+      participantPricing: config.participantPricing,
       repeats: config.repeats,
     },
     versions,
@@ -57,6 +58,7 @@ export function readManifest(dir: string): ResultManifest {
       provider: legacy.provider ?? legacy.participantProvider ?? legacy.judgeProvider ?? 'claude',
       participantModel: legacy.participantModel ?? legacy.model ?? '',
       participantEffort: legacy.participantEffort ?? legacy.effort ?? '',
+      participantPricing: legacy.participantPricing ?? ((legacy.participantModel ?? legacy.model) === DEFAULT_CONFIG.participantModel ? DEFAULT_CONFIG.participantPricing : undefined),
     },
     runs: readRuns(dir),
   }

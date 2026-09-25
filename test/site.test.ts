@@ -102,7 +102,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.doesNotMatch(html, /01 \/ SAME CONDITIONS|02 \/ ITEM-LEVEL JUDGING|03 \/ AGGREGATION/)
   assert.match(html, /<h3>One starting point<\/h3>/)
   assert.match(html, /<h3>Decisions before scores<\/h3>/)
-  assert.match(html, /<h3>Equal class weights<\/h3>/)
+  assert.match(html, /<h3>Quality, time, and cost<\/h3>/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /January 1, 2026|Full workflow|Repeats: 1|class="hero-meta"/)
@@ -112,12 +112,16 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /80%/)
   assert.doesNotMatch(
     html,
-    /Scores range from 0 to 100|Avg\. time|Avg\. cost|<th scope="col">Status<\/th>|Judge scores use a 0–10 scale\.|\$0\.12/,
+    /Scores range from 0 to 100|<th scope="col">Status<\/th>|Judge scores use a 0–10 scale\./,
   )
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
   assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
   assert.match(html, /<th scope="col" class="number">Score<\/th>/)
   assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Avg\. time<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Avg\. cost<\/th>/)
+  assert.match(html, /<th scope="col" class="number">Time<\/th><th scope="col" class="number">Cost<\/th>/)
+  assert.match(html, /\$0\.120/)
   assert.match(html, /Held-out tests are reported separately from the score\./)
   assert.doesNotMatch(html, /Full methodology|class="method-link"/)
   assert.doesNotMatch(
@@ -239,8 +243,10 @@ test('the methodology page renders the current Markdown with navigation', () => 
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
+  assert.doesNotMatch(html, /Workflow stages/)
+  assert.match(html, /<h2 id="section-2">Agent configuration<\/h2>/)
   assert.doesNotMatch(html, /ON THIS PAGE|class="toc-label"|<a href="#section-1"><span>/)
-  assert.match(html, /<div class="methodology-layout"><h1 class="methodology-title">Methodology<\/h1>/)
+  assert.doesNotMatch(html, /<h1 class="methodology-title">/)
   assert.doesNotMatch(html, /methodology-hero|methodology-sequence/)
   assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
@@ -248,7 +254,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
   assert.match(html, /Aggregate score/)
   assert.match(html, /Interpreting results/)
   assert.match(html, /Run isolation/)
-  const sectionCount = [...source.matchAll(/^## /gm)].length
+  const sectionCount = [...source.matchAll(/^## /gm)].length - 1
   assert.equal((html.match(/<h2 id="section-\d+">/g) ?? []).length, sectionCount)
   assert.match(html, new RegExp(`href="#section-${sectionCount}"`))
   assert.match(html, /<link rel="stylesheet" href="\.\/katex\/katex\.min\.css">/)

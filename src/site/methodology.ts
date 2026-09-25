@@ -24,7 +24,13 @@ export function renderMethodology(source: string): string {
   const first = lines[0] ?? ''
   const title = first.startsWith('# ') ? first.slice(2).trim() : 'Methodology'
   if (first.startsWith('# ')) lines.shift()
-  const tokens = markdown.parse(lines.join('\n'), {})
+  const visibleLines: string[] = []
+  let hidden = false
+  for (const line of lines) {
+    if (line.startsWith('## ')) hidden = line.trim() === '## Workflow stages'
+    if (!hidden) visibleLines.push(line)
+  }
+  const tokens = markdown.parse(visibleLines.join('\n'), {})
   const sections: { id: string; title: string }[] = []
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i]
@@ -38,6 +44,6 @@ export function renderMethodology(source: string): string {
     .map((section) => `<li><a href="#${section.id}">${esc(section.title)}</a></li>`)
     .join('')
   const article = markdown.renderer.render(tokens, markdown.options, {})
-  const body = `<main id="top" class="methodology-page"><div class="methodology-layout"><h1 class="methodology-title">${esc(title)}</h1><aside class="methodology-aside"><div class="methodology-toc"><ul>${contents}</ul><a class="toc-back" href="./index.html#results">Back to scores</a></div></aside><article class="methodology-content">${article}</article></div></main>`
+  const body = `<main id="top" class="methodology-page"><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><ul>${contents}</ul><a class="toc-back" href="./index.html#results">Back to scores</a></div></aside><article class="methodology-content">${article}</article></div></main>`
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${esc(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader('methodology')}${body}</body></html>\n`
 }

@@ -4,7 +4,7 @@ import test from 'node:test'
 import type { Metric, RunRecord, Verdict } from '../src/model/run.js'
 import type { Stage } from '../src/model/stage.js'
 import type { TaskClass } from '../src/model/task.js'
-import { normalize, scoreParticipants, scoreRun } from '../src/score/score.js'
+import { normalize, runCost, scoreParticipants, scoreRun } from '../src/score/score.js'
 
 function verdict(metric: Metric, score: number): Verdict {
   return { metric, score, rationale: '', findings: [], evidence: [], judgeModel: 'judge' }
@@ -22,7 +22,18 @@ function record(over: Partial<RunRecord> = {}): RunRecord {
     statusDetail: undefined,
     startedAt: '2026-01-01T00:00:00.000Z',
     finishedAt: '2026-01-01T00:10:00.000Z',
-    telemetry: undefined,
+    telemetry: {
+      activeMs: 600_000,
+      durationMs: 600_000,
+      apiDurationMs: undefined,
+      inputTokens: 1000,
+      outputTokens: 500,
+      cacheReadTokens: 0,
+      cacheCreationTokens: 0,
+      totalTokens: 1500,
+      costUsd: 1,
+      numTurns: 1,
+    },
     baseline: undefined,
     hidden: undefined,
     verdicts: { 'spec-quality': verdict('spec-quality', 10), 'spec-fit': verdict('spec-fit', 10), 'impl-fit': verdict('impl-fit', 10) },
@@ -116,7 +127,7 @@ test('повторы одной задачи усредняются', () => {
   assert.equal(participant?.tasks[0]?.score, 50)
 })
 
-test('эффективность считается по телеметрии и в скор не входит', () => {
+test('эффективность считается по телеметрии и входит в скор', () => {
   const telemetry = {
     activeMs: 900_000,
     durationMs: 60_000,
@@ -139,6 +150,38 @@ test('эффективность считается по телеметрии и
     meanTotalTokens: 1500,
     meanCostUsd: 2,
   })
+})
+
+test('время и цена дают по десять процентов внутри одной задачи', () => {
+  const fast = record({ runId: 'fast', telemetry: { ...record().telemetry!, activeMs: 300_000, costUsd: 2 } })
+  const cheap = record({ runId: 'cheap', participantId: 'other', telemetry: { ...record().telemetry!, activeMs: 600_000, costUsd: 1 } })
+  const runs = [fast, cheap]
+  assert.equal(scoreRun(fast, runs).value, 95)
+  assert.equal(scoreRun(cheap, runs).value, 95)
+  assert.equal(scoreRun(fast, runs).timeFactor, 1)
+  assert.equal(scoreRun(fast, runs).costFactor, 0.5)
+})
+
+test('отсутствующая стоимость оставляет сравнение задачи без балла', () => {
+  const known = record({ runId: 'known' })
+  const unknown = record({ runId: 'unknown', participantId: 'other', telemetry: { ...record().telemetry!, costUsd: undefined } })
+  assert.equal(scoreRun(known, [known, unknown]).value, null)
+  assert.equal(scoreRun(unknown, [known, unknown]).value, null)
+})
+
+test('стоимость Codex оценивается по сохранённым ставкам с учётом кэша', () => {
+  const run = record({ telemetry: {
+    ...record().telemetry!,
+    inputTokens: 2_000_000,
+    cacheReadTokens: 1_000_000,
+    cacheCreationTokens: 100_000,
+    outputTokens: 1_000_000,
+    costUsd: undefined,
+  } })
+  const pricing = { inputUsdPerMillion: 2, cachedInputUsdPerMillion: 0.2, cacheWriteUsdPerMillion: 2.5, outputUsdPerMillion: 12 }
+  assert.equal(runCost(run, pricing).value, 14.25)
+  assert.equal(runCost(run, pricing).estimated, true)
+  assert.equal(scoreRun(run, [run], pricing).value, 100)
 })
 
 test('этап spec оценивается по двум метрикам, без IS', () => {

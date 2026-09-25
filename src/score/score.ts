@@ -1,4 +1,5 @@
 import { type Metric, type RunRecord } from '../model/run.js'
+import type { TokenPricing } from '../config.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../model/stage.js'
 import type { TaskClass } from '../model/task.js'
 
@@ -13,6 +14,9 @@ export interface RunScore {
   repeat: number
   /** `null` while a metric of an otherwise finished run has no verdict. */
   value: number | null
+  quality: number | null
+  timeFactor: number | null
+  costFactor: number | null
   normalized: Partial<Record<Metric, number>>
   /** Why the run scored zero, when it did. */
   zeroReason: string | undefined
@@ -44,7 +48,27 @@ export function normalize(score: number): number {
   return clamp(score / JUDGE_SCALE_MAX, 0, 1)
 }
 
-export function scoreRun(record: RunRecord): RunScore {
+export function runCost(record: RunRecord, pricing?: TokenPricing): { value: number | null; estimated: boolean } {
+  const telemetry = record.telemetry
+  if (!telemetry) return { value: null, estimated: false }
+  if (telemetry.costUsd !== undefined && Number.isFinite(telemetry.costUsd) && telemetry.costUsd >= 0) {
+    return { value: telemetry.costUsd, estimated: false }
+  }
+  if (!pricing) return { value: null, estimated: false }
+  if (telemetry.inputTokens + telemetry.outputTokens + telemetry.cacheReadTokens + telemetry.cacheCreationTokens <= 0) {
+    return { value: null, estimated: false }
+  }
+  const uncached = Math.max(0, telemetry.inputTokens - telemetry.cacheReadTokens - telemetry.cacheCreationTokens)
+  const value = (
+    uncached * pricing.inputUsdPerMillion +
+    telemetry.cacheReadTokens * pricing.cachedInputUsdPerMillion +
+    telemetry.cacheCreationTokens * pricing.cacheWriteUsdPerMillion +
+    telemetry.outputTokens * pricing.outputUsdPerMillion
+  ) / 1_000_000
+  return { value: Number.isFinite(value) && value >= 0 ? value : null, estimated: true }
+}
+
+export function scoreRun(record: RunRecord, peers: RunRecord[] = [record], pricing?: TokenPricing): RunScore {
   const base = {
     runId: record.runId,
     taskId: record.taskId,
@@ -55,7 +79,7 @@ export function scoreRun(record: RunRecord): RunScore {
 
   const zeroReason = failureReason(record)
   if (zeroReason !== undefined) {
-    return { ...base, value: 0, normalized: {}, zeroReason }
+    return { ...base, value: 0, quality: 0, timeFactor: null, costFactor: null, normalized: {}, zeroReason }
   }
 
   // A stage that writes no code produces no IS, and its score is the
@@ -64,12 +88,32 @@ export function scoreRun(record: RunRecord): RunScore {
   const normalized: Partial<Record<Metric, number>> = {}
   for (const metric of metrics) {
     const verdict = record.verdicts[metric]
-    if (verdict === undefined) return { ...base, value: null, normalized, zeroReason: undefined }
+    if (verdict === undefined) return { ...base, value: null, quality: null, timeFactor: null, costFactor: null, normalized, zeroReason: undefined }
     normalized[metric] = normalize(verdict.score)
   }
 
   const product = metrics.reduce((acc, metric) => acc * (normalized[metric] ?? 0), 1)
-  return { ...base, value: 100 * product ** (1 / metrics.length), normalized, zeroReason: undefined }
+  const quality = 100 * product ** (1 / metrics.length)
+  const comparable = peers.filter((peer) => peer.taskId === record.taskId && peer.taskClass === record.taskClass && failureReason(peer) === undefined)
+  const durations = comparable.map((peer) => peer.telemetry?.activeMs ?? peer.telemetry?.durationMs ?? null)
+  const costs = comparable.map((peer) => runCost(peer, pricing).value)
+  if (durations.some((value) => value === null || !Number.isFinite(value) || value < 0) ||
+      costs.some((value) => value === null || !Number.isFinite(value) || value < 0)) {
+    return { ...base, value: null, quality, timeFactor: null, costFactor: null, normalized, zeroReason: undefined }
+  }
+  const duration = record.telemetry?.activeMs ?? record.telemetry?.durationMs ?? null
+  const cost = runCost(record, pricing).value
+  if (duration === null || cost === null) {
+    return { ...base, value: null, quality, timeFactor: null, costFactor: null, normalized, zeroReason: undefined }
+  }
+  const timeFactor = ratio(Math.min(...durations as number[]), duration)
+  const costFactor = ratio(Math.min(...costs as number[]), cost)
+  return { ...base, value: quality * (0.8 + 0.1 * timeFactor + 0.1 * costFactor), quality, timeFactor, costFactor, normalized, zeroReason: undefined }
+}
+
+function ratio(best: number, actual: number): number {
+  if (best === 0) return actual === 0 ? 1 : 0
+  return best / actual
 }
 
 /**
@@ -85,8 +129,8 @@ function failureReason(record: RunRecord): string | undefined {
   return undefined
 }
 
-export function scoreParticipants(records: RunRecord[]): ParticipantScore[] {
-  const scores = records.map(scoreRun)
+export function scoreParticipants(records: RunRecord[], pricing?: TokenPricing): ParticipantScore[] {
+  const scores = records.map((record) => scoreRun(record, records, pricing))
   const participantIds = [...new Set(scores.map((s) => s.participantId))].sort()
 
   return participantIds.map((participantId) => {
@@ -108,20 +152,17 @@ export function scoreParticipants(records: RunRecord[]): ParticipantScore[] {
       tasks,
       classes,
       score: mean(classes.map((c) => c.score)),
-      efficiency: efficiencyOf(records.filter((r) => r.participantId === participantId)),
+      efficiency: efficiencyOf(records.filter((r) => r.participantId === participantId), pricing),
     }
   })
 }
 
-function efficiencyOf(records: RunRecord[]): Efficiency {
-  const telemetry = records.map((r) => r.telemetry).filter((t) => t !== undefined)
+function efficiencyOf(records: RunRecord[], pricing?: TokenPricing): Efficiency {
   return {
     runs: records.length,
-    // Records written before the harness measured time fall back to the
-    // participant's own figure, which is all they carry.
-    meanDurationMs: mean(telemetry.map((t) => t.activeMs ?? t.durationMs)),
-    meanTotalTokens: mean(telemetry.map((t) => t.totalTokens)),
-    meanCostUsd: mean(telemetry.map((t) => t.costUsd ?? null)),
+    meanDurationMs: mean(records.map((r) => r.telemetry?.activeMs ?? r.telemetry?.durationMs ?? null)),
+    meanTotalTokens: mean(records.map((r) => r.telemetry?.totalTokens ?? null)),
+    meanCostUsd: mean(records.map((r) => runCost(r, pricing).value)),
   }
 }
 

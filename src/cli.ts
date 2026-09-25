@@ -349,7 +349,10 @@ function scoreCommand(root: string, config: BenchConfig, options: Options): void
   const manifest = readManifest(resolveResult(root, config, options.result))
   process.stdout.write(
     `${JSON.stringify(
-      { runs: manifest.runs.map(scoreRun), participants: scoreParticipants(manifest.runs) },
+      {
+        runs: manifest.runs.map((run) => scoreRun(run, manifest.runs, manifest.config.participantPricing)),
+        participants: scoreParticipants(manifest.runs, manifest.config.participantPricing),
+      },
       null,
       2,
     )}\n`,

@@ -71,11 +71,22 @@ main {
 }
 .topbar nav {
   display: flex;
+  align-self: stretch;
   gap: 32px;
   margin-left: auto;
   font-size: 13px;
   font-weight: 600;
   color: #4a5b50;
+}
+.topbar nav a {
+  display: inline-flex;
+  align-items: center;
+  padding-top: 2px;
+  border-bottom: 2px solid transparent;
+}
+.topbar nav a[aria-current="page"] {
+  color: var(--green);
+  border-bottom-color: var(--green);
 }
 .topbar nav a:hover {
   color: var(--green-2);
@@ -609,13 +620,6 @@ tbody tr:hover {
   row-gap: 44px;
   padding: 72px 0 110px;
 }
-.methodology-title {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--ink);
-  font: 800 clamp(38px, 4vw, 56px) / 1.1 var(--display);
-  letter-spacing: -0.06em;
-}
 .methodology-aside {
   grid-column: 1 / span 3;
 }
@@ -759,9 +763,6 @@ tbody tr:hover {
   .methodology-layout {
     display: block;
     padding: 47px 0 75px;
-  }
-  .methodology-title {
-    margin-bottom: 38px;
   }
   .methodology-toc {
     position: static;

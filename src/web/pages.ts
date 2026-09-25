@@ -3,7 +3,7 @@ import { METRICS, METRIC_LABELS, METRIC_TITLES, type RunRecord } from '../model/
 import { DEFAULT_STAGE, STAGE_TITLES } from '../model/stage.js'
 import { toolVersion } from '../model/versions.js'
 import type { RunEntry } from '../results.js'
-import { scoreRun } from '../score/score.js'
+import { runCost, scoreRun } from '../score/score.js'
 import { describe, runDirName, type ResultView } from './data.js'
 
 const STYLE = `
@@ -219,7 +219,8 @@ ${METRICS.map((m) => `<th class="num" title="${esc(METRIC_TITLES[m])}">${esc(MET
 
 function runRow(result: ResultView, entry: RunEntry, firstOfGroup: boolean): string {
   const record = entry.record
-  const score = scoreRun(record)
+  const score = scoreRun(record, result.manifest.runs, result.manifest.config.participantPricing)
+  const price = runCost(record, result.manifest.config.participantPricing)
   const href = `/r/${esc(result.id)}/${esc(runDirName(entry))}`
 
   // Оценки судей остаются чернилами: они лежат в узкой полосе, и оттенок
@@ -239,7 +240,7 @@ ${metrics}
 <td class="score">${gauge(score.value)}</td>
 <td class="num">${hiddenCell(record)}</td>
 <td class="num dim">${telemetry ? minutes(telemetry.activeMs ?? telemetry.durationMs) : '—'}</td>
-<td class="num dim">${telemetry?.costUsd === undefined ? '—' : telemetry.costUsd.toFixed(2)}</td>
+<td class="num dim">${price.value === null ? '—' : `${price.estimated ? '≈' : ''}${price.value.toFixed(3)}`}</td>
 </tr>`
 }
 
@@ -279,7 +280,7 @@ export function runPage(data: RunPageData): string {
     `<div class="crumbs"><a href="/">все результаты</a> ·
 <a href="/r/${esc(result.id)}">${esc(result.id)}</a></div>
 <h1>${esc(describe(entry.record))}</h1>
-${statusLine(entry.record)}
+${statusLine(entry.record, result)}
 ${verdictsSection(entry.record)}
 <h2>Спецификация</h2>${fileList(data.spec, `${base}/spec`)}
 <h2>Реализация</h2>
@@ -289,8 +290,9 @@ ${fileList(data.impl, `${base}/impl`)}`,
   )
 }
 
-function statusLine(record: RunRecord): string {
-  const score = scoreRun(record)
+function statusLine(record: RunRecord, result: ResultView): string {
+  const score = scoreRun(record, result.manifest.runs, result.manifest.config.participantPricing)
+  const price = runCost(record, result.manifest.config.participantPricing)
   const telemetry = record.telemetry
   const version = toolVersion(record)
   const parts = [
@@ -302,7 +304,7 @@ function statusLine(record: RunRecord): string {
   if (telemetry) {
     parts.push(`${minutes(telemetry.activeMs ?? telemetry.durationMs)}`)
     parts.push(`${telemetry.totalTokens.toLocaleString('ru-RU')} токенов`)
-    if (telemetry.costUsd !== undefined) parts.push(`$${telemetry.costUsd.toFixed(2)}`)
+    if (price.value !== null) parts.push(`${price.estimated ? '≈' : ''}$${price.value.toFixed(3)}`)
   }
   if (score.zeroReason) parts.push(`<span class="state bad">${esc(score.zeroReason)}</span>`)
   return `<div class="facts">${parts.map((part) => `<span>${part}</span>`).join('')}</div>`
@@ -346,7 +348,7 @@ export function comparePage(result: ResultView, left: RunPageData, right: RunPag
     const base = `/r/${esc(result.id)}/${esc(runDirName(data.entry))}`
     return `<div>
 <h2><a href="${base}">${esc(describe(data.entry.record))}</a></h2>
-${statusLine(data.entry.record)}
+${statusLine(data.entry.record, result)}
 ${verdictsSection(data.entry.record)}
 <h3>Спецификация</h3>${fileList(data.spec, `${base}/spec`)}
 <h3>Реализация</h3><p class="lede"><a href="${base}/diff">весь diff</a></p>

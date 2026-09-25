@@ -32,6 +32,22 @@ node dist/src/cli.js all --task ledger-cli --participant neutral -n 1
 
 By default, both participant and judge use Codex; models, limits, and three repeats come from `src/config.ts`. Override them in a local `bench.json` or pass another file with `--config`. The `provider` setting applies to both participant and judge; their models can differ. The available fields are defined by `BenchConfig` in `src/config.ts`.
 
+The score uses the participant's active execution time and USD cost. Codex CLI does not report USD cost, so the default GPT-5.6 Terra run uses token-based API rates saved in the result. For another Codex model, set `participantPricing` in `bench.json` to its input, cached input, cache write, and output USD rates per million tokens. Without cost data, a successful task has no final score.
+
+~~~json
+{
+  "participantModel": "your-model",
+  "participantPricing": {
+    "inputUsdPerMillion": 2,
+    "cachedInputUsdPerMillion": 0.2,
+    "cacheWriteUsdPerMillion": 2.5,
+    "outputUsdPerMillion": 12
+  }
+}
+~~~
+
+Replace the sample rates with the selected model's published rates. Estimated cost excludes any charges the CLI does not expose.
+
 Inspect or process a saved result:
 
 ~~~sh
