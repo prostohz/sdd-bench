@@ -19,6 +19,11 @@
 - The public site contains summaries. Logs, judge responses, and run repositories remain in `results/`.
 - Do not add comments to code.
 
+## Static site changes
+
+- After changing the methodology or site presentation, regenerate `public/` locally with `npm run site -- --result <id>` using the result currently published, then inspect the generated page. This is sufficient verification for routine content and styling changes.
+- Do not push changes or trigger a GitHub Pages deployment just to verify an edit. Publish only when the user explicitly asks; follow [PUBLISHING.md](PUBLISHING.md) then.
+
 ## Checks
 
 ~~~sh
