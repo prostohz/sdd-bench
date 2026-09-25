@@ -1,6 +1,6 @@
 # Running the benchmark
 
-You need Node.js 22+, Git, and npm. A real run also requires the Docker Sandboxes `sbx` CLI, provider authentication, and access to the selected models.
+You need Node.js 22.12+, Git, and npm. A real run also requires the Docker Sandboxes `sbx` CLI, provider authentication, and access to the selected models.
 
 ~~~sh
 npm ci

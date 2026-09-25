@@ -1,6 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-
-function SiteHeader({ current }: { current: 'home' | 'methodology' }) {
+export function SiteHeader({ current }: { current: 'home' | 'methodology' }) {
   return (
     <header className="masthead">
       <div className="masthead-inner">
@@ -28,8 +26,4 @@ function SiteHeader({ current }: { current: 'home' | 'methodology' }) {
       </div>
     </header>
   )
-}
-
-export function siteHeader(current: 'home' | 'methodology' = 'home'): string {
-  return renderToStaticMarkup(<SiteHeader current={current} />)
 }

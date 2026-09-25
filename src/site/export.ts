@@ -2,12 +2,9 @@ import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'no
 import { execFileSync } from 'node:child_process'
 import { isAbsolute, join, resolve } from 'node:path'
 
-import { loadCatalog } from '../catalog.js'
-import { loadConfig } from '../config.js'
-import { readManifest, resolveResult } from '../results.js'
-import { scoreRun } from '../score/score.js'
-import { renderMethodology } from './pages/methodology.js'
-import { renderSite } from './pages/results.js'
+import { loadSiteManifest } from './data.js'
+import { renderMethodology } from './pages/methodology-build.js'
+import { renderSite } from './pages/results-build.js'
 
 const args = process.argv.slice(2)
 let result: string | undefined
@@ -32,18 +29,7 @@ const root = process.cwd()
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as {
   version: string
 }
-const sourceManifest =
-  result === undefined ? undefined : readManifest(resolveResult(root, loadConfig(root), result))
-const activeParticipants = new Set(loadCatalog(root).participants.map((participant) => participant.id))
-const manifest = sourceManifest && {
-  ...sourceManifest,
-  runs: sourceManifest.runs.filter((run) => activeParticipants.has(run.participantId)),
-}
-if (manifest) {
-  if (manifest.runs.length === 0) throw new Error('the result has no active participant runs')
-  const pending = manifest.runs.filter((run) => scoreRun(run, manifest.runs, manifest.config.participantPricing).value === null)
-  if (pending.length > 0) throw new Error(`the result lacks judgments or efficiency data: ${pending.length} runs`)
-}
+const manifest = loadSiteManifest(root, result)
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })
 writeFileSync(join(destination, 'index.html'), renderSite(manifest, version))

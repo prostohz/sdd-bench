@@ -4,8 +4,9 @@ import test from 'node:test'
 
 import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderReport } from '../src/report/report.js'
-import { renderMethodology } from '../src/site/pages/methodology.js'
-import { renderSite } from '../src/site/pages/results.js'
+import { previewManifest } from '../src/site/data.js'
+import { renderMethodology } from '../src/site/pages/methodology-build.js'
+import { renderSite } from '../src/site/pages/results-build.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
@@ -127,6 +128,14 @@ test('the public site shows summaries without exposing run artifacts', () => {
     html,
     /<script>alert\(1\)<\/script>|PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/,
   )
+})
+
+test('the dev preview keeps published scores without sending private artifacts', () => {
+  const manifest = fixture()
+  const preview = previewManifest(manifest)
+  assert.ok(preview)
+  assert.equal(renderSite(preview, version), renderSite(manifest, version))
+  assert.doesNotMatch(JSON.stringify(preview), /PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/)
 })
 
 test('estimated costs have no prefix in site or report', () => {

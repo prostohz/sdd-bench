@@ -1,4 +1,3 @@
-import { renderToStaticMarkup } from 'react-dom/server'
 import type { ReactNode } from 'react'
 import { Button } from '../components/ui/button.js'
 import {
@@ -9,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table.js'
-import { siteHeader } from '../components/site-header.js'
 import type { Metric, ResultManifest } from '../../model/run.js'
 import { DEFAULT_STAGE, STAGE_METRICS } from '../../model/stage.js'
 import { participantVersions } from '../../model/versions.js'
@@ -492,12 +490,14 @@ function MethodSummary() {
   )
 }
 
-export function renderSite(
-  manifest: ResultManifest | undefined,
-  version: string,
-): string {
-  const body =
-    manifest && manifest.runs.length > 0 ? (
+export function ResultsBody({
+  manifest,
+  version,
+}: {
+  manifest: ResultManifest | undefined
+  version: string
+}) {
+  return manifest && manifest.runs.length > 0 ? (
       <main id="top">
         <Summary manifest={manifest} version={version} />
         <Leaderboard manifest={manifest} />
@@ -508,5 +508,4 @@ export function renderSite(
     ) : (
       <EmptySite />
     )
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench: results of a specification-driven development benchmark."><meta name="theme-color" content="#f5f2eb"><title>Scores — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader()}${renderToStaticMarkup(body)}</body></html>\n`
 }
