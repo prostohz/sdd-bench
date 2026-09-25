@@ -59,6 +59,12 @@ function duration(value: number | undefined): string {
   return value === undefined ? '—' : `${(value / 60_000).toFixed(1)} min`
 }
 
+function exactDuration(value: number | undefined): string {
+  if (value === undefined) return '—'
+  const seconds = Math.round(value / 1000)
+  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`
+}
+
 function cost(value: number | null): string {
   return value === null ? '—' : `$${value.toFixed(3)}`
 }
@@ -157,7 +163,11 @@ function EmptySite() {
   )
 }
 
-function Summary({ version }: { version: string }) {
+function Summary({ version, manifest }: { version: string; manifest: ResultManifest }) {
+  const latest = [...manifest.runs]
+    .filter((run) => run.status === 'ok' && run.finishedAt)
+    .sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))[0]
+  const latestScore = latest && scoreRun(latest, manifest.runs, manifest.config.participantPricing)
   return (
     <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-7 pb-8 max-[760px]:pt-6 max-[760px]:pb-7">
       <div className="mx-auto max-w-[var(--page-max)]">
@@ -170,6 +180,23 @@ function Summary({ version }: { version: string }) {
         <p className="mt-3 max-w-[900px] text-base leading-[1.55] text-[#57675c] max-[760px]:text-[15px]">
           SDD workflows compared on the same tasks, model, and settings.
         </p>
+        {latest && (
+          <div className="mt-7 flex flex-wrap items-end gap-x-10 gap-y-5 border-t border-line pt-5 max-[760px]:gap-x-7">
+            <div className="min-w-[220px]">
+              <div className="font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+                Latest completed run · <time dateTime={latest.finishedAt}>{latest.finishedAt.slice(0, 10)}</time>
+              </div>
+              <div className="mt-1 font-serif text-xl font-bold tracking-[-0.035em]">
+                {NAMES[latest.participantId] ?? latest.participantId}
+                <span className="font-sans text-sm font-normal text-muted"> / {latest.taskId}</span>
+              </div>
+            </div>
+            <div className="font-mono text-sm"><span className="mr-2 text-[10px] tracking-[0.08em] text-muted uppercase">Score</span><strong>{score(latestScore?.value ?? null)}</strong></div>
+            <div className="font-mono text-sm"><span className="mr-2 text-[10px] tracking-[0.08em] text-muted uppercase">Time</span><strong>{exactDuration(latest.telemetry?.activeMs ?? latest.telemetry?.durationMs)}</strong></div>
+            {latest.hidden && <div className="font-mono text-sm"><span className="mr-2 text-[10px] tracking-[0.08em] text-muted uppercase">Held-out tests</span><strong>{Math.round(latest.hidden.passRatio * 100)}%</strong></div>}
+            <a className="ml-auto border-b border-green pb-1 text-xs font-semibold text-green hover:text-green-2" href="#runs">View run scores</a>
+          </div>
+        )}
       </div>
     </section>
   )
@@ -467,7 +494,7 @@ export function ResultsBody({
 }) {
   return manifest && manifest.runs.length > 0 ? (
       <main id="top" className="overflow-hidden">
-        <Summary version={version} />
+        <Summary version={version} manifest={manifest} />
         <Leaderboard manifest={manifest} />
         <Tasks manifest={manifest} />
         <Runs manifest={manifest} />

@@ -44,7 +44,7 @@ export function previewManifest(manifest: ResultManifest | undefined): ResultMan
       status: run.status,
       statusDetail: undefined,
       startedAt: '',
-      finishedAt: '',
+      finishedAt: run.finishedAt,
       telemetry: run.telemetry && {
         activeMs: run.telemetry.activeMs,
         durationMs: run.telemetry.durationMs,
