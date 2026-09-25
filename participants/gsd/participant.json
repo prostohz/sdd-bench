@@ -1,0 +1,18 @@
+{
+  "id": "gsd",
+  "name": "GSD Core",
+  "setup": "setup.sh",
+  "prompts": {
+    "full": "prompt.md",
+    "spec": "prompt-spec.md"
+  },
+  "specPaths": [
+    ".planning"
+  ],
+  "allowHosts": [
+    "registry.npmjs.org",
+    "*.npmjs.org"
+  ],
+  "mounts": {},
+  "versionProbe": "for path in .codex/gsd-core/VERSION .claude/gsd-core/VERSION; do if [ -f \"$path\" ]; then cat \"$path\"; break; fi; done"
+}
