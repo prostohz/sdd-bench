@@ -14,7 +14,6 @@ import type { Task } from './model/task.js'
 import { agentHint, checkAgent } from './run/doctor.js'
 import { runParticipant } from './run/participantRun.js'
 import { describeRun, renderVerdicts, restoreRun, selectRuns } from './run/showRun.js'
-import { serve } from './web/server.js'
 import { renderReport } from './report/report.js'
 import {
   createResult,
@@ -40,7 +39,6 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   sdd-bench report [опции]              собрать отчёт
   sdd-bench show [опции]                развернуть репозиторий запуска для просмотра
   sdd-bench verdicts [опции]            прочитать обоснования судей
-  sdd-bench serve [--port N]            локальный просмотр результатов в браузере
   sdd-bench all [опции]                 run + judge + report
 
 Опции:
@@ -51,7 +49,6 @@ const USAGE = `sdd-bench — бенчмарк инструментов spec-driv
   --config <path>         файл настроек (по умолчанию bench.json)
   --out <path>            куда записать отчёт или развернуть репозиторий
   --repeat <N>            номер повтора (для show и verdicts)
-  --port <N>              порт для serve (по умолчанию 7777)
   --stage <full|spec>     этап цикла: полностью или только спецификация
   --rejudge               спросить судей заново там, где вердикт уже есть
   --rescore               пересчитать баллы по сохранённым ответам судей
@@ -79,7 +76,6 @@ interface Options {
   out: string | undefined
   stage: Stage | undefined
   repeat: number | undefined
-  port: number | undefined
   metric: Metric | undefined
   rubric: string | undefined
   materials: string[]
@@ -125,13 +121,6 @@ async function main(argv: string[]): Promise<number> {
       return showCommand(root, config, options)
     case 'verdicts':
       return verdictsCommand(root, config, options)
-    case 'serve': {
-      const url = await serve({ root, config, port: options.port ?? 7777, host: '127.0.0.1' })
-      process.stdout.write(`${url}\n`)
-      // The server owns the process from here; nothing follows.
-      await new Promise(() => {})
-      return 0
-    }
     case 'all': {
       const resultDir = await runCommand(root, config, options)
       await judgeCommand(root, config, options, resultDir)
@@ -453,7 +442,6 @@ function parseArgs(argv: string[]): Options {
     out: undefined,
     stage: undefined,
     repeat: undefined,
-    port: undefined,
     metric: undefined,
     rubric: undefined,
     materials: [],
@@ -493,9 +481,6 @@ function parseArgs(argv: string[]): Options {
         break
       case '--out':
         options.out = next()
-        break
-      case '--port':
-        options.port = Number(next())
         break
       case '--repeat':
         options.repeat = Number(next())

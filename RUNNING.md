@@ -51,7 +51,6 @@ Replace the sample rates with the selected model's published rates. Estimated co
 Inspect or process a saved result:
 
 ~~~sh
-node dist/src/cli.js serve
 node dist/src/cli.js judge --result <id>
 node dist/src/cli.js score --result <id>
 node dist/src/cli.js report --result <id>

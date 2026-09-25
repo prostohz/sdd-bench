@@ -10,7 +10,6 @@ import { parseTask } from '../src/model/task.js'
 import { ValidationError } from '../src/model/validate.js'
 import type { RunRecord } from '../src/model/run.js'
 import { selectRuns } from '../src/run/showRun.js'
-import { readInside } from '../src/web/data.js'
 
 test('каталог репозитория проходит проверку', () => {
   const catalog = loadCatalog(process.cwd())
@@ -151,19 +150,4 @@ test('выбор запуска сужается по задаче, участн
   assert.equal(selectRuns(records, { stage: 'full' }).length, 4)
   assert.equal(selectRuns(records, { participants: ['p'], stage: 'full', repeat: 1 }).length, 1)
   assert.equal(selectRuns(records, { tasks: ['другая'] }).length, 0)
-})
-
-test('веб-сервер не отдаёт файлы за пределами запуска', () => {
-  const root = mkdtempSync(join(tmpdir(), 'sdd-bench-web-'))
-  try {
-    writeFileSync(join(root, 'inside.md'), 'виден')
-
-    assert.equal(readInside(root, 'inside.md'), 'виден')
-    assert.equal(readInside(root, '../../etc/passwd'), undefined, 'выход вверх запрещён')
-    assert.equal(readInside(root, '/etc/passwd'), undefined, 'абсолютный путь запрещён')
-    assert.equal(readInside(root, ''), undefined)
-    assert.equal(readInside(root, 'нет-такого.md'), undefined)
-  } finally {
-    rmSync(root, { recursive: true, force: true })
-  }
 })

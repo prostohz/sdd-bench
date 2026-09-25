@@ -8,7 +8,7 @@
 - `participants/<id>/`: participant descriptor, setup, and prompts for the full and specification-only stages.
 - `src/run/` and `src/sandbox/`: agent execution in Docker Sandboxes and artifact capture.
 - `src/judge/`, `judges/`, and `src/score/`: item-level judge decisions and score calculation.
-- `src/web/`: local view of full results; `src/site/`: static public results site.
+- `src/site/`: static public results site.
 - `results/` and `judge-probes/`: local artifacts excluded from Git.
 
 ## Invariants

@@ -6,7 +6,6 @@ import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderReport } from '../src/report/report.js'
 import { renderMethodology } from '../src/site/pages/methodology.js'
 import { renderSite } from '../src/site/pages/results.js'
-import { resultPage, runPage } from '../src/web/pages.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 
@@ -130,7 +129,7 @@ test('the public site shows summaries without exposing run artifacts', () => {
   )
 })
 
-test('estimated costs have no prefix in site, report, or local view', () => {
+test('estimated costs have no prefix in site or report', () => {
   const manifest = fixture()
   manifest.config.participantPricing = {
     inputUsdPerMillion: 2,
@@ -146,9 +145,7 @@ test('estimated costs have no prefix in site, report, or local view', () => {
     totalTokens: 110_000,
     costUsd: undefined,
   }
-  const entry = { record: manifest.runs[0]!, dir: '/tmp/sample/runs/run-1' }
-  const result = { id: manifest.resultId, dir: '/tmp/sample', manifest, entries: [entry] }
-  for (const output of [renderSite(manifest, version), renderReport(manifest), resultPage(result), runPage({ result, entry, spec: [], impl: [] })]) {
+  for (const output of [renderSite(manifest, version), renderReport(manifest)]) {
     assert.doesNotMatch(output, /[~≈]\$?0\.32/)
   }
   assert.match(renderSite(manifest, version), /\$0\.320/)
@@ -201,18 +198,6 @@ test('saved tool versions appear in each report view', () => {
 
   const site = renderSite(manifest, version)
   assert.match(site, /<span class="tool-version">Tool version: 1\.13\.2, 1\.14\.0<\/span>/)
-
-  const result = {
-    id: manifest.resultId,
-    dir: '/tmp/sample',
-    manifest,
-    entries: manifest.runs.map((record) => ({ record, dir: `/tmp/sample/runs/${record.runId}` })),
-  }
-  const local = resultPage(result)
-  assert.match(local, /<th>Версия инструмента<\/th>/)
-  assert.match(local, /<code>1\.13\.2<\/code>/)
-  assert.match(local, /<code>1\.14\.0<\/code>/)
-  assert.match(runPage({ result, entry: result.entries[0]!, spec: [], impl: [] }), /версия инструмента <code>1\.13\.2<\/code>/)
 
   const report = renderReport(manifest)
   assert.match(report, /\| Запуск \| Версия инструмента \| Статус \|/)
