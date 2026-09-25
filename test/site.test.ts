@@ -143,7 +143,7 @@ test('the dev preview keeps published scores without sending private artifacts',
   assert.doesNotMatch(JSON.stringify(preview), /PRIVATE RATIONALE|PRIVATE EVIDENCE|PRIVATE OUTPUT|PRIVATE COMMAND/)
 })
 
-test('the newest completed run is visible above the score tables', () => {
+test('the score page has no latest-run highlight', () => {
   const manifest = fixture()
   manifest.runs.push({
     ...manifest.runs[0]!,
@@ -152,12 +152,11 @@ test('the newest completed run is visible above the score tables', () => {
     finishedAt: '2026-01-02T11:09:48Z',
     telemetry: { ...manifest.runs[0]!.telemetry!, activeMs: 2_323_498 },
   })
-  const hero = withoutClasses(renderSite(manifest, version)).split('</section>')[0]!
-  assert.match(hero, /Latest completed run · <time dateTime="2026-01-02T11:09:48Z">2026-01-02<\/time>/)
-  assert.match(hero, /GSD Core<span> \/ ledger-cli<\/span>/)
-  assert.match(hero, /38m 43s/)
-  assert.match(hero, /Held-out tests<\/span><strong>80%<\/strong>/)
-  assert.match(hero, /href="#runs">View run scores<\/a>/)
+  const html = withoutClasses(renderSite(manifest, version))
+  const hero = html.split('</section>')[0]!
+  assert.doesNotMatch(hero, /Latest completed run|2026-01-02|GSD Core|View run scores/)
+  assert.match(html, /GSD Core/)
+  assert.match(html, /38\.7 min/)
 })
 
 test('published pages use a versioned stylesheet URL', () => {
