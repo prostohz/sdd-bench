@@ -44,6 +44,6 @@ export function renderMethodology(source: string): string {
     .map((section) => `<li><a href="#${section.id}">${esc(section.title)}</a></li>`)
     .join('')
   const article = markdown.renderer.render(tokens, markdown.options, {})
-  const body = `<main id="top" class="methodology-page"><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><ul>${contents}</ul><a class="toc-back" href="./index.html#results">Back to scores</a></div></aside><article class="methodology-content">${article}</article></div></main>`
+  const body = `<main id="top" class="methodology-page"><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><ul>${contents}</ul></div></aside><article class="methodology-content">${article}</article></div></main>`
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${esc(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="./site.css"></head><body>${siteHeader('methodology')}${body}</body></html>\n`
 }

@@ -651,11 +651,6 @@ tbody tr:hover {
 .methodology-toc li a:focus-visible {
   color: var(--green-2);
 }
-.toc-back {
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 700;
-}
 .methodology-content {
   grid-column: 4 / -1;
   max-width: 850px;

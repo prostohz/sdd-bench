@@ -238,8 +238,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
     /<nav aria-label="Sections"><a href="\.\/index\.html">Scores<\/a><a href="\.\/methodology\.html" aria-current="page">Methodology<\/a><\/nav>/,
   )
   assert.match(html, /<a class="brand" href="\.\/index\.html">SDD BENCH<\/a>/)
-  assert.match(html, /Back to scores/)
-  assert.doesNotMatch(html, /← Back to scores/)
+  assert.doesNotMatch(html, /Back to scores|class="toc-back"/)
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Task classes/)
   assert.match(html, /<ul><li><a href="#section-1">Task classes<\/a><\/li>/)
