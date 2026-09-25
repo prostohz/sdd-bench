@@ -375,12 +375,7 @@ tbody tr:hover {
 .task-card h3 {
   font: 800 28px var(--display);
   letter-spacing: -0.05em;
-  margin: 29px 0 4px;
-}
-.task-card > p {
-  color: #8b998d;
-  font-size: 12px;
-  margin: 0 0 26px;
+  margin: 29px 0 30px;
 }
 .task-bars {
   display: flex;

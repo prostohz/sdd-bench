@@ -52,6 +52,7 @@ writeFileSync(
 )
 copyFileSync(join(root, 'src/site/site.css'), join(destination, 'site.css'))
 copyFileSync(join(root, 'src/site/favicon.svg'), join(destination, 'favicon.svg'))
+copyFileSync(join(root, 'src/site/PHOSPHOR-LICENSE.txt'), join(destination, 'PHOSPHOR-LICENSE.txt'))
 const katexSource = join(root, 'node_modules/katex/dist')
 const katexDestination = join(destination, 'katex')
 mkdirSync(katexDestination, { recursive: true })
