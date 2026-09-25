@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { SiteHeader } from '../components/site-header.js'
+import { googleAnalyticsTag } from './google-analytics.js'
 import { MethodologyBody } from './methodology.js'
 import { escapeHtml, parseMethodology } from './methodology-content.js'
 
@@ -12,5 +13,5 @@ export function renderMethodology(source: string, cssVersion?: string): string {
     </>,
   )
   const styleHref = cssVersion ? `./site.css?v=${cssVersion}` : './site.css'
-  return `<!doctype html><html lang="en" class="scroll-smooth"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${escapeHtml(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="${styleHref}"></head><body class="m-0 bg-bg font-sans text-ink antialiased [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-green-2 [&_a:focus-visible]:outline-offset-4">${body}</body></html>\n`
+  return `<!doctype html><html lang="en" class="scroll-smooth"><head>${googleAnalyticsTag()}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>${escapeHtml(title)} — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="${styleHref}"></head><body class="m-0 bg-bg font-sans text-ink antialiased [&_a:focus-visible]:outline-2 [&_a:focus-visible]:outline-green-2 [&_a:focus-visible]:outline-offset-4">${body}</body></html>\n`
 }

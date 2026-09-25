@@ -5,6 +5,7 @@ import test from 'node:test'
 import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderReport } from '../src/report/report.js'
 import { previewManifest } from '../src/site/data.js'
+import { measurementId } from '../src/site/pages/google-analytics.js'
 import { renderMethodology } from '../src/site/pages/methodology-build.js'
 import { renderSite } from '../src/site/pages/results-build.js'
 
@@ -164,6 +165,13 @@ test('published pages use a versioned stylesheet URL', () => {
   assert.match(renderMethodology('# Methodology', 'abc123'), /href="\.\/site\.css\?v=abc123"/)
 })
 
+test('both published pages send page views to the same GA4 stream', () => {
+  for (const html of [renderSite(fixture(), version), renderMethodology('# Methodology')]) {
+    assert.equal(html.split(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`).length - 1, 1)
+    assert.equal(html.split(`gtag('config','${measurementId}')`).length - 1, 1)
+  }
+})
+
 test('estimated costs have no prefix in site or report', () => {
   const manifest = fixture()
   manifest.config.participantPricing = {
@@ -313,5 +321,5 @@ test('the methodology page renders the current Markdown with navigation', () => 
 test('methodology Markdown escapes embedded HTML', () => {
   const html = renderMethodology('# Methodology\n\n## Check\n\n<script>alert(1)</script>')
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
-  assert.doesNotMatch(html, /<script>/)
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/)
 })
