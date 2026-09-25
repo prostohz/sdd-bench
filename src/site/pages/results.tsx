@@ -115,42 +115,22 @@ function EmptySite() {
         <div className="hero-layout">
           <div>
             <h1>
-              From intent
-              <br />
-              to working
-              <br />
-              <span>code.</span>
+              From intent to working <em>code.</em>
             </h1>
             <p className="hero-intro">
               Comparing specification-driven workflows by specification quality,
               implementation fidelity, and effort.
             </p>
             <Button asChild variant="link" size="link" className="hero-link">
-              <a href="./methodology.html">
-                How the benchmark works <span aria-hidden="true">↗</span>
-              </a>
+              <a href="./methodology.html">How the benchmark works</a>
             </Button>
-          </div>
-          <div className="pipeline" aria-label="Benchmark pipeline">
-            <div>
-              <span>01</span>
-              <strong>Intent</strong>
-            </div>
-            <div>
-              <span>02</span>
-              <strong>Specification</strong>
-            </div>
-            <div>
-              <span>03</span>
-              <strong>Implementation</strong>
-            </div>
           </div>
         </div>
       </section>
       <section id="results" className="content empty-state">
         <SectionHead title="Results" note="No public runs yet." />
         <div className="empty-panel">
-          <span className="empty-symbol" aria-hidden="true">
+          <span className="empty-icon" aria-hidden="true">
             ∅
           </span>
           <div>
@@ -160,6 +140,7 @@ function EmptySite() {
               comparisons will appear here.
             </p>
           </div>
+          <span className="empty-label">AWAITING DATA</span>
         </div>
       </section>
       <MethodSummary />
@@ -167,42 +148,19 @@ function EmptySite() {
   )
 }
 
-function Summary({
-  manifest,
-  version,
-}: {
-  manifest: ResultManifest
-  version: string
-}) {
-  const tasks = new Set(manifest.runs.map((run) => run.taskId)).size
-  const participants = new Set(manifest.runs.map((run) => run.participantId))
-    .size
+function Summary({ version }: { version: string }) {
   return (
     <section className="hero results-hero">
       <div className="results-hero-content">
         <div className="edition">
           VERSION <span>{version}</span>
         </div>
-        <div className="hero-columns">
-          <div>
-            <h1>
-              From specification to <span>results.</span>
-            </h1>
-            <p className="hero-intro">
-              SDD workflows compared on the same tasks, model, and settings.
-            </p>
-          </div>
-          <div className="hero-facts">
-            <div>
-              <strong>{tasks.toString().padStart(2, '0')}</strong>
-              <span>Tasks</span>
-            </div>
-            <div>
-              <strong>{participants.toString().padStart(2, '0')}</strong>
-              <span>Workflows</span>
-            </div>
-          </div>
-        </div>
+        <h1>
+          From specification to <em>results.</em>
+        </h1>
+        <p className="hero-intro">
+          SDD workflows compared on the same tasks, model, and settings.
+        </p>
       </div>
     </section>
   )
@@ -311,7 +269,7 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
     <section className="content task-section" id="tasks">
       <SectionHead
         title="Task breakdown"
-        note="Each task shows a participant’s mean score across repeats."
+        note="Each card shows a participant’s mean score across repeats for one task."
       />
       <div className="task-grid">
         {taskIds.map((taskId) => {
@@ -319,12 +277,10 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
             manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
           return (
             <article className="task-card" key={taskId}>
-              <div className="task-card-head">
-                <div className="task-top">
-                  {CLASS_NAMES[taskClass] ?? taskClass}
-                </div>
-                <h3>{taskId}</h3>
+              <div className="task-top">
+                {CLASS_NAMES[taskClass] ?? taskClass}
               </div>
+              <h3>{taskId}</h3>
               <div className="task-bars">
                 {participants.map((participant) => {
                   const value =
@@ -499,7 +455,7 @@ export function ResultsBody({
 }) {
   return manifest && manifest.runs.length > 0 ? (
       <main id="top">
-        <Summary manifest={manifest} version={version} />
+        <Summary version={version} />
         <Leaderboard manifest={manifest} />
         <Tasks manifest={manifest} />
         <Runs manifest={manifest} />
