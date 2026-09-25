@@ -277,6 +277,7 @@ test('the methodology page renders the current Markdown with navigation', () => 
   assert.match(html, /Aggregate score/)
   assert.match(html, /Interpreting results/)
   assert.match(html, /Run isolation/)
+  assert.match(html, /<li><a href="#section-7">Run isolation<\/a><\/li><li><a href="#section-8">Interpreting results<\/a><\/li><\/ul>/)
   const sectionCount = [...source.matchAll(/^## /gm)].length - 1
   assert.equal((html.match(/<h2 id="section-\d+">/g) ?? []).length, sectionCount)
   assert.match(html, new RegExp(`href="#section-${sectionCount}"`))

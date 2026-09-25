@@ -95,14 +95,6 @@ A task score is the mean of its runs. A class score is the mean of its tasks. Th
 
 By default, each task and participant combination runs three times (`n = 3`). The repeat count can be changed in the configuration. Every repeat starts from the same initial state.
 
-## Interpreting results
-
-Compare final scores within one result: its participants ran the same tasks with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.
-
-The current task set covers only its included scenarios. A score describes behavior under those conditions, not the quality of every possible use of a tool. LLM judges can make mistakes; disputed scores should be checked against the item-level decisions and saved run artifacts.
-
-Tasks, requirement checklists, and tests are public in this repository. They are withheld from the participant during a run, but publication cannot rule out prior exposure of the model to them. This is not a blind evaluation on unseen tasks.
-
 ## Run isolation
 
 Participants and LLM judges run in separate [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) through the `sbx` CLI. Each task, participant, and repeat combination gets a new sandbox with these restrictions:
@@ -124,3 +116,11 @@ Each judgment uses a fresh judge without previous run history. The judge receive
 The specification is placed in a neutral `spec/` directory for judging. Participants store it in different locations, and the original path could reveal the author. This does not provide complete anonymity: for `impl-fit`, the participant's tooling may still be visible in the repository. That is a known limitation.
 
 Held-out tests run separately after the participant finishes and are never placed in its sandbox. They do not enter the final score. They show what the implementation does; the judge assesses how well it follows the specification.
+
+## Interpreting results
+
+Compare final scores within one result: its participants ran the same tasks with the same agent and judge configuration. Directly comparing scores from different results can mix the effects of workflow, model, tasks, and settings.
+
+The current task set covers only its included scenarios. A score describes behavior under those conditions, not the quality of every possible use of a tool. LLM judges can make mistakes; disputed scores should be checked against the item-level decisions and saved run artifacts.
+
+Tasks, requirement checklists, and tests are public in this repository. They are withheld from the participant during a run, but publication cannot rule out prior exposure of the model to them. This is not a blind evaluation on unseen tasks.
