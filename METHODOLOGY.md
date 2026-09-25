@@ -27,12 +27,6 @@ For diagnostic `spec` runs, quality is the geometric mean of `spec-quality` and 
 
 Every run in one result uses the same stage. Scores are comparable within a stage, not across different stages.
 
-## Agent configuration
-
-The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.
-
-Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.
-
 ## Run protocol
 
 Each task, participant, and repeat combination produces a separate run:
@@ -44,6 +38,12 @@ Each task, participant, and repeat combination produces a separate run:
 5. A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.
 
 Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.
+
+## Agent configuration
+
+The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.
+
+Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.
 
 ## Metrics
 

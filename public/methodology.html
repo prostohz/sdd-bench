@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>Methodology — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="./site.css"></head><body><header class="topbar"><a class="brand" href="./index.html">SDD BENCH</a><nav aria-label="Sections"><a href="./index.html">Scores</a><a href="./methodology.html" aria-current="page">Methodology</a></nav></header><main id="top" class="methodology-page"><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><ul><li><a href="#section-1">Task classes</a></li><li><a href="#section-2">Agent configuration</a></li><li><a href="#section-3">Run protocol</a></li><li><a href="#section-4">Metrics</a></li><li><a href="#section-5">Aggregate score</a></li><li><a href="#section-6">Repeats</a></li><li><a href="#section-7">Run isolation</a></li><li><a href="#section-8">Interpreting results</a></li></ul></div></aside><article class="methodology-content"><h2 id="section-1">Task classes</h2>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="SDD Bench methodology: tasks, judging, scoring, and run isolation."><meta name="theme-color" content="#155b3d"><title>Methodology — SDD Bench</title><link rel="icon" type="image/svg+xml" href="./favicon.svg"><link rel="stylesheet" href="./katex/katex.min.css"><link rel="stylesheet" href="./site.css"></head><body><header class="topbar"><a class="brand" href="./index.html">SDD BENCH</a><nav aria-label="Sections"><a href="./index.html">Scores</a><a href="./methodology.html" aria-current="page">Methodology</a></nav></header><main id="top" class="methodology-page"><div class="methodology-layout"><aside class="methodology-aside"><div class="methodology-toc"><ul><li><a href="#section-1">Task classes</a></li><li><a href="#section-2">Run protocol</a></li><li><a href="#section-3">Agent configuration</a></li><li><a href="#section-4">Metrics</a></li><li><a href="#section-5">Aggregate score</a></li><li><a href="#section-6">Repeats</a></li><li><a href="#section-7">Run isolation</a></li><li><a href="#section-8">Interpreting results</a></li></ul></div></aside><article class="methodology-content"><h2 id="section-1">Task classes</h2>
 <p>The benchmark examines the path from an initial request through a specification to an implementation.</p>
 <p>Published results cover the full workflow: each participant writes a specification and implements the task.</p>
 <table>
@@ -28,10 +28,7 @@
 </tbody>
 </table>
 <p>These are the initial task classes. The set can expand as the benchmark develops.</p>
-<h2 id="section-2">Agent configuration</h2>
-<p>The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.</p>
-<p>Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.</p>
-<h2 id="section-3">Run protocol</h2>
+<h2 id="section-2">Run protocol</h2>
 <p>Each task, participant, and repeat combination produces a separate run:</p>
 <ol>
 <li>The starting project is committed to Git and placed in a fresh sandbox.</li>
@@ -41,6 +38,9 @@
 <li>A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.</li>
 </ol>
 <p>Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.</p>
+<h2 id="section-3">Agent configuration</h2>
+<p>The participant and judge use the same provider, although their models may differ. Within one result, all participants use the same model and model version, reasoning settings, time and token limits, available tools, and network restrictions. Each participant receives the original task request unchanged. There is no human intervention during a run.</p>
+<p>Only the SDD workflow and the tooling it requires differ between participants. The result records the model and tool versions and the run settings.</p>
 <h2 id="section-4">Metrics</h2>
 <table>
 <thead>
