@@ -12,8 +12,9 @@
     "verbatimModuleSyntax": true,
     "declaration": true,
     "sourceMap": true,
+    "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": "."
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"]
 }

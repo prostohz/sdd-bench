@@ -4,8 +4,8 @@ import test from 'node:test'
 
 import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderReport } from '../src/report/report.js'
-import { renderMethodology } from '../src/site/methodology.js'
-import { renderSite } from '../src/site/render.js'
+import { renderMethodology } from '../src/site/pages/methodology.js'
+import { renderSite } from '../src/site/pages/results.js'
 import { resultPage, runPage } from '../src/web/pages.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
@@ -89,13 +89,13 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.doesNotMatch(html, /brand-mark/)
   assert.match(html, /Overall scores/)
   assert.doesNotMatch(html, /class="rank"|class="participant-id"|<th scope="col">#<\/th>/)
-  assert.match(html, /<th scope="col">Participant<\/th><th scope="col">Score<\/th>/)
+  assert.match(html, /<th[^>]*scope="col">Participant<\/th><th[^>]*scope="col">Score<\/th>/)
   assert.match(html, /Task breakdown/)
   assert.match(html, /<div class="task-top">Greenfield<\/div>/)
   assert.doesNotMatch(html, /<span>TASK 01<\/span>/)
   assert.match(html, /Run scores/)
   assert.ok(html.includes('<div class="edition">VERSION <span>' + version + '</span></div>'))
-  assert.match(html, /<h1>From specification to <em>results\.<\/em><\/h1>/)
+  assert.match(html, /<h1>From specification to <span>results\.<\/span><\/h1>/)
   assert.doesNotMatch(html, /RUN RESULT/)
   assert.doesNotMatch(html, /<footer|RESULT SET \/ 01|class="hero-stat"|class="method-note"/)
   assert.doesNotMatch(html, /OPEN BENCHMARK|topbar-badge|live-dot/)
@@ -115,12 +115,12 @@ test('the public site shows summaries without exposing run artifacts', () => {
     /Scores range from 0 to 100|<th scope="col">Status<\/th>|Judge scores use a 0–10 scale\./,
   )
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/)
-  assert.match(html, /<th scope="col" class="number" title="Specification quality">spec-quality<\/th>/)
-  assert.match(html, /<th scope="col" class="number">Score<\/th>/)
-  assert.match(html, /<th scope="col" class="number">Held-out tests<\/th>/)
-  assert.match(html, /<th scope="col" class="number">Avg\. time<\/th>/)
-  assert.match(html, /<th scope="col" class="number">Avg\. cost<\/th>/)
-  assert.match(html, /<th scope="col" class="number">Time<\/th><th scope="col" class="number">Cost<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*title="Specification quality">spec-quality<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*>Score<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*>Held-out tests<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*>Avg\. time<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*>Avg\. cost<\/th>/)
+  assert.match(html, /<th[^>]*scope="col"[^>]*>Time<\/th><th[^>]*scope="col"[^>]*>Cost<\/th>/)
   assert.match(html, /\$0\.120/)
   assert.match(html, /Held-out tests are reported separately from the score\./)
   assert.doesNotMatch(html, /Full methodology|class="method-link"/)
@@ -187,9 +187,9 @@ test('the baseline appears first even when another method scores higher', () => 
   manifest.runs = [high, low]
 
   const html = renderSite(manifest, version)
-  assert.match(html, /<table class="leaderboard">.*?<tbody><tr class="baseline-row"><th scope="row"><span class="participant-name">Baseline<\/span>/s)
+  assert.match(html, /<table[^>]*leaderboard[^>]*>.*?<tbody[^>]*><tr[^>]*baseline-row[^>]*><th scope="row"><span class="participant-name">Baseline<\/span>/s)
   assert.match(html, /<div class="task-bars"><div class="task-row"><span>Baseline<\/span>/)
-  assert.match(html, /<table class="runs-table">.*?<tbody><tr><td><strong>Baseline<\/strong>/s)
+  assert.match(html, /<table[^>]*runs-table[^>]*>.*?<tbody[^>]*><tr[^>]*><td[^>]*><strong>Baseline<\/strong>/s)
 })
 
 test('saved tool versions appear in each report view', () => {

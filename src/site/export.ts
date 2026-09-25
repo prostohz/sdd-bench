@@ -1,12 +1,13 @@
 import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { isAbsolute, join, resolve } from 'node:path'
 
 import { loadCatalog } from '../catalog.js'
 import { loadConfig } from '../config.js'
 import { readManifest, resolveResult } from '../results.js'
 import { scoreRun } from '../score/score.js'
-import { renderMethodology } from './methodology.js'
-import { renderSite } from './render.js'
+import { renderMethodology } from './pages/methodology.js'
+import { renderSite } from './pages/results.js'
 
 const args = process.argv.slice(2)
 let result: string | undefined
@@ -50,7 +51,12 @@ writeFileSync(
   join(destination, 'methodology.html'),
   renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8')),
 )
-copyFileSync(join(root, 'src/site/site.css'), join(destination, 'site.css'))
+execFileSync(process.execPath, [
+  join(root, 'node_modules/@tailwindcss/cli/dist/index.mjs'),
+  '-i', join(root, 'src/site/site.css'),
+  '-o', join(destination, 'site.css'),
+  '--minify',
+], { stdio: 'inherit' })
 copyFileSync(join(root, 'src/site/favicon.svg'), join(destination, 'favicon.svg'))
 copyFileSync(join(root, 'src/site/PHOSPHOR-LICENSE.txt'), join(destination, 'PHOSPHOR-LICENSE.txt'))
 const katexSource = join(root, 'node_modules/katex/dist')
