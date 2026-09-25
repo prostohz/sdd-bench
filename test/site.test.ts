@@ -199,7 +199,7 @@ test('the baseline appears first even when another method scores higher', () => 
 
   const html = withoutClasses(renderSite(manifest, version))
   assert.match(html, /<tbody[^>]*><tr[^>]*><th scope="row"><span>Baseline<\/span>/s)
-  assert.match(html, /<h3>ledger-cli<\/h3><div><div><span>Baseline<\/span>/)
+  assert.match(html, /<h3>ledger-cli<\/h3><p>[^<]+<\/p><div><div><span>Baseline<\/span>/)
   assert.match(html, /<tbody[^>]*><tr[^>]*><td[^>]*><strong>Baseline<\/strong>/s)
 })
 
