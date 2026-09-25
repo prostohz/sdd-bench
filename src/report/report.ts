@@ -26,7 +26,7 @@ export function renderReport(manifest: ResultManifest): string {
 
   lines.push('## Итог', '', ...totalTable(participants, manifest.runs), '')
   lines.push('## Задачи', '', ...taskTable(participants), '')
-  lines.push('## Эффективность', '', ...efficiencyTable(participants, manifest), '')
+  lines.push('## Эффективность', '', ...efficiencyTable(participants), '')
   lines.push('## Запуски', '', ...runTable(manifest), '')
 
   return lines.join('\n')
@@ -55,14 +55,14 @@ function taskTable(participants: ParticipantScore[]): string[] {
   return table(header, rows)
 }
 
-function efficiencyTable(participants: ParticipantScore[], manifest: ResultManifest): string[] {
+function efficiencyTable(participants: ParticipantScore[]): string[] {
   const header = ['Участник', 'Запусков', 'Среднее время', 'Средние токены', 'Средняя стоимость']
   const rows = participants.map((p) => [
     p.participantId,
     String(p.efficiency.runs),
     duration(p.efficiency.meanDurationMs),
     p.efficiency.meanTotalTokens === null ? '—' : Math.round(p.efficiency.meanTotalTokens).toLocaleString('ru-RU'),
-    p.efficiency.meanCostUsd === null ? '—' : `${manifest.runs.some((run) => run.participantId === p.participantId && runCost(run, manifest.config.participantPricing).estimated) ? '≈' : ''}$${p.efficiency.meanCostUsd.toFixed(2)}`,
+    p.efficiency.meanCostUsd === null ? '—' : `$${p.efficiency.meanCostUsd.toFixed(2)}`,
   ])
   return table(header, rows)
 }
@@ -81,7 +81,7 @@ function runTable(manifest: ResultManifest): string[] {
         return verdict === undefined ? '—' : verdict.score.toFixed(1)
       }),
       duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs ?? null),
-      price.value === null ? '—' : `${price.estimated ? '≈' : ''}$${price.value.toFixed(3)}`,
+      price.value === null ? '—' : `$${price.value.toFixed(3)}`,
       number(score.value),
       score.zeroReason ?? run.statusDetail ?? '',
     ]

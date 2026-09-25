@@ -39,8 +39,8 @@ function score(value: number | null): string {
 function duration(value: number | undefined): string {
   return value === undefined ? '—' : `${(value / 60_000).toFixed(1)} min`
 }
-function cost(value: number | null, estimated: boolean): string {
-  return value === null ? '—' : `${estimated ? '~' : ''}$${value.toFixed(3)}`
+function cost(value: number | null): string {
+  return value === null ? '—' : `$${value.toFixed(3)}`
 }
 function bar(value: number | null, className = ''): string {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
@@ -94,11 +94,10 @@ function leaderboard(manifest: ResultManifest): string {
           : versions.length > 0
             ? `<span class="tool-version">Tool version: ${esc(versions.join(', '))}</span>`
             : ''
-      const estimated = manifest.runs.some((run) => run.participantId === participant.participantId && runCost(run, manifest.config.participantPricing).estimated)
-      return `<tr${participant.participantId === 'neutral' ? ' class="baseline-row"' : ''}><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}<td class="number">${duration(participant.efficiency.meanDurationMs ?? undefined)}</td><td class="number">${cost(participant.efficiency.meanCostUsd, estimated)}</td></tr>`
+      return `<tr${participant.participantId === 'neutral' ? ' class="baseline-row"' : ''}><th scope="row"><span class="participant-name">${participantName(participant.participantId)}</span>${detail}</th><td class="total-cell"><strong>${score(participant.score)}</strong><span>/ 100</span></td>${classCells}<td class="number">${duration(participant.efficiency.meanDurationMs ?? undefined)}</td><td class="number">${cost(participant.efficiency.meanCostUsd)}</td></tr>`
     })
     .join('')
-  return `<section class="content" id="results">${sectionHead('Overall scores', 'Baseline first; methods ranked by score across included task classes. ~ marks estimated cost.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col" class="number">Avg. time</th><th scope="col" class="number">Avg. cost</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
+  return `<section class="content" id="results">${sectionHead('Overall scores', 'Baseline first; methods ranked by score across included task classes.')}<div class="table-shell"><table class="leaderboard"><thead><tr><th scope="col">Participant</th><th scope="col">Score</th>${classes.map((key) => `<th scope="col">${esc(CLASS_NAMES[key] ?? key)}</th>`).join('')}<th scope="col" class="number">Avg. time</th><th scope="col" class="number">Avg. cost</th></tr></thead><tbody>${rows}</tbody></table></div></section>`
 }
 function tasks(manifest: ResultManifest): string {
   const participants = scoreParticipants(manifest.runs, manifest.config.participantPricing).sort(compareParticipants)
@@ -144,7 +143,7 @@ function runs(manifest: ResultManifest): string {
       const hiddenCell = showHidden
         ? `<td class="number">${hidden === undefined ? '—' : `${Math.round(hidden * 100)}%`}</td>`
         : ''
-      return `<tr><td><strong>${participantName(run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number">${duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs)}</td><td class="number">${cost(price.value, price.estimated)}</td><td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
+      return `<tr><td><strong>${participantName(run.participantId)}</strong><span class="run-sub">${esc(run.taskId)}${manifest.config.repeats > 1 ? ` · repeat ${run.repeat}` : ''}</span></td>${cells}<td class="number">${duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs)}</td><td class="number">${cost(price.value)}</td><td class="number run-score">${score(value.value)}</td>${hiddenCell}</tr>`
     })
     .join('')
   return `<section class="content runs-section" id="runs">${sectionHead('Run scores', note)}<div class="table-shell"><table class="runs-table"><thead><tr><th scope="col">Run</th>${metrics.map((metric) => `<th scope="col" class="number" title="${esc(METRIC_LABELS[metric])}">${esc(metric)}</th>`).join('')}<th scope="col" class="number">Time</th><th scope="col" class="number">Cost</th><th scope="col" class="number">Score</th>${showHidden ? '<th scope="col" class="number">Held-out tests</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div></section>`

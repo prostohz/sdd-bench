@@ -130,6 +130,30 @@ test('the public site shows summaries without exposing run artifacts', () => {
   )
 })
 
+test('estimated costs have no prefix in site, report, or local view', () => {
+  const manifest = fixture()
+  manifest.config.participantPricing = {
+    inputUsdPerMillion: 2,
+    cachedInputUsdPerMillion: 0.2,
+    cacheWriteUsdPerMillion: 2.5,
+    outputUsdPerMillion: 12,
+  }
+  manifest.runs[0]!.telemetry = {
+    ...manifest.runs[0]!.telemetry!,
+    inputTokens: 100_000,
+    outputTokens: 10_000,
+    cacheReadTokens: 0,
+    totalTokens: 110_000,
+    costUsd: undefined,
+  }
+  const entry = { record: manifest.runs[0]!, dir: '/tmp/sample/runs/run-1' }
+  const result = { id: manifest.resultId, dir: '/tmp/sample', manifest, entries: [entry] }
+  for (const output of [renderSite(manifest, version), renderReport(manifest), resultPage(result), runPage({ result, entry, spec: [], impl: [] })]) {
+    assert.doesNotMatch(output, /[~≈]\$?0\.32/)
+  }
+  assert.match(renderSite(manifest, version), /\$0\.320/)
+})
+
 test('the specification stage omits implementation checks', () => {
   const html = renderSite(fixture('spec'), version)
   assert.doesNotMatch(html, /Specification only|class="hero-meta"/)

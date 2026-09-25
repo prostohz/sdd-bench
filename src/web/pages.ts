@@ -240,7 +240,7 @@ ${metrics}
 <td class="score">${gauge(score.value)}</td>
 <td class="num">${hiddenCell(record)}</td>
 <td class="num dim">${telemetry ? minutes(telemetry.activeMs ?? telemetry.durationMs) : '—'}</td>
-<td class="num dim">${price.value === null ? '—' : `${price.estimated ? '≈' : ''}${price.value.toFixed(3)}`}</td>
+<td class="num dim">${price.value === null ? '—' : price.value.toFixed(3)}</td>
 </tr>`
 }
 
@@ -304,7 +304,7 @@ function statusLine(record: RunRecord, result: ResultView): string {
   if (telemetry) {
     parts.push(`${minutes(telemetry.activeMs ?? telemetry.durationMs)}`)
     parts.push(`${telemetry.totalTokens.toLocaleString('ru-RU')} токенов`)
-    if (price.value !== null) parts.push(`${price.estimated ? '≈' : ''}$${price.value.toFixed(3)}`)
+    if (price.value !== null) parts.push(`$${price.value.toFixed(3)}`)
   }
   if (score.zeroReason) parts.push(`<span class="state bad">${esc(score.zeroReason)}</span>`)
   return `<div class="facts">${parts.map((part) => `<span>${part}</span>`).join('')}</div>`

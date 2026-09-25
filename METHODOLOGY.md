@@ -85,7 +85,7 @@ C_{\mathrm{run}} &= \frac{\min(C_{\mathrm{successful\ runs\ of\ task}})}{C_{\mat
 
 For example, scores of `8/10`, `6/10`, and `9/10` give `Q = 75.6`. If that run takes twice the fastest successful run of the same task and costs the same as the cheapest, its final score is `75.6 × (0.8 + 0.1 × 0.5 + 0.1 × 1) = 71.8`. The reference minima use all successful participants and repeats of that task within the result. A zero minimum gives a factor of `1` only to zero-valued runs and `0` to positive-valued runs.
 
-A successful run has no aggregate score until all applicable judgments and every successful peer's time and cost are available. Missing data is not treated as zero. The published table shows each run's time and cost; estimated costs are marked `~`.
+A successful run has no aggregate score until all applicable judgments and every successful peer's time and cost are available. Missing data is not treated as zero. The published table shows each run's time and cost. Token-based costs are estimates, as described above.
 
 A run scores `0` if it fails, times out, or regresses the original tests. Regression checks do not apply to greenfield tasks.
 
