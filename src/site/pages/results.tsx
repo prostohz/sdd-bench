@@ -180,6 +180,10 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
               const versions = participantVersions(
                 manifest.runs,
                 participant.participantId,
+              ).map((version) =>
+                participant.participantId === 'canon'
+                  ? version.replace(/^@canon\/cli\s+/, '')
+                  : version,
               )
               return (
                 <TableRow
@@ -344,7 +348,14 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
               const price = runCost(run, manifest.config.participantPricing)
               const hidden = run.hidden?.passRatio
               return (
-                <TableRow key={run.runId}>
+                <TableRow
+                  key={run.runId}
+                  className={
+                    run.participantId === 'neutral'
+                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#d4dbd1]'
+                      : 'hover:bg-[#f9fbf7]'
+                  }
+                >
                   <TableCell>
                     <strong className="font-bold">
                       <ParticipantName id={run.participantId} />

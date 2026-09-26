@@ -238,9 +238,11 @@ test('saved tool versions appear in each report view', () => {
   first.participantId = 'openspec'
   first.versions = { openspec: '1.13.2' }
   manifest.runs.push({ ...first, runId: 'run-2', repeat: 2, versions: { openspec: '1.14.0' } })
+  manifest.runs.push({ ...first, runId: 'run-3', participantId: 'canon', versions: { canon: '@canon/cli      0.1.0' } })
 
   const site = renderSite(manifest, version)
   assert.match(withoutClasses(site), /<span>Tool version: 1\.13\.2, 1\.14\.0<\/span>/)
+  assert.match(withoutClasses(site), /<span>Tool version: 0\.1\.0<\/span>/)
 
   const report = renderReport(manifest)
   assert.match(report, /\| Запуск \| Версия инструмента \| Статус \|/)
