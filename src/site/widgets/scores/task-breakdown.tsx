@@ -1,4 +1,5 @@
 import type { ResultManifest } from '../../../model/run.js'
+import { TASK_CLASSES } from '../../../model/task.js'
 import { scoreParticipants } from '../../../score/score.js'
 import { CLASS_NAMES, TASK_DESCRIPTIONS } from './config.js'
 import {
@@ -15,7 +16,11 @@ export function TaskBreakdown({ manifest }: { manifest: ResultManifest }) {
     manifest.runs,
     manifest.config.participantPricing,
   ).sort(compareParticipants)
-  const taskIds = [...new Set(manifest.runs.map((run) => run.taskId))].sort()
+  const tasks = [...new Map(manifest.runs.map((run) => [run.taskId, run.taskClass])).entries()]
+    .sort(([firstId, firstClass], [secondId, secondClass]) =>
+      TASK_CLASSES.indexOf(firstClass) - TASK_CLASSES.indexOf(secondClass) ||
+      firstId.localeCompare(secondId),
+    )
   return (
     <section className={`${sectionClass} pt-[94px] max-[760px]:pt-[70px]`} id="tasks">
       <SectionHead
@@ -23,9 +28,7 @@ export function TaskBreakdown({ manifest }: { manifest: ResultManifest }) {
         note="Each card shows a participant’s mean score across repeats for one task."
       />
       <div className="grid grid-cols-3 gap-[18px] max-[1050px]:grid-cols-2 max-[760px]:grid-cols-1">
-        {taskIds.map((taskId) => {
-          const taskClass =
-            manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
+        {tasks.map(([taskId, taskClass]) => {
           return (
             <article className="border border-line bg-paper px-[31px] pt-7 pb-[33px] max-[430px]:p-[22px]" key={taskId}>
               <div className="text-xs leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">

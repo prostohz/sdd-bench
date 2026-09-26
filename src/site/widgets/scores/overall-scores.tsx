@@ -7,6 +7,7 @@ import {
   TableRow,
 } from '../../components/ui/table.js'
 import type { ResultManifest } from '../../../model/run.js'
+import { TASK_CLASSES } from '../../../model/task.js'
 import { participantVersions } from '../../../model/versions.js'
 import { scoreParticipants } from '../../../score/score.js'
 import { CLASS_NAMES } from './config.js'
@@ -29,7 +30,9 @@ export function OverallScores({ manifest }: { manifest: ResultManifest }) {
     manifest.runs,
     manifest.config.participantPricing,
   ).sort(compareParticipants)
-  const classes = [...new Set(manifest.runs.map((run) => run.taskClass))].sort()
+  const classes = TASK_CLASSES.filter((taskClass) =>
+    manifest.runs.some((run) => run.taskClass === taskClass),
+  )
   return (
     <section className={sectionClass} id="results">
       <SectionHead
