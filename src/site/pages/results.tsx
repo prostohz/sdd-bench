@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Button } from '../components/ui/button.js'
 import {
   Table,
   TableBody,
@@ -29,12 +28,14 @@ const NAMES: Record<string, string> = {
   gsd: 'GSD Core',
   speckit: 'Spec Kit',
   bmad: 'BMad Method',
+  canon: 'Canon',
 }
 const REPOSITORIES: Record<string, string> = {
   openspec: 'https://github.com/Fission-AI/OpenSpec',
   gsd: 'https://github.com/open-gsd/gsd-core',
   speckit: 'https://github.com/github/spec-kit',
   bmad: 'https://github.com/bmad-code-org/BMAD-METHOD',
+  canon: 'https://github.com/prostohz/canon',
 }
 const CLASS_NAMES: Record<string, string> = {
   greenfield: 'Greenfield',
@@ -117,43 +118,11 @@ function compareParticipants(a: ParticipantScore, b: ParticipantScore): number {
   )
 }
 
-function EmptySite() {
+function EmptyResults() {
   return (
-    <main id="top" className="overflow-hidden">
-      <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-[67px] pb-[78px] max-[760px]:pt-[52px] max-[760px]:pb-[65px]">
-        <div className="mx-auto max-w-[var(--page-max)]">
-          <div>
-            <h1 className="m-0 font-serif text-[clamp(29px,3vw,52px)] leading-[1.07] font-extrabold tracking-[-0.075em] max-[1050px]:text-[clamp(27.5px,3vw,39px)] max-[760px]:text-[clamp(24.5px,6vw,37.5px)] max-[430px]:text-[23px]">
-              From intent to working <em className="not-italic text-green-2">code.</em>
-            </h1>
-            <p className="mt-[27px] max-w-[570px] text-[17px] leading-[1.65] text-[#57675c] max-[760px]:text-[15px] max-[760px]:leading-[1.6]">
-              Comparing specification-driven workflows by specification quality,
-              implementation fidelity, and effort.
-            </p>
-            <Button asChild variant="link" size="link" className="mt-[35px] inline-flex items-center border-b border-green pb-2 text-sm font-bold text-green">
-              <a href="./methodology.html">How the benchmark works</a>
-            </Button>
-          </div>
-        </div>
-      </section>
-      <section id="results" className={`${sectionClass} pb-3`}>
-        <SectionHead title="Results" note="No public runs yet." />
-        <div className="flex min-h-[175px] items-center gap-[25px] border border-dashed border-[#b9c7b9] bg-[#f9faf6] px-[42px] py-9 max-[760px]:items-start max-[760px]:gap-[17px] max-[760px]:p-6">
-          <span className="font-serif text-[64px] leading-none text-[#b3cdb6] max-[760px]:text-[44px]" aria-hidden="true">
-            ∅
-          </span>
-          <div>
-            <h3 className="mb-1.5 font-serif text-xl font-bold tracking-[-0.03em]">The first result is in progress</h3>
-            <p className="m-0 max-w-[600px] text-sm leading-[1.5] text-muted">
-              Once a run is complete and reviewed, participant scores and task
-              comparisons will appear here.
-            </p>
-          </div>
-          <span className="ml-auto whitespace-nowrap font-mono text-[10px] tracking-[0.12em] text-[#89978b] max-[760px]:hidden">AWAITING DATA</span>
-        </div>
-      </section>
-      <MethodSummary />
-    </main>
+    <section id="results" className={`${sectionClass} pb-3`}>
+      <SectionHead title="Results" note="No data yet." />
+    </section>
   )
 }
 
@@ -168,7 +137,7 @@ function Summary({ version }: { version: string }) {
           From specification to <em className="not-italic text-green-2">results.</em>
         </h1>
         <p className="mt-3 max-w-[900px] text-base leading-[1.55] text-[#57675c] max-[760px]:text-[15px]">
-          SDD workflows compared on the same tasks, model, and settings.
+          SDD workflows compared on the same tasks and model. Run limits are noted below.
         </p>
       </div>
     </section>
@@ -322,9 +291,7 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
   const metrics = STAGE_METRICS[stage]
   const showHidden = stage === 'full'
   const note = showHidden
-    ? manifest.resultId === '2026-09-24T22-57-32-852'
-      ? 'Held-out tests are reported separately from the score. GSD Core had no time limit; other participants had a 45-minute limit.'
-      : 'Held-out tests are reported separately from the score.'
+    ? 'Held-out tests are reported separately from the score.'
     : undefined
   const sorted = [...manifest.runs].sort(
     (a, b) =>
@@ -467,15 +434,19 @@ export function ResultsBody({
   manifest: ResultManifest | undefined
   version: string
 }) {
-  return manifest && manifest.runs.length > 0 ? (
-      <main id="top" className="overflow-hidden">
-        <Summary version={version} />
-        <Leaderboard manifest={manifest} />
-        <Tasks manifest={manifest} />
-        <Runs manifest={manifest} />
-        <MethodSummary />
-      </main>
-    ) : (
-      <EmptySite />
-    )
+  return (
+    <main id="top" className="overflow-hidden">
+      <Summary version={version} />
+      {manifest && manifest.runs.length > 0 ? (
+        <>
+          <Leaderboard manifest={manifest} />
+          <Tasks manifest={manifest} />
+          <Runs manifest={manifest} />
+        </>
+      ) : (
+        <EmptyResults />
+      )}
+      <MethodSummary />
+    </main>
+  )
 }

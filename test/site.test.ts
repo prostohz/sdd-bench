@@ -249,7 +249,7 @@ test('saved tool versions appear in each report view', () => {
 
 test('methodology names open their GitHub repositories in a new tab', () => {
   const manifest = fixture('spec')
-  const ids = ['openspec', 'speckit', 'bmad', 'gsd', 'neutral']
+  const ids = ['openspec', 'speckit', 'bmad', 'gsd', 'canon', 'neutral']
   manifest.runs = ids.map((participantId, index) => ({
     ...manifest.runs[0]!,
     runId: `run-${index}`,
@@ -261,6 +261,7 @@ test('methodology names open their GitHub repositories in a new tab', () => {
     'https://github.com/github/spec-kit',
     'https://github.com/bmad-code-org/BMAD-METHOD',
     'https://github.com/open-gsd/gsd-core',
+    'https://github.com/prostohz/canon',
   ]
   for (const repository of repositories) {
     assert.equal(html.split(`href="${repository}" target="_blank" rel="noopener noreferrer"`).length - 1, 3)
@@ -275,11 +276,24 @@ test('the site shows an empty state without a result', () => {
     withoutClasses(html),
     /<nav aria-label="Sections"><a href="\.\/index\.html" aria-current="page">Scores<\/a><a href="\.\/methodology\.html">Methodology<\/a><\/nav>/,
   )
-  assert.match(html, /No public runs yet/)
+  assert.match(html, /No data yet\./)
+  assert.match(html, /From specification to/)
+  assert.match(html, /How to read this result/)
+  assert.doesNotMatch(html, /Overall scores|Task breakdown|Run scores/)
   assert.doesNotMatch(html, /<footer/)
   assert.doesNotMatch(html, /SPEC-DRIVEN DEVELOPMENT \/ BENCHMARK/)
   assert.doesNotMatch(html, /section-index/)
   assert.doesNotMatch(html, /href="#tasks"/)
+})
+
+test('the site shows an empty state when a result has no runs', () => {
+  const manifest = fixture()
+  manifest.runs = []
+  const html = renderSite(manifest, version)
+  assert.match(html, /No data yet\./)
+  assert.match(html, /From specification to/)
+  assert.match(html, /How to read this result/)
+  assert.doesNotMatch(html, /Overall scores|Task breakdown|Run scores/)
 })
 
 test('the methodology page renders the current Markdown with navigation', () => {
