@@ -51,7 +51,7 @@ const sectionClass = 'mx-auto w-[var(--page-width)] scroll-mt-[30px] pt-[74px] m
 const numberClass = 'text-right tabular-nums whitespace-nowrap'
 const numberValueClass = `${numberClass} font-medium`
 const tableClass = 'w-full border-collapse text-left tabular-nums [&_th]:border-b [&_th]:border-line [&_th]:px-5 [&_th]:py-[18px] [&_td]:border-b [&_td]:border-line [&_td]:px-5 [&_td]:py-[18px] [&_thead]:bg-[#edf1e9] [&_thead_th]:whitespace-nowrap [&_thead_th]:text-[10px] [&_thead_th]:leading-[normal] [&_thead_th]:font-medium [&_thead_th]:tracking-[0.08em] [&_thead_th]:text-[#5a6b5d] [&_thead_th]:uppercase [&_tbody_tr:hover]:bg-[#f9fbf7] [&_tbody_tr:last-child>*]:border-b-0'
-const runTableClass = `${tableClass} table-fixed [&_th]:px-[19px] [&_th]:py-[15px] [&_td]:px-[19px] [&_td]:py-[15px] [&_td]:text-[13px]`
+const runTableClass = `${tableClass} table-fixed [&_th]:px-[19px] [&_th]:py-[15px] [&_td]:px-[19px] [&_td]:py-[15px] [&_thead_th]:text-[11px] [&_td]:text-sm`
 
 function score(value: number | null): string {
   return value === null ? '—' : value.toFixed(1)
@@ -260,12 +260,12 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
             manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
           return (
             <article className="border border-line bg-paper px-[31px] pt-7 pb-[33px] max-[430px]:p-[22px]" key={taskId}>
-              <div className="text-[10px] leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
+              <div className="text-xs leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
                 {CLASS_NAMES[taskClass] ?? taskClass}
               </div>
               <h3 className={`mt-[29px] font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.05em] ${TASK_DESCRIPTIONS[taskId] ? 'mb-2' : 'mb-[30px]'}`}>{taskId}</h3>
               {TASK_DESCRIPTIONS[taskId] && (
-                <p className="mb-[30px] text-[13px] leading-[1.5] text-muted">{TASK_DESCRIPTIONS[taskId]}</p>
+                <p className="mb-[30px] text-[15px] leading-[1.5] text-muted">{TASK_DESCRIPTIONS[taskId]}</p>
               )}
               <div className="flex flex-col gap-[18px]">
                 {participants.map((participant) => {
@@ -273,12 +273,12 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
                     participant.tasks.find((item) => item.key === taskId)
                       ?.score ?? null
                   return (
-                    <div className="grid grid-cols-[130px_1fr_35px] items-center gap-4 max-[430px]:grid-cols-[105px_1fr_30px] max-[430px]:gap-2" key={participant.participantId}>
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs leading-[1.5] font-semibold max-[430px]:text-[11px]">
+                    <div className="grid grid-cols-[130px_1fr_42px] items-center gap-4 max-[430px]:grid-cols-[105px_1fr_42px] max-[430px]:gap-2" key={participant.participantId}>
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm leading-[1.5] font-semibold max-[430px]:text-[13px]">
                         <ParticipantName id={participant.participantId} />
                       </span>
                       <Bar value={value} />
-                      <strong className="text-right tabular-nums text-xs leading-[normal] font-semibold">{score(value)}</strong>
+                      <strong className="text-right tabular-nums text-sm leading-[normal] font-semibold">{score(value)}</strong>
                     </div>
                   )
                 })}
