@@ -17,10 +17,10 @@ import {
   type ParticipantScore,
 } from '../../score/score.js'
 
-const METRIC_LABELS: Record<Metric, string> = {
-  'spec-quality': 'Specification quality',
-  'spec-fit': 'Specification fit to requirements',
-  'impl-fit': 'Implementation fit to specification',
+const METRIC_HINTS: Record<Metric, string> = {
+  'spec-quality': 'Quality of the specification itself',
+  'spec-fit': 'How well the specification covers the task requirements',
+  'impl-fit': 'How well the implementation follows the specification',
 }
 const NAMES: Record<string, string> = {
   neutral: 'Baseline',
@@ -48,9 +48,10 @@ const TASK_DESCRIPTIONS: Record<string, string> = {
 }
 
 const sectionClass = 'mx-auto w-[var(--page-width)] scroll-mt-[30px] pt-[74px] max-[760px]:pt-[60px]'
-const numberClass = 'text-right font-mono whitespace-nowrap'
-const tableClass = 'min-w-[760px] w-full border-collapse text-left tabular-nums [&_th]:border-b [&_th]:border-line [&_th]:px-5 [&_th]:py-[18px] [&_td]:border-b [&_td]:border-line [&_td]:px-5 [&_td]:py-[18px] [&_thead]:bg-[#edf1e9] [&_thead_th]:whitespace-nowrap [&_thead_th]:font-mono [&_thead_th]:text-[10px] [&_thead_th]:leading-[normal] [&_thead_th]:font-medium [&_thead_th]:tracking-[0.08em] [&_thead_th]:text-[#5a6b5d] [&_thead_th]:uppercase [&_tbody_tr:hover]:bg-[#f9fbf7] [&_tbody_tr:last-child>*]:border-b-0'
-const runTableClass = `${tableClass} [&_th]:px-[19px] [&_th]:py-[15px] [&_td]:px-[19px] [&_td]:py-[15px] [&_td]:text-[13px]`
+const numberClass = 'text-right tabular-nums whitespace-nowrap'
+const numberValueClass = `${numberClass} font-medium`
+const tableClass = 'w-full border-collapse text-left tabular-nums [&_th]:border-b [&_th]:border-line [&_th]:px-5 [&_th]:py-[18px] [&_td]:border-b [&_td]:border-line [&_td]:px-5 [&_td]:py-[18px] [&_thead]:bg-[#edf1e9] [&_thead_th]:whitespace-nowrap [&_thead_th]:text-[10px] [&_thead_th]:leading-[normal] [&_thead_th]:font-medium [&_thead_th]:tracking-[0.08em] [&_thead_th]:text-[#5a6b5d] [&_thead_th]:uppercase [&_tbody_tr:hover]:bg-[#f9fbf7] [&_tbody_tr:last-child>*]:border-b-0'
+const runTableClass = `${tableClass} table-fixed [&_th]:px-[19px] [&_th]:py-[15px] [&_td]:px-[19px] [&_td]:py-[15px] [&_td]:text-[13px]`
 
 function score(value: number | null): string {
   return value === null ? '—' : value.toFixed(1)
@@ -67,7 +68,7 @@ function cost(value: number | null): string {
 function Bar({ value }: { value: number | null }) {
   const width = value === null ? 0 : Math.max(0, Math.min(100, value))
   return (
-    <span className="block h-[5px] w-full overflow-hidden bg-[#e8ede5]" aria-hidden="true">
+    <span className="block h-[10px] w-full overflow-hidden bg-[#e8ede5]" aria-hidden="true">
       <span className="block h-full bg-green-2" style={{ width: `${width}%` }} />
     </span>
   )
@@ -130,8 +131,8 @@ function Summary({ version }: { version: string }) {
   return (
     <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-7 pb-8 max-[760px]:pt-6 max-[760px]:pb-7">
       <div className="mx-auto max-w-[var(--page-max)]">
-        <div className="mb-3.5 inline-flex items-center gap-2.5 rounded bg-green px-[11px] py-2 font-mono text-[11px] leading-[normal] font-medium tracking-[0.08em] text-white">
-          VERSION <span className="text-xs leading-[normal] tracking-normal text-lime">{version}</span>
+        <div className="mb-3.5 inline-flex items-center gap-2.5 rounded bg-green px-[11px] py-2 text-[11px] leading-[normal] font-medium tracking-[0.08em] text-white">
+          VERSION <span className="font-mono text-xs leading-[normal] tracking-normal text-lime">{version}</span>
         </div>
         <h1 className="m-0 font-serif text-[clamp(44px,4.5vw,68px)] leading-[1.07] font-extrabold tracking-[-0.075em] max-[1050px]:text-[clamp(42px,4.5vw,58px)] max-[760px]:text-[clamp(34px,7vw,44px)] max-[430px]:text-[34px]">
           From specification to <em className="not-italic text-green-2">results.</em>
@@ -157,7 +158,7 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
         note="Baseline first; methods ranked by score across included task classes."
       />
       <div className="overflow-x-auto border border-line bg-paper">
-        <Table className={tableClass}>
+        <Table className={`${tableClass} min-w-[760px]`}>
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Participant</TableHead>
@@ -190,7 +191,7 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
                   key={participant.participantId}
                   className={
                     participant.participantId === 'neutral'
-                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#d4dbd1]'
+                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#dfe5dc]'
                       : 'hover:bg-[#f9fbf7]'
                   }
                 >
@@ -199,18 +200,18 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
                       <ParticipantName id={participant.participantId} />
                     </span>
                     {participant.participantId === 'neutral' ? (
-                      <span className="mt-1 block font-mono text-[9px] leading-[1.4] text-[#8c978e]">
+                      <span className="mt-1 block text-[9px] leading-[1.4] text-[#8c978e]">
                         Naive model planning
                       </span>
                     ) : versions.length > 0 ? (
-                      <span className="mt-1 block font-mono text-[11px] leading-[normal] text-muted">
-                        Tool version: {versions.join(', ')}
+                      <span className="mt-1 block text-[11px] leading-[normal] text-muted">
+                        Tool version: <span className="font-mono">{versions.join(', ')}</span>
                       </span>
                     ) : null}
                   </th>
                   <TableCell className="whitespace-nowrap">
                     <strong className="font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.06em] text-green">{score(participant.score)}</strong>
-                    <span className="ml-[3px] font-mono text-[11px] leading-[normal] text-[#9aa59a]">/ 100</span>
+                    <span className="ml-[3px] text-[11px] leading-[normal] text-[#9aa59a]">/ 100</span>
                   </TableCell>
                   {classes.map((key) => {
                     const value =
@@ -218,17 +219,17 @@ function Leaderboard({ manifest }: { manifest: ResultManifest }) {
                         ?.score ?? null
                     return (
                       <TableCell className="min-w-[150px]" key={key}>
-                        <span className="mb-2 block font-mono text-[13px] leading-[normal] font-semibold">{score(value)}</span>
+                        <span className="mb-2 block text-[13px] leading-[normal] font-semibold">{score(value)}</span>
                         <Bar value={value} />
                       </TableCell>
                     )
                   })}
-                  <TableCell className={numberClass}>
+                  <TableCell className={numberValueClass}>
                     {duration(
                       participant.efficiency.meanDurationMs ?? undefined,
                     )}
                   </TableCell>
-                  <TableCell className={numberClass}>
+                  <TableCell className={numberValueClass}>
                     {cost(participant.efficiency.meanCostUsd)}
                   </TableCell>
                 </TableRow>
@@ -259,7 +260,7 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
             manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
           return (
             <article className="border border-line bg-paper px-[31px] pt-7 pb-[33px] max-[430px]:p-[22px]" key={taskId}>
-              <div className="font-mono text-[10px] leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
+              <div className="text-[10px] leading-[normal] tracking-[0.06em] text-[#6c886f] uppercase">
                 {CLASS_NAMES[taskClass] ?? taskClass}
               </div>
               <h3 className={`mt-[29px] font-serif text-[28px] leading-[normal] font-extrabold tracking-[-0.05em] ${TASK_DESCRIPTIONS[taskId] ? 'mb-2' : 'mb-[30px]'}`}>{taskId}</h3>
@@ -277,7 +278,7 @@ function Tasks({ manifest }: { manifest: ResultManifest }) {
                         <ParticipantName id={participant.participantId} />
                       </span>
                       <Bar value={value} />
-                      <strong className="text-right font-mono text-xs leading-[normal] font-semibold">{score(value)}</strong>
+                      <strong className="text-right tabular-nums text-xs leading-[normal] font-semibold">{score(value)}</strong>
                     </div>
                   )
                 })}
@@ -308,18 +309,22 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
     <section className={`${sectionClass} pt-[94px] pb-[90px] max-[760px]:pt-[70px] max-[760px]:pb-[65px]`} id="runs">
       <SectionHead title="Run scores" note={note} />
       <div className="overflow-x-auto border border-line bg-paper">
-        <Table className={runTableClass}>
+        <Table className={`${runTableClass} ${showHidden ? 'min-w-[1000px]' : 'min-w-[760px]'}`}>
           <TableHeader>
             <TableRow>
-              <TableHead scope="col">Run</TableHead>
+              <TableHead scope="col" className="w-[180px]">Run</TableHead>
               {metrics.map((metric) => (
                 <TableHead
                   key={metric}
                   scope="col"
                   className={numberClass}
-                  title={METRIC_LABELS[metric]}
                 >
-                  {metric}
+                  <abbr
+                    className="cursor-help underline decoration-dotted underline-offset-[3px]"
+                    title={METRIC_HINTS[metric]}
+                  >
+                    {metric}
+                  </abbr>
                 </TableHead>
               ))}
               <TableHead scope="col" className={numberClass}>
@@ -328,14 +333,19 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
               <TableHead scope="col" className={numberClass}>
                 Cost
               </TableHead>
+              {showHidden && (
+                <TableHead scope="col" className={numberClass}>
+                  <span
+                    className="inline-block cursor-help whitespace-normal underline decoration-dotted underline-offset-[3px]"
+                    title="Share of held-out tests passed; reported separately from the score"
+                  >
+                    Held-out tests
+                  </span>
+                </TableHead>
+              )}
               <TableHead scope="col" className={numberClass}>
                 Score
               </TableHead>
-              {showHidden && (
-                <TableHead scope="col" className={numberClass}>
-                  Held-out tests
-                </TableHead>
-              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -352,7 +362,7 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
                   key={run.runId}
                   className={
                     run.participantId === 'neutral'
-                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#d4dbd1]'
+                      ? 'bg-[#f2f3ef] hover:bg-[#ebeee8] [&>*]:border-b-2 [&>*]:border-[#dfe5dc]'
                       : 'hover:bg-[#f9fbf7]'
                   }
                 >
@@ -368,28 +378,28 @@ function Runs({ manifest }: { manifest: ResultManifest }) {
                     </span>
                   </TableCell>
                   {metrics.map((metric) => (
-                    <TableCell className={numberClass} key={metric}>
+                    <TableCell className={numberValueClass} key={metric}>
                       {run.verdicts[metric] === undefined
                         ? '—'
                         : score(run.verdicts[metric]?.score ?? null)}
                     </TableCell>
                   ))}
-                  <TableCell className={numberClass}>
+                  <TableCell className={numberValueClass}>
                     {duration(
                       run.telemetry?.activeMs ?? run.telemetry?.durationMs,
                     )}
                   </TableCell>
-                  <TableCell className={numberClass}>{cost(price.value)}</TableCell>
-                  <TableCell className={`${numberClass} font-bold text-green`}>
-                    {score(value.value)}
-                  </TableCell>
+                  <TableCell className={numberValueClass}>{cost(price.value)}</TableCell>
                   {showHidden && (
-                    <TableCell className={numberClass}>
+                    <TableCell className={numberValueClass}>
                       {hidden === undefined
                         ? '—'
                         : `${Math.round(hidden * 100)}%`}
                     </TableCell>
                   )}
+                  <TableCell className={`${numberClass} font-bold text-green`}>
+                    {score(value.value)}
+                  </TableCell>
                 </TableRow>
               )
             })}
@@ -408,7 +418,7 @@ function MethodSummary() {
           title="How to read this result"
           note="How scores are calculated and where comparisons apply."
         />
-        <div className="grid grid-cols-3 border-y border-[#cfdacd] max-[760px]:grid-cols-1">
+        <div className="grid grid-cols-3 border-y border-[#dce4d9] max-[760px]:grid-cols-1">
           <div className="min-h-[215px] pt-[29px] pr-[27px] pb-7 max-[760px]:min-h-0 max-[760px]:py-6">
             <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">One starting point</h3>
             <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
@@ -416,14 +426,14 @@ function MethodSummary() {
               own SDD workflow and required tools.
             </p>
           </div>
-          <div className="min-h-[215px] border-l border-[#cfdacd] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
+          <div className="min-h-[215px] border-l border-[#dce4d9] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
             <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">Decisions before scores</h3>
             <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
               Judges assess individual requirements and defects. The harness
               calculates scores from those decisions.
             </p>
           </div>
-          <div className="min-h-[215px] border-l border-[#cfdacd] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
+          <div className="min-h-[215px] border-l border-[#dce4d9] pt-[29px] pr-[27px] pb-7 pl-[30px] max-[760px]:min-h-0 max-[760px]:border-t max-[760px]:border-l-0 max-[760px]:px-0 max-[760px]:py-6">
             <h3 className="mb-[9px] font-serif text-[19px] leading-[normal] font-bold tracking-[-0.035em]">Quality, time, and cost</h3>
             <p className="m-0 text-[13px] leading-[1.65] text-[#607263]">
               Quality is the geometric mean of applicable metrics. Time

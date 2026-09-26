@@ -2,7 +2,7 @@ import { parseMethodology } from './methodology-content.js'
 
 const articleClass = [
   'col-[4/-1] max-w-[850px] min-w-0 text-[15px] leading-[1.78] text-[#34463a] max-[760px]:text-sm',
-  '[&_h2]:scroll-mt-[30px] [&_h2]:mb-[21px] [&_h2]:border-t [&_h2]:border-[#cad7cc] [&_h2]:pt-[46px] [&_h2]:font-serif [&_h2]:text-[clamp(28px,3vw,37px)] [&_h2]:leading-[1.22] [&_h2]:font-extrabold [&_h2]:tracking-[-0.05em] [&_h2]:text-ink',
+  '[&_h2]:scroll-mt-[30px] [&_h2]:mb-[21px] [&_h2]:border-t [&_h2]:border-[#dce4d9] [&_h2]:pt-[46px] [&_h2]:font-serif [&_h2]:text-[clamp(28px,3vw,37px)] [&_h2]:leading-[1.22] [&_h2]:font-extrabold [&_h2]:tracking-[-0.05em] [&_h2]:text-ink',
   '[&_h2:first-of-type]:border-t-0 [&_h2:first-of-type]:pt-0 [&_h2:not(:first-of-type)]:mt-[54px] max-[760px]:[&_h2]:text-[29px]',
   '[&_p]:mb-5 [&_ul]:mb-6 [&_ul]:pl-[22px] [&_li]:my-[5px] [&_li]:pl-1 [&_li::marker]:text-green-2',
   '[&_a]:text-green [&_a]:underline [&_a]:underline-offset-[3px]',
@@ -10,7 +10,7 @@ const articleClass = [
   '[&_pre]:my-[26px] [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:border-0 [&_pre]:bg-green [&_pre]:px-[27px] [&_pre]:py-[23px] [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-[1.8] [&_pre]:text-[#eef8ed]',
   '[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-inherit [&_pre_code]:[font:inherit]',
   '[&_table]:mt-[25px] [&_table]:mb-[31px] [&_table]:w-full [&_table]:min-w-0 [&_table]:border [&_table]:border-line [&_table]:border-collapse [&_table]:bg-paper [&_table]:text-left [&_table]:text-[13px] [&_table]:leading-[1.55] [&_table]:tabular-nums [&_table_thead]:bg-[#edf1e9]',
-  '[&_table_th]:border-b [&_table_th]:border-line [&_table_th]:px-[15px] [&_table_th]:py-[13px] [&_table_th]:align-top [&_table_th]:[overflow-wrap:anywhere] [&_table_th]:font-mono [&_table_th]:text-[11px] [&_table_th]:leading-[normal] [&_table_th]:font-semibold [&_table_th]:tracking-[0.03em] [&_table_th]:text-[#56705b] [&_table_th]:uppercase [&_table_th]:whitespace-normal',
+  '[&_table_th]:border-b [&_table_th]:border-line [&_table_th]:px-[15px] [&_table_th]:py-[13px] [&_table_th]:align-top [&_table_th]:[overflow-wrap:anywhere] [&_table_th]:text-[11px] [&_table_th]:leading-[normal] [&_table_th]:font-semibold [&_table_th]:tracking-[0.03em] [&_table_th]:text-[#56705b] [&_table_th]:uppercase [&_table_th]:whitespace-normal',
   '[&_table_td]:border-b [&_table_td]:border-line [&_table_td]:px-[15px] [&_table_td]:py-[13px] [&_table_td]:align-top [&_table_td]:[overflow-wrap:anywhere] [&_table_td:first-child]:font-semibold [&_table_td:first-child]:text-ink [&_table_tbody_tr:last-child>*]:border-b-0',
 ].join(' ')
 
