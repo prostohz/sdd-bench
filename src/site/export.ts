@@ -1,4 +1,4 @@
-import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { isAbsolute, join, resolve } from 'node:path'
@@ -56,6 +56,8 @@ if (previousManifest) {
     join(destination, 'previous.html'),
     renderSite(previousManifest, version, cssVersion, { href: './index.html', label: 'Latest result' }),
   )
+} else {
+  rmSync(join(destination, 'previous.html'), { force: true })
 }
 writeFileSync(
   join(destination, 'methodology.html'),

@@ -32,7 +32,7 @@ function Summary({
           From specification to <em className="not-italic text-green-2">results.</em>
         </h1>
         <p className="mt-3 max-w-[900px] text-base leading-[1.55] text-[#57675c] max-[760px]:text-[15px]">
-          SDD workflows compared on the same tasks and model. Run limits are noted below.
+          SDD workflows compared on the same tasks and model. Run limits and exceptions are described in the methodology.
         </p>
         {related && manifest && (
           <p className="mt-4 text-sm leading-[1.6] text-muted">

@@ -45,7 +45,7 @@ Judging can be repeated from saved artifacts without rerunning the participant. 
 
 The participant and judge use the same provider, although their models may differ. Within one result, participants use the same model, model version, reasoning settings, and shared network policy. Each participant receives the original task request unchanged. There is no human intervention during a run.
 
-The SDD workflow and its required tools differ between participants. In result `2026-09-24T22-57-32-852`, GSD Core and Canon had no time limit; other participants had a 45-minute limit. Both Canon runs finished within 45 minutes. The result records model and tool versions and run settings.
+The SDD workflow and its required tools differ between participants. In merged result `2026-09-24T22-57-32-852`, Greenfield and Brownfield without a specification had a 45-minute limit except for GSD Core and Canon, which had no limit. Both Canon runs finished within 45 minutes. Brownfield with a specification was transferred from result `2026-09-26T09-44-06-502` and had a 90-minute limit for every participant. The model, judge, effort, pricing, and stage matched across both result sets. The aggregate score includes classes with different time limits; the result retains the original run artifacts and merge provenance.
 
 ## Metrics
 
