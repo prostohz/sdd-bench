@@ -1,3 +1,5 @@
+import { isAbsolute } from 'node:path'
+
 import { ID } from './participant.js'
 import { Reader } from './validate.js'
 
@@ -34,6 +36,7 @@ export interface Task {
   requirementsFile: string
   /** Initial repository state, relative to `dir`. Absent for greenfield. */
   seedDir: string | undefined
+  initialSpecs: Record<string, string>
   /** The project's own tests, whose continued passing is the regression check. */
   baselineTests: TestCommand | undefined
   /** Tests never placed in the participant's sandbox. */
@@ -50,6 +53,7 @@ export function parseTask(source: string, dir: string, value: unknown): Task {
   const intentFile = reader.string('intent')
   const requirementsFile = reader.string('requirements')
   const seedDir = reader.optionalString('seed')
+  const initialSpecs = reader.stringMap('initialSpecs')
   const allowHosts = reader.stringArray('allowHosts')
 
   const baseline = reader.object('baselineTests')
@@ -76,8 +80,19 @@ export function parseTask(source: string, dir: string, value: unknown): Task {
   if (taskClass === 'greenfield' && baselineTests !== undefined) {
     reader.problem('baselineTests: regressions do not apply to a greenfield task')
   }
+  if (taskClass === 'brownfield-spec' && Object.keys(initialSpecs).length === 0) {
+    reader.problem('initialSpecs: a brownfield-spec task needs existing specifications')
+  }
+  if (taskClass !== 'brownfield-spec' && Object.keys(initialSpecs).length > 0) {
+    reader.problem('initialSpecs: only brownfield-spec tasks may have existing specifications')
+  }
+  for (const [participant, path] of Object.entries(initialSpecs)) {
+    if (!ID.test(participant) || isAbsolute(path) || path.includes('\\') || path.split('/').some((part) => part === '' || part === '.' || part === '..')) {
+      reader.problem(`initialSpecs.${participant}: expected a relative directory inside the task`)
+    }
+  }
 
   reader.done()
 
-  return { id, taskClass, dir, intentFile, requirementsFile, seedDir, baselineTests, hiddenTests, allowHosts }
+  return { id, taskClass, dir, intentFile, requirementsFile, seedDir, initialSpecs, baselineTests, hiddenTests, allowHosts }
 }

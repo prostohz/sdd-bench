@@ -10,6 +10,7 @@ import { parseTask } from '../src/model/task.js'
 import { ValidationError } from '../src/model/validate.js'
 import type { RunRecord } from '../src/model/run.js'
 import { selectRuns } from '../src/run/showRun.js'
+import { initialSpecFiles } from '../src/run/participantRun.js'
 
 test('каталог репозитория проходит проверку', () => {
   const catalog = loadCatalog(process.cwd())
@@ -50,6 +51,38 @@ test('brownfield-задача без seed отвергается', () => {
       }),
     ValidationError,
   )
+})
+
+test('brownfield со спецификацией требует безопасные каталоги исходных спецификаций', () => {
+  const base = {
+    id: 'x',
+    class: 'brownfield-spec',
+    intent: 'intent.md',
+    requirements: 'requirements.md',
+    seed: 'seed',
+  }
+  assert.throws(() => parseTask('task.json', '/tmp', base), /initialSpecs/)
+  assert.throws(
+    () => parseTask('task.json', '/tmp', { ...base, initialSpecs: { neutral: '../outside' } }),
+    /initialSpecs.neutral/,
+  )
+  assert.equal(
+    parseTask('task.json', '/tmp', { ...base, initialSpecs: { neutral: 'initial-specs/neutral' } }).initialSpecs.neutral,
+    'initial-specs/neutral',
+  )
+})
+
+test('исходные спецификации перечисляются с вложенными и скрытыми каталогами', () => {
+  const root = mkdtempSync(join(tmpdir(), 'sdd-bench-specs-'))
+  try {
+    mkdirSync(join(root, '.canon', 'spec'), { recursive: true })
+    mkdirSync(join(root, 'spec'), { recursive: true })
+    writeFileSync(join(root, '.canon', 'spec', 'tasks.canon'), 'module tasks\n')
+    writeFileSync(join(root, 'spec', 'tasks.md'), '# Tasks\n')
+    assert.deepEqual(initialSpecFiles(root).sort(), ['.canon/spec/tasks.canon', 'spec/tasks.md'])
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('участник обязан назвать, где лежит спецификация', () => {

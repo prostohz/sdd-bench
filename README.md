@@ -4,8 +4,6 @@ A benchmark for specification-driven development workflows. It compares specific
 
 [Methodology](METHODOLOGY.md) · [Scores](https://prostohz.github.io/sdd-bench/)
 
-Participants: Neutral SDD, OpenSpec, Spec Kit, BMad Method, [GSD Core](https://github.com/open-gsd/gsd-core).
+Participants: Neutral SDD, OpenSpec, Spec Kit, BMad Method, [GSD Core](https://github.com/open-gsd/gsd-core), Canon.
 
-## To Be Done
-
-- Support Brownfield Spec tasks with equivalent existing specifications in each participant's native format.
+Brownfield Spec task: [change the priority of an existing task](tasks/brownfield-spec/tasks-priority-edit/intent.md).

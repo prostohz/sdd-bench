@@ -1,0 +1,136 @@
+language 0.1.0
+module tasks
+  uses core, data, cli
+  means
+    A command-line list of tasks kept in a local tasks.json file: the tasks
+    it holds, their priorities, and the ways a person adds and views them.
+
+value task-text : core:text
+  means
+    task text: the words describing one task.
+
+value tag : core:text
+  means
+    tag: a word that groups tasks by their source or subject.
+
+enum priority
+  high
+  normal
+  low
+  means
+    priority: the urgency of a task — high before ordinary work, normal as
+    the ordinary case, or low after it.
+
+entity task : data:record
+  text     : task-text
+  done     : core:boolean
+  tags     : tag       many
+  priority : priority
+  means
+    task: one item in the list, with its text, completion mark, tags and
+    priority.
+
+requirement R-001
+  states
+    A newly added [task|task] has [task.priority|priority]
+    [priority.normal|normal] unless the person selects another priority.
+  because
+    Ordinary work is the usual case and must not require an extra option.
+
+requirement R-002
+  states
+    The `add` command accepts `--priority high`, `--priority normal`, or
+    `--priority low` when it creates a [task|task], and stores the selected
+    [task.priority|priority].
+  because
+    A person must be able to set urgency while recording a task.
+
+requirement R-003
+  states
+    Every [task|task] shown by the `list` command displays its
+    [task.priority|priority] as `\[high]`, `\[normal]`, or `\[low]`
+    immediately after its completion mark and before its text.
+  because
+    The priority has to be visible where a person chooses what to do next.
+
+requirement R-004
+  states
+    The `list` command shows [task|tasks] with
+    [priority.high|high] [task.priority|priority] first, then
+    [priority.normal|normal], then [priority.low|low], while preserving the
+    file order among tasks of each priority.
+  because
+    Urgent work must rise to the top without making equally urgent tasks
+    jump around.
+
+requirement R-005
+  states
+    The `list` command accepts `--priority high`, `--priority normal`, or
+    `--priority low` and shows only [task|tasks] with that
+    [task.priority|priority].
+  because
+    A person sometimes needs to see one urgency level without losing the
+    other ways of narrowing the list.
+
+requirement R-006
+  states
+    A tasks.json file written before [task.priority|priority] existed still
+    opens with its task order, text, completion marks and [task.tags|tags]
+    unchanged, and each such [task|task] is treated as
+    [priority.normal|normal].
+  because
+    A long-lived list must remain usable after priorities are introduced.
+
+requirement R-007
+  states
+    The `list` command combines `--priority` selection with `--done`,
+    `--open` and `--tag` selection so that a shown [task|task] meets every
+    selected condition.
+  because
+    Combining filters must continue to narrow the same list rather than
+    silently discard an existing condition.
+
+requirement R-008
+  states
+    When `--priority` occurs more than once in `add` or `list`, its last
+    value selects the [task.priority|priority].
+  because
+    Repeated valued options must have one deterministic meaning.
+
+requirement R-009
+  states
+    A `list` line retains the file-position number, completion mark, text,
+    number alignment and [task.tags|tag] representation that it had before
+    priorities, and the priority fragment is its only added output.
+  because
+    Existing scripts and people must keep recognising the list while they
+    gain one new piece of information.
+
+requirement R-010
+  states
+    A task from a pre-priority tasks.json file retains its file position,
+    text, completion mark and [task.tags|tags] after a later `add` or
+    `done` command saves the file, and that save writes its
+    [task.priority|priority] as [priority.normal|normal].
+  because
+    Opening an old list is not enough if the next ordinary command loses
+    data or leaves the new value unspecified.
+
+requirement R-011
+  states
+    Except for the priority behaviour stated in R-001 through R-010, the
+    existing [cli:command|commands], [cli:option|options], successful
+    [cli:output-stream|output], error messages, [cli:exit-status|exit
+    statuses] and [cli:usage|usage] of the command-line program remain
+    unchanged.
+  because
+    Priorities are an addition to the established tool, not a revision of
+    its other behaviour.
+
+exclude X-001
+  states
+    Editing the [task.priority|priority] of an existing [task|task], due
+    dates, projects and coloured list output are not part of this change.
+  because
+    The change is limited to recording and viewing priorities on newly
+    added tasks.

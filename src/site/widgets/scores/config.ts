@@ -28,4 +28,5 @@ export const CLASS_NAMES: Record<string, string> = {
 export const TASK_DESCRIPTIONS: Record<string, string> = {
   'ledger-cli': 'Build a standalone CLI to record income and expenses, list transactions, and calculate balances.',
   'tasks-cli': 'Add priorities, sorting, and filtering to an existing task CLI while preserving saved tasks and existing behavior.',
+  'tasks-priority-edit': 'Change the priority of an existing task in a CLI with an established specification.',
 }

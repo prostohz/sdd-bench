@@ -3,7 +3,10 @@
 их артефакты в `.planning/`. Оставь настройки GSD по умолчанию.
 
 Создай `.planning/INTENT.md` с намерением ниже. Если в исходном проекте уже есть
-код, сначала выполни `gsd-map-codebase`. Затем выполни
+код, сначала выполни `gsd-map-codebase`. Если `.planning/PROJECT.md` уже есть,
+это текущая спецификация проекта: обнови её через `gsd-new-milestone --auto`,
+используя намерение как цель нового этапа. Не запускай `gsd-new-project` поверх
+существующего проекта. Если `.planning/PROJECT.md` нет, выполни
 `gsd-new-project --auto @.planning/INTENT.md`.
 
 Пройди каждую фазу созданного roadmap в штатном порядке: `gsd-spec-phase`,

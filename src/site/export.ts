@@ -9,14 +9,18 @@ import { renderSite } from './render/results.js'
 
 const args = process.argv.slice(2)
 let result: string | undefined
+let previousResult: string | undefined
 let out = 'public'
 for (let i = 0; i < args.length; i += 1) {
   const arg = args[i]
   const next = args[i + 1]
-  if ((arg === '--result' || arg === '--out') && next === undefined)
+  if ((arg === '--result' || arg === '--previous-result' || arg === '--out') && next === undefined)
     throw new Error(`${arg}: a value is required`)
   if (arg === '--result') {
     result = next
+    i += 1
+  } else if (arg === '--previous-result') {
+    previousResult = next
     i += 1
   } else if (arg === '--out') {
     out = next ?? out
@@ -31,6 +35,9 @@ const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   version: string
 }
 const manifest = loadSiteManifest(root, result)
+const previousManifest = loadSiteManifest(root, previousResult)
+if (previousManifest && !manifest) throw new Error('--previous-result requires --result')
+if (previousResult === result && previousResult !== undefined) throw new Error('the result and previous result must differ')
 const destination = isAbsolute(out) ? out : resolve(root, out)
 mkdirSync(destination, { recursive: true })
 execFileSync(process.execPath, [
@@ -40,7 +47,16 @@ execFileSync(process.execPath, [
   '--minify',
 ], { stdio: 'inherit' })
 const cssVersion = createHash('sha256').update(readFileSync(join(destination, 'site.css'))).digest('hex').slice(0, 12)
-writeFileSync(join(destination, 'index.html'), renderSite(manifest, version, cssVersion))
+writeFileSync(
+  join(destination, 'index.html'),
+  renderSite(manifest, version, cssVersion, previousManifest ? { href: './previous.html', label: 'Earlier results' } : undefined),
+)
+if (previousManifest) {
+  writeFileSync(
+    join(destination, 'previous.html'),
+    renderSite(previousManifest, version, cssVersion, { href: './index.html', label: 'Latest result' }),
+  )
+}
 writeFileSync(
   join(destination, 'methodology.html'),
   renderMethodology(readFileSync(join(root, 'METHODOLOGY.md'), 'utf8'), cssVersion),

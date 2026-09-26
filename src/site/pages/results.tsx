@@ -13,7 +13,15 @@ function EmptyResults() {
   )
 }
 
-function Summary({ version }: { version: string }) {
+function Summary({
+  version,
+  manifest,
+  related,
+}: {
+  version: string
+  manifest: ResultManifest | undefined
+  related?: { href: string; label: string } | undefined
+}) {
   return (
     <section className="border-b border-line bg-[radial-gradient(circle_at_88%_16%,#f0f4e6_0,transparent_32%),var(--bg)] px-[var(--page-inset)] pt-7 pb-8 max-[760px]:pt-6 max-[760px]:pb-7">
       <div className="mx-auto max-w-[var(--page-max)]">
@@ -26,6 +34,13 @@ function Summary({ version }: { version: string }) {
         <p className="mt-3 max-w-[900px] text-base leading-[1.55] text-[#57675c] max-[760px]:text-[15px]">
           SDD workflows compared on the same tasks and model. Run limits are noted below.
         </p>
+        {related && manifest && (
+          <p className="mt-4 text-sm leading-[1.6] text-muted">
+            Result <span className="font-mono">{manifest.resultId}</span> · {manifest.config.timeoutMs / 60000} min default limit · {manifest.config.repeats} repeat per participant
+            <span className="mx-2">·</span>
+            <a className="font-semibold text-green-2 underline underline-offset-[3px]" href={related.href}>{related.label}</a>
+          </p>
+        )}
       </div>
     </section>
   )
@@ -34,13 +49,15 @@ function Summary({ version }: { version: string }) {
 export function ResultsBody({
   manifest,
   version,
+  related,
 }: {
   manifest: ResultManifest | undefined
   version: string
+  related?: { href: string; label: string } | undefined
 }) {
   return (
     <main id="top" className="overflow-hidden">
-      <Summary version={version} />
+      <Summary version={version} manifest={manifest} related={related} />
       {manifest && manifest.runs.length > 0 ? (
         <>
           <OverallScores manifest={manifest} />

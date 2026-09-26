@@ -1,0 +1,24 @@
+{
+  "id": "tasks-priority-edit",
+  "class": "brownfield-spec",
+  "intent": "intent.md",
+  "requirements": "requirements.md",
+  "seed": "seed",
+  "initialSpecs": {
+    "neutral": "initial-specs/neutral",
+    "openspec": "initial-specs/openspec",
+    "speckit": "initial-specs/speckit",
+    "bmad": "initial-specs/bmad",
+    "gsd": "initial-specs/gsd",
+    "canon": "initial-specs/canon"
+  },
+  "baselineTests": {
+    "command": "python3 -m unittest discover -q -s tests -t ."
+  },
+  "hiddenTests": {
+    "dir": "tests",
+    "command": "python3 sdd-bench-check.py",
+    "countsPattern": "passed (\\d+) of (\\d+)"
+  },
+  "allowHosts": ["registry.npmjs.org", "*.npmjs.org", "pypi.org", "files.pythonhosted.org"]
+}

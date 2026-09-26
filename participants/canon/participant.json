@@ -1,0 +1,20 @@
+{
+  "id": "canon",
+  "name": "Canon",
+  "setup": "setup.sh",
+  "prompts": {
+    "full": "prompt.md",
+    "spec": "prompt-spec.md"
+  },
+  "specPaths": [
+    ".canon/spec"
+  ],
+  "allowHosts": [
+    "registry.npmjs.org",
+    "*.npmjs.org"
+  ],
+  "mounts": {
+    "canon": "~/workspace/canon/@canon"
+  },
+  "versionProbe": "canon-cli version"
+}

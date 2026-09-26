@@ -16,6 +16,7 @@ export function loadCatalog(root: string): Catalog {
   const problems: string[] = []
   const tasks = loadTasks(join(root, 'tasks'), problems)
   const participants = loadParticipants(join(root, 'participants'), problems)
+  validateInitialSpecs(tasks, participants, problems)
 
   if (problems.length > 0) throw new ValidationError('catalog', problems)
   return { root, tasks, participants }
@@ -60,6 +61,9 @@ function loadTasks(tasksRoot: string, problems: string[]): Task[] {
     requireFile(dir, task.requirementsFile, source, 'requirements', problems)
     requireRequirements(dir, task.requirementsFile, source, problems)
     if (task.seedDir) requireDir(dir, task.seedDir, source, 'seed', problems)
+    for (const [participant, specs] of Object.entries(task.initialSpecs)) {
+      requireDir(dir, specs, source, `initialSpecs.${participant}`, problems)
+    }
     if (task.hiddenTests) requireDir(dir, task.hiddenTests.dir, source, 'hiddenTests.dir', problems)
 
     tasks.push(task)
@@ -100,6 +104,31 @@ function loadParticipants(participantsRoot: string, problems: string[]): Partici
 
   reportDuplicates(participants.map((p) => p.id), 'participant', problems)
   return participants
+}
+
+function validateInitialSpecs(tasks: Task[], participants: Participant[], problems: string[]): void {
+  const known = new Set(participants.map((participant) => participant.id))
+  for (const task of tasks.filter((item) => item.taskClass === 'brownfield-spec')) {
+    for (const participant of participants) {
+      const specs = task.initialSpecs[participant.id]
+      if (!specs) {
+        problems.push(`${task.id}: initialSpecs.${participant.id} is missing`)
+      } else if (!participant.specPaths.some((path) => hasFile(join(task.dir, specs, path)))) {
+        problems.push(`${task.id}: initialSpecs.${participant.id} has no file in ${participant.specPaths.join(', ')}`)
+      }
+    }
+    for (const id of Object.keys(task.initialSpecs)) {
+      if (!known.has(id)) problems.push(`${task.id}: initialSpecs.${id} names an unknown participant`)
+    }
+  }
+}
+
+function hasFile(path: string): boolean {
+  if (!existsSync(path) || !statSync(path).isDirectory()) return false
+  return readdirSync(path, { withFileTypes: true }).some((entry) => {
+    if (entry.isFile()) return true
+    return entry.isDirectory() && hasFile(join(path, entry.name))
+  })
 }
 
 function findDescriptors(root: string, name: string): string[] {

@@ -37,13 +37,15 @@ Each task, participant, and repeat combination produces a separate run:
 4. The project's original tests, when present, and the held-out tests run separately from the participant.
 5. A separate judge evaluates each applicable metric. Its decisions on individual items become a run score; scores are then aggregated by task, class, and participant.
 
+For Brownfield with a current specification, every participant receives the same code seed and an equivalent existing specification in its native format. The specification is added after tool setup and included in the baseline commit before the agent begins.
+
 Judging can be repeated from saved artifacts without rerunning the participant. Each result retains the configuration and versions used to produce it.
 
 ## Agent configuration
 
 The participant and judge use the same provider, although their models may differ. Within one result, participants use the same model, model version, reasoning settings, and shared network policy. Each participant receives the original task request unchanged. There is no human intervention during a run.
 
-The SDD workflow and its required tools differ between participants. In the currently published result, GSD Core had no time limit; other participants had a 45-minute limit. No other run reached that limit. The result records model and tool versions and run settings.
+The SDD workflow and its required tools differ between participants. In result `2026-09-24T22-57-32-852`, GSD Core and Canon had no time limit; other participants had a 45-minute limit. Both Canon runs finished within 45 minutes. The result records model and tool versions and run settings.
 
 ## Metrics
 

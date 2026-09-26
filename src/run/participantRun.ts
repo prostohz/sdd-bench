@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { resultText, writeCapturedJson } from '../artifacts.js'
@@ -101,7 +101,7 @@ export async function runParticipant(
     const repo = await sandbox.repoPath()
     note(`sandbox: готов, репозиторий ${repo}`)
 
-    const setupFailure = await setUp(sandbox, participant, ctx.config.provider, repo, runDir, record, note)
+    const setupFailure = await setUp(sandbox, task, participant, ctx.config.provider, repo, runDir, record, note)
     if (setupFailure) return finish(record, 'error', setupFailure, runDir, workspace, note)
 
     const promptOnHost = join(runDir, 'prompt.md')
@@ -147,6 +147,7 @@ export async function runParticipant(
 
 async function setUp(
   sandbox: Sandbox,
+  task: Task,
   participant: Participant,
   provider: string,
   repo: string,
@@ -175,8 +176,30 @@ async function setUp(
 
   const versions = Object.entries(record.versions).map(([k, v]) => `${k}=${v.slice(0, 60)}`)
   note(`версии: ${versions.join(', ')}`)
+  if (task.taskClass === 'brownfield-spec') {
+    const root = join(task.dir, task.initialSpecs[participant.id] as string)
+    const files = initialSpecFiles(root)
+    for (const file of files) await sandbox.copyIn(join(root, file), join(repo, file))
+    const paths = files.map((file) => shellQuote(join(repo, file)))
+    const writable = await sandbox.exec(
+      `sudo -n chown "$(id -u):$(id -g)" ${paths.join(' ')} && ${paths.map((path) => `test -w ${path}`).join(' && ')}`,
+    )
+    if (writable.code !== 0) return `исходная спецификация ${participant.id} недоступна для записи`
+    note(`исходная спецификация: ${participant.id}, файлов ${files.length}`)
+  }
   await markBaseline(sandbox, repo)
   return undefined
+}
+
+export function initialSpecFiles(root: string, prefix = ''): string[] {
+  return readdirSync(join(root, prefix), { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => {
+      const path = join(prefix, entry.name)
+      if (entry.isFile()) return [path]
+      if (entry.isDirectory()) return initialSpecFiles(root, path)
+      throw new Error(`unsupported initial specification entry: ${path}`)
+    })
 }
 
 /**

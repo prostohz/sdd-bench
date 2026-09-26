@@ -292,6 +292,20 @@ test('the site shows an empty state without a result', () => {
   assert.doesNotMatch(html, /href="#tasks"/)
 })
 
+test('separate result pages show their own limit and navigation', () => {
+  const current = fixture()
+  current.config.timeoutMs = 5400000
+  const previous = fixture()
+  previous.resultId = 'previous'
+  previous.config.timeoutMs = 2700000
+  const latestHtml = renderSite(current, version, undefined, { href: './previous.html', label: 'Earlier results' })
+  const previousHtml = renderSite(previous, version, undefined, { href: './index.html', label: 'Latest result' })
+  assert.match(latestHtml, /sample.*90 min default limit.*Earlier results/)
+  assert.match(latestHtml, /href="\.\/previous\.html"/)
+  assert.match(previousHtml, /previous.*45 min default limit.*Latest result/)
+  assert.match(previousHtml, /href="\.\/index\.html"/)
+})
+
 test('the site shows an empty state when a result has no runs', () => {
   const manifest = fixture()
   manifest.runs = []

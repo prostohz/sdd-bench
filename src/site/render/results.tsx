@@ -4,11 +4,16 @@ import { SiteHeader } from '../components/site-header.js'
 import { googleAnalyticsTag } from './google-analytics.js'
 import { ResultsBody } from '../pages/results.js'
 
-export function renderSite(manifest: ResultManifest | undefined, version: string, cssVersion?: string): string {
+export function renderSite(
+  manifest: ResultManifest | undefined,
+  version: string,
+  cssVersion?: string,
+  related?: { href: string; label: string },
+): string {
   const body = renderToStaticMarkup(
     <>
       <SiteHeader current="home" />
-      <ResultsBody manifest={manifest} version={version} />
+      <ResultsBody manifest={manifest} version={version} related={related} />
     </>,
   )
   const styleHref = cssVersion ? `./site.css?v=${cssVersion}` : './site.css'
