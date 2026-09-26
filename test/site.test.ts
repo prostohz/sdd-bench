@@ -5,9 +5,9 @@ import test from 'node:test'
 import type { ResultManifest, RunRecord, Verdict } from '../src/model/run.js'
 import { renderReport } from '../src/report/report.js'
 import { previewManifest } from '../src/site/data.js'
-import { measurementId } from '../src/site/pages/google-analytics.js'
-import { renderMethodology } from '../src/site/pages/methodology-build.js'
-import { renderSite } from '../src/site/pages/results-build.js'
+import { measurementId } from '../src/site/render/google-analytics.js'
+import { renderMethodology } from '../src/site/render/methodology.js'
+import { renderSite } from '../src/site/render/results.js'
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }
 

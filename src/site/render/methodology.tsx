@@ -1,8 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { SiteHeader } from '../components/site-header.js'
 import { googleAnalyticsTag } from './google-analytics.js'
-import { MethodologyBody } from './methodology.js'
-import { escapeHtml, parseMethodology } from './methodology-content.js'
+import { escapeHtml, MethodologyBody, parseMethodology } from '../pages/methodology.js'
 
 export function renderMethodology(source: string, cssVersion?: string): string {
   const { title } = parseMethodology(source)

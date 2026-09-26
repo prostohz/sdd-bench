@@ -4,8 +4,8 @@ import { createHash } from 'node:crypto'
 import { isAbsolute, join, resolve } from 'node:path'
 
 import { loadSiteManifest } from './data.js'
-import { renderMethodology } from './pages/methodology-build.js'
-import { renderSite } from './pages/results-build.js'
+import { renderMethodology } from './render/methodology.js'
+import { renderSite } from './render/results.js'
 
 const args = process.argv.slice(2)
 let result: string | undefined
