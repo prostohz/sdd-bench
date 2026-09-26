@@ -22,7 +22,7 @@ export function TaskBreakdown({ manifest }: { manifest: ResultManifest }) {
         title="Task breakdown"
         note="Each card shows a participant’s mean score across repeats for one task."
       />
-      <div className="grid grid-cols-2 gap-[18px] max-[760px]:grid-cols-1">
+      <div className="grid grid-cols-3 gap-[18px] max-[1050px]:grid-cols-2 max-[760px]:grid-cols-1">
         {taskIds.map((taskId) => {
           const taskClass =
             manifest.runs.find((run) => run.taskId === taskId)?.taskClass ?? ''
