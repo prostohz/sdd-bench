@@ -40,14 +40,26 @@ export function OverallScores({ manifest }: { manifest: ResultManifest }) {
         note="Baseline first; methods ranked by score across included task classes."
       />
       <div className="overflow-x-auto border border-line bg-paper">
-        <Table className={`${tableClass} min-w-[760px]`}>
+        <Table className={`${tableClass} min-w-[1060px] table-fixed`}>
+          <colgroup>
+            <col className="w-[210px]" />
+            <col className="w-[110px]" />
+            <col span={classes.length} className="w-[180px]" />
+            <col className="w-[100px]" />
+            <col className="w-[100px]" />
+          </colgroup>
           <TableHeader>
             <TableRow>
               <TableHead scope="col">Participant</TableHead>
               <TableHead scope="col">Score</TableHead>
               {classes.map((key) => (
                 <TableHead scope="col" key={key}>
-                  {CLASS_NAMES[key] ?? key}
+                  {key === 'greenfield' ? CLASS_NAMES[key] : (
+                    <>
+                      <span className="block">Brownfield · </span>
+                      <span className="block">{key === 'brownfield-nospec' ? 'no specification' : 'current specification'}</span>
+                    </>
+                  )}
                 </TableHead>
               ))}
               <TableHead scope="col" className={numberClass}>
@@ -100,7 +112,7 @@ export function OverallScores({ manifest }: { manifest: ResultManifest }) {
                       participant.classes.find((item) => item.key === key)
                         ?.score ?? null
                     return (
-                      <TableCell className="min-w-[150px]" key={key}>
+                      <TableCell className="min-w-[180px]" key={key}>
                         <span className="mb-2 block text-[13px] leading-[normal] font-semibold">{score(value)}</span>
                         <Bar value={value} />
                       </TableCell>
