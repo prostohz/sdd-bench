@@ -81,7 +81,7 @@ function runTable(manifest: ResultManifest): string[] {
         return verdict === undefined ? '—' : verdict.score.toFixed(1)
       }),
       duration(run.telemetry?.activeMs ?? run.telemetry?.durationMs ?? null),
-      price.value === null ? '—' : `$${price.value.toFixed(3)}`,
+      price.value === null ? '—' : `$${price.value.toFixed(2)}`,
       number(score.value),
       score.zeroReason ?? run.statusDetail ?? '',
     ]

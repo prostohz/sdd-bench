@@ -17,7 +17,7 @@ export function duration(value: number | undefined): string {
 }
 
 export function cost(value: number | null): string {
-  return value === null ? '—' : `$${value.toFixed(3)}`
+  return value === null ? '—' : `$${value.toFixed(2)}`
 }
 
 export function Bar({ value }: { value: number | null }) {

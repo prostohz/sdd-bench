@@ -131,7 +131,8 @@ test('the public site shows summaries without exposing run artifacts', () => {
   assert.match(html, /<th[^>]*scope="col"[^>]*>Time<\/th><th[^>]*scope="col"[^>]*>Cost<\/th>/)
   assert.match(html, /<th[^>]*>Cost<\/th><th[^>]*><span[^>]*>Held-out tests<\/span><\/th><th[^>]*>Score<\/th>/)
   assert.match(html, /<td[^>]*>80%<\/td><td[^>]*>\d+\.\d<\/td>/)
-  assert.match(html, /\$0\.120/)
+  assert.match(html, /\$0\.12(?!\d)/)
+  assert.doesNotMatch(html, /\$\d+\.\d{3}/)
   assert.match(html, /Held-out tests are reported separately from the score\./)
   assert.doesNotMatch(html, /Full methodology|class="method-link"/)
   assert.doesNotMatch(
@@ -194,8 +195,9 @@ test('estimated costs have no prefix in site or report', () => {
   }
   for (const output of [renderSite(manifest, version), renderReport(manifest)]) {
     assert.doesNotMatch(output, /[~≈]\$?0\.32/)
+    assert.match(output, /\$0\.32(?!\d)/)
+    assert.doesNotMatch(output, /\$\d+\.\d{3}/)
   }
-  assert.match(renderSite(manifest, version), /\$0\.320/)
 })
 
 test('the specification stage omits implementation checks', () => {
