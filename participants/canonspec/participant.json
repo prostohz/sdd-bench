@@ -1,6 +1,6 @@
 {
-  "id": "canon",
-  "name": "Canon",
+  "id": "canonspec",
+  "name": "Canon Spec",
   "setup": "setup.sh",
   "prompts": {
     "full": "prompt.md",
@@ -13,8 +13,6 @@
     "registry.npmjs.org",
     "*.npmjs.org"
   ],
-  "mounts": {
-    "canon": "~/workspace/canon/@canon"
-  },
+  "mounts": {},
   "versionProbe": "canon-cli version"
 }

@@ -10,7 +10,7 @@
     "speckit": "initial-specs/speckit",
     "bmad": "initial-specs/bmad",
     "gsd": "initial-specs/gsd",
-    "canon": "initial-specs/canon"
+    "canonspec": "initial-specs/canonspec"
   },
   "baselineTests": {
     "command": "python3 -m unittest discover -q -s tests -t ."

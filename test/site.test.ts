@@ -242,11 +242,12 @@ test('saved tool versions appear in each report view', () => {
   first.participantId = 'openspec'
   first.versions = { openspec: '1.13.2' }
   manifest.runs.push({ ...first, runId: 'run-2', repeat: 2, versions: { openspec: '1.14.0' } })
-  manifest.runs.push({ ...first, runId: 'run-3', participantId: 'canon', versions: { canon: '@canon/cli      0.1.0' } })
+  manifest.runs.push({ ...first, runId: 'run-3', participantId: 'canonspec', versions: { canonspec: '@canon/cli      0.1.0' } })
+  manifest.runs.push({ ...first, runId: 'run-4', participantId: 'canonspec', repeat: 2, versions: { canonspec: '@canonspec/cli     0.1.1' } })
 
   const site = renderSite(manifest, version)
   assert.match(withoutClasses(site), /<span>Tool version: <span>1\.13\.2, 1\.14\.0<\/span><\/span>/)
-  assert.match(withoutClasses(site), /<span>Tool version: <span>0\.1\.0<\/span><\/span>/)
+  assert.match(withoutClasses(site), /<span>Tool version: <span>0\.1\.0, 0\.1\.1<\/span><\/span>/)
 
   const report = renderReport(manifest)
   assert.match(report, /\| Запуск \| Версия инструмента \| Статус \|/)
@@ -255,7 +256,7 @@ test('saved tool versions appear in each report view', () => {
 
 test('methodology names open their GitHub repositories in a new tab', () => {
   const manifest = fixture('spec')
-  const ids = ['openspec', 'speckit', 'bmad', 'gsd', 'canon', 'neutral']
+  const ids = ['openspec', 'speckit', 'bmad', 'gsd', 'canonspec', 'neutral']
   manifest.runs = ids.map((participantId, index) => ({
     ...manifest.runs[0]!,
     runId: `run-${index}`,
@@ -267,7 +268,7 @@ test('methodology names open their GitHub repositories in a new tab', () => {
     'https://github.com/github/spec-kit',
     'https://github.com/bmad-code-org/BMAD-METHOD',
     'https://github.com/open-gsd/gsd-core',
-    'https://github.com/prostohz/canon',
+    'https://github.com/prostohz/canonspec',
   ]
   for (const repository of repositories) {
     assert.equal(html.split(`href="${repository}" target="_blank" rel="noopener noreferrer"`).length - 1, 3)

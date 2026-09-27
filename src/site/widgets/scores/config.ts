@@ -11,14 +11,14 @@ export const NAMES: Record<string, string> = {
   gsd: 'GSD Core',
   speckit: 'Spec Kit',
   bmad: 'BMad Method',
-  canon: 'Canon',
+  canonspec: 'Canon Spec',
 }
 export const REPOSITORIES: Record<string, string> = {
   openspec: 'https://github.com/Fission-AI/OpenSpec',
   gsd: 'https://github.com/open-gsd/gsd-core',
   speckit: 'https://github.com/github/spec-kit',
   bmad: 'https://github.com/bmad-code-org/BMAD-METHOD',
-  canon: 'https://github.com/prostohz/canon',
+  canonspec: 'https://github.com/prostohz/canonspec',
 }
 export const CLASS_NAMES: Record<string, string> = {
   greenfield: 'Greenfield',

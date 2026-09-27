@@ -76,8 +76,8 @@ export function OverallScores({ manifest }: { manifest: ResultManifest }) {
                 manifest.runs,
                 participant.participantId,
               ).map((version) =>
-                participant.participantId === 'canon'
-                  ? version.replace(/^@canon\/cli\s+/, '')
+                participant.participantId === 'canonspec'
+                  ? version.replace(/^@[^/\s]+\/cli\s+/, '')
                   : version,
               )
               return (
